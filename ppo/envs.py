@@ -9,29 +9,14 @@ from baselines import bench
 from baselines.common.atari_wrappers import make_atari, wrap_deepmind
 from baselines.common.vec_env import VecEnvWrapper
 #from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
-from .subproc_vec_env import MySubprocVecEnv
+from ppo.subproc_vec_env import MySubprocVecEnv
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 #from baselines.common.vec_env.shmem_vec_env import ShmemVecEnv
 from baselines.common.vec_env.vec_normalize import \
     VecNormalize as VecNormalize_
 
-try:
-    import dm_control2gym
-except ImportError:
-    pass
 
-try:
-    import roboschool
-except ImportError:
-    pass
-
-try:
-    import pybullet_envs
-except ImportError:
-    pass
-
-
-def make_vec_envs(env_name,
+def make_vec_envs(make,
                   seed,
                   num_processes,
                   gamma,
@@ -40,12 +25,8 @@ def make_vec_envs(env_name,
                   allow_early_resets,
                   num_frame_stack=None):
 
-    if isinstance(env_name, str):
-        envs = [make_env(env_name, seed, i, log_dir, allow_early_resets)
-                    for i in range(num_processes)    ]
-    else:
-        make = env_name
-        envs = [make(i)  for i in range(num_processes)    ]
+
+    envs = [make(i)  for i in range(num_processes)    ]
 
     if len(envs) > 1:
         #envs = SubprocVecEnv(envs)
@@ -54,70 +35,12 @@ def make_vec_envs(env_name,
     else:
         envs = DummyVecEnv(envs)
 
-    if len(envs.observation_space.shape) == 1:
-        if gamma is None:
-            envs = VecNormalize(envs, ret=False)
-        else:
-            envs = VecNormalize(envs, gamma=gamma)
-
     envs = VecPyTorch(envs, device)
 
     if num_frame_stack is not None:
         envs = VecPyTorchFrameStack(envs, num_frame_stack, device)
-    elif len(envs.observation_space.shape) == 3:
-        envs = VecPyTorchFrameStack(envs, 4, device)
 
     return envs
-
-
-# Checks whether done was caused my timit limits or not
-class TimeLimitMask(gym.Wrapper):
-    def step(self, action):
-        obs, rew, done, info = self.env.step(action)
-        if done and self.env._max_episode_steps == self.env._elapsed_steps:
-            info['bad_transition'] = True
-
-        return obs, rew, done, info
-
-    def reset(self, **kwargs):
-        return self.env.reset(**kwargs)
-
-
-# Can be used to test recurrent policies for Reacher-v2
-class MaskGoal(gym.ObservationWrapper):
-    def observation(self, observation):
-        if self.env._elapsed_steps > 0:
-            observation[-2:0] = 0
-        return observation
-
-
-class TransposeObs(gym.ObservationWrapper):
-    def __init__(self, env=None):
-        """
-        Transpose observation space (base class)
-        """
-        super(TransposeObs, self).__init__(env)
-
-
-class TransposeImage(TransposeObs):
-    def __init__(self, env=None, op=[2, 0, 1]):
-        """
-        Transpose observation space for images
-        """
-        super(TransposeImage, self).__init__(env)
-        assert len(op) == 3, f"Error: Operation, {str(op)}, must be dim3"
-        self.op = op
-        obs_shape = self.observation_space.shape
-        self.observation_space = Box(
-            self.observation_space.low[0, 0, 0],
-            self.observation_space.high[0, 0, 0], [
-                obs_shape[self.op[0]], obs_shape[self.op[1]],
-                obs_shape[self.op[2]]
-            ],
-            dtype=self.observation_space.dtype)
-
-    def observation(self, ob):
-        return ob.transpose(self.op[0], self.op[1], self.op[2])
 
 
 class VecPyTorch(VecEnvWrapper):
@@ -212,3 +135,64 @@ class VecPyTorchFrameStack(VecEnvWrapper):
 
     def close(self):
         self.venv.close()
+
+
+
+
+class FrameSkipEnv(gym.Wrapper):
+    def __init__(self, env, skip=4):
+        """Return only every `skip`-th frame"""
+        gym.Wrapper.__init__(self, env)
+        # most recent raw observations (for max pooling across time steps)
+        self._obs_buffer = np.zeros((2,)+env.observation_space.shape, dtype=np.uint8)
+        self._skip       = skip
+
+    def step(self, action):
+        """Repeat action, sum reward, and max over last observations."""
+        total_reward = 0.0
+        done = None
+        for i in range(self._skip):
+            obs, reward, done, info = self.env.step(action)
+            if i == self._skip - 2: self._obs_buffer[0] = obs
+            if i == self._skip - 1: self._obs_buffer[1] = obs
+            total_reward += reward
+            if done:
+                break
+        # Note that the observation on the done=True frame
+        # doesn't matter
+        #max_frame = self._obs_buffer.max(axis=0)
+        last_frame = obs
+
+        return last_frame, total_reward, done, info
+
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)
+
+
+class TransposeObs(gym.ObservationWrapper):
+    def __init__(self, env=None):
+        """
+        Transpose observation space (base class)
+        """
+        super(TransposeObs, self).__init__(env)
+
+
+class TransposeImage(TransposeObs):
+    def __init__(self, env=None, op=[2, 0, 1]):
+        """
+        Transpose observation space for images
+        """
+        super(TransposeImage, self).__init__(env)
+        assert len(op) == 3, f"Error: Operation, {str(op)}, must be dim3"
+        self.op = op
+        obs_shape = self.observation_space.shape
+        self.observation_space = Box(
+            self.observation_space.low[0, 0, 0],
+            self.observation_space.high[0, 0, 0], [
+                obs_shape[self.op[0]], obs_shape[self.op[1]],
+                obs_shape[self.op[2]]
+            ],
+            dtype=self.observation_space.dtype)
+
+    def observation(self, ob):
+       return ob.transpose(self.op[0], self.op[1], self.op[2])

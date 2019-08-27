@@ -1,28 +1,10 @@
 import argparse
-
+import os
 import torch
 
 
 def get_args():
     parser = argparse.ArgumentParser(description='RL')
-    parser.add_argument(
-        '--algo', default='a2c', help='algorithm to use: a2c | ppo | acktr')
-    parser.add_argument(
-        '--gail',
-        action='store_true',
-        default=False,
-        help='do imitation learning with gail')
-    parser.add_argument(
-        '--gail-experts-dir',
-        default='./gail_experts',
-        help='directory that contains expert demonstrations for gail')
-    parser.add_argument(
-        '--gail-batch-size',
-        type=int,
-        default=128,
-        help='gail batch size (default: 128)')
-    parser.add_argument(
-        '--gail-epoch', type=int, default=5, help='gail epochs (default: 5)')
     parser.add_argument(
         '--lr', type=float, default=7e-4, help='learning rate (default: 7e-4)')
     parser.add_argument(
@@ -71,11 +53,6 @@ def get_args():
         default=1, 
         help='random seed (default: 1)')
     parser.add_argument(
-        '--cuda-deterministic',
-        action='store_true',
-        default=False,
-        help="sets flags for determinism when using CUDA (potentially slow!)")
-    parser.add_argument(
         '--num-processes',
         type=int,
         default=16,
@@ -103,7 +80,7 @@ def get_args():
     parser.add_argument(
         '--log-interval',
         type=int,
-        default=10,
+        default=1,
         help='log interval, one log per n updates (default: 10)')
     parser.add_argument(
         '--save-interval',
@@ -121,10 +98,6 @@ def get_args():
         default=10e7,
         help='number of environment steps to train (default: 10e6)')
     parser.add_argument(
-        '--env-name',
-        default='PongNoFrameskip-v4',
-        help='environment to train on (default: PongNoFrameskip-v4)')
-    parser.add_argument(
         '--log-dir',
         default='/tmp/gym/',
         help='directory to save agent logs (default: /tmp/gym)')
@@ -132,11 +105,6 @@ def get_args():
         '--save-dir',
         default='./trained_models/',
         help='directory to save agent logs (default: ./trained_models/)')
-    parser.add_argument(
-        '--no-cuda',
-        action='store_true',
-        default=False,
-        help='disables CUDA training')
     parser.add_argument(
         '--use-proper-time-limits',
         action='store_true',
@@ -148,24 +116,9 @@ def get_args():
         default=False,
         help='use a recurrent policy')
     parser.add_argument(
-        '--use-linear-lr-decay',
-        action='store_true',
-        default=False,
-        help='use a linear schedule on the learning rate')
-    parser.add_argument(
         '--restart-model',
         default='',
         help='Restart training using the model given (Gianni)')  
-    parser.add_argument(
-        '--maml-inner-steps',
-        type=int,
-        default=0,
-        help='MAML inner steps')      
-    parser.add_argument(
-        '--maml-beta',
-        type=float,
-        default=0.001,
-        help='MAML relaxation')
     parser.add_argument(
         '--behavior',
         action='append',
@@ -175,10 +128,6 @@ def get_args():
         '--device',
         default=None,
         help='Device to run on') 
-    parser.add_argument(
-        '--task',
-        default=None,
-        help='Provide name of task to use in multitask env. ')  
     parser.add_argument(
         '--frame-skip',
         type=int,
@@ -195,12 +144,6 @@ def get_args():
         help='directory where the yamls files for the environemnt are (default: None)')   
 
     args = parser.parse_args()
-
-    args.cuda = not args.no_cuda and torch.cuda.is_available()
-
-    assert args.algo in ['a2c', 'ppo', 'ppokl', 'acktr']
-    if args.recurrent_policy:
-        assert args.algo in ['a2c', 'ppo', 'ppokl'], \
-            'Recurrent policy is not implemented for ACKTR'
+    args.log_dir = os.path.expanduser(args.log_dir)
 
     return args

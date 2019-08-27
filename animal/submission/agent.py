@@ -1,8 +1,8 @@
 import torch
-from a2c_ppo_acktr.model import Policy
+from ppo.model import Policy
 from animalai.envs.gym.environment import ActionFlattener
 from PIL import Image
-from a2c_ppo_acktr.envs import VecPyTorchFrameStack, TransposeImage, VecPyTorch
+from ppo.envs import VecPyTorchFrameStack, TransposeImage, VecPyTorch
 from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 import numpy as np
