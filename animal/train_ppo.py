@@ -3,7 +3,6 @@ import glob
 import os
 import sys
 import time
-from collections import deque
 import random
 
 import gym
@@ -20,16 +19,10 @@ from arguments import get_args
 from ppo.envs import make_vec_envs
 from ppo.model import Policy
 from ppo.storage import RolloutStorage
+from ppo.algo.ppokl import ppo_rollout, ppo_update
 from animal import make_animal_env
 
-def save_model(save_path,actor_critic):
-    fname='animal'
-    try:
-        os.makedirs(save_path)
-    except OSError:
-        pass
-    torch.save(actor_critic.state_dict(), os.path.join(save_path, fname + ".state_dict"))
-        
+
 def main():
     args = get_args()
 
@@ -53,6 +46,7 @@ def main():
     if args.restart_model:
         actor_critic.load_state_dict(torch.load(args.restart_model, map_location=device))
     actor_critic.to(device)
+
     actor_behaviors = None
     if args.behavior: 
         actor_behaviors = []
@@ -82,56 +76,24 @@ def main():
 
     obs = envs.reset()
     rollouts.obs[0].copy_(obs)
-    rollouts.to(device)
-
-    episode_rewards = deque(maxlen=20)
+    rollouts.to(device)  #they live in GPU, converted to torch from the env wrapper
 
     start = time.time()
     num_updates = int(args.num_env_steps) // args.num_steps // args.num_processes
 
-
     for j in range(num_updates):
-        for step in range(args.num_steps):
-            # Sample actions
-            with torch.no_grad():
-                value, action, action_log_prob, recurrent_hidden_states, dist_entropy = actor_critic.act(
-                    rollouts.obs[step], rollouts.recurrent_hidden_states[step],
-                    rollouts.masks[step])
 
-            # Obser reward and next obs
-            obs, reward, done, infos = envs.step(action)
+        ppo_rollout(args.num_steps, envs, actor_critic, rollouts)
 
-            for info in infos:
-                if 'episode' in info.keys():
-                    episode_rewards.append(info['episode']['r'])
-                    
-
-            # If done then clean the history of observations.
-            masks = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
-            bad_masks = torch.FloatTensor([[0.0] if 'bad_transition' in info.keys() else [1.0] for info in infos])
-
-            rollouts.insert(obs, recurrent_hidden_states, action,
-                            action_log_prob, value, reward, masks, bad_masks)
-
-        with torch.no_grad():
-            next_value = actor_critic.get_value(rollouts.obs[-1], rollouts.recurrent_hidden_states[-1],
-                rollouts.masks[-1]).detach()
-
-
-        rollouts.compute_returns(next_value, args.use_gae, args.gamma,
-                                 args.gae_lambda, args.use_proper_time_limits)
-
-        value_loss, action_loss, dist_entropy, kl_div = agent.update(rollouts)
-
-        rollouts.after_update()
+        value_loss, action_loss, dist_entropy, kl_div = ppo_update(agent, actor_critic, rollouts,
+                                    args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits)
 
         if (j % args.save_interval == 0 or j == num_updates - 1) and args.save_dir != "":
-            save_model(args.save_dir,actor_critic)
+            actor_critic.save(os.path.join(args.save_dir, "animal.state_dict"))
 
-        if j % args.log_interval == 0 and len(episode_rewards) > 1:
+        if j % args.log_interval == 0:
             total_num_steps = (j + 1) * args.num_processes * args.num_steps
-            end = time.time()
-            s =  "Update {}, num timesteps {}, FPS {} \n".format(j, total_num_steps,int(total_num_steps / (end - start)))
+            s =  "Update {}, num timesteps {}, FPS {} \n".format(j, total_num_steps,int(total_num_steps / ( time.time() - start)))
             s += "Entropy {}, value_loss {}, action_loss {}, kl_divergence {}".format(dist_entropy, value_loss,action_loss,kl_div)
             print(s,flush=True)
 

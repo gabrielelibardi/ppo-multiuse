@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import os
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -77,6 +78,15 @@ class Policy(nn.Module):
         dist_entropy = dist.entropy().mean()
 
         return value, action_log_probs, dist_entropy, rnn_hxs, dist
+
+    def save(self,save_path):
+        try:
+            os.makedirs(save_path)
+        except OSError:
+            pass
+        torch.save(self.state_dict(), save_path + ".tmp")
+        os.rename(save_path + '.tmp', save_path)
+
 
 
 class NNBase(nn.Module):

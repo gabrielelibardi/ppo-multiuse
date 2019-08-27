@@ -111,3 +111,34 @@ class PPOKL():
         kl_div_epoch /= num_updates
 
         return value_loss_epoch, action_loss_epoch, dist_entropy_epoch, kl_div_epoch
+
+
+
+def ppo_rollout(num_steps, envs, actor_critic, rollouts):
+    for step in range(num_steps):
+        # Sample actions
+        with torch.no_grad():
+            value, action, action_log_prob, recurrent_hidden_states, _ = actor_critic.act(
+                rollouts.obs[step], rollouts.recurrent_hidden_states[step],
+                rollouts.masks[step])
+
+        # Obser reward and next obs
+        obs, reward, done, infos = envs.step(action)
+
+        # If done then clean the history of observations.
+        masks = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
+        bad_masks = torch.FloatTensor([[0.0] if 'bad_transition' in info.keys() else [1.0] for info in infos])
+
+        rollouts.insert(obs, recurrent_hidden_states, action,
+                        action_log_prob, value, reward, masks, bad_masks)
+
+
+def ppo_update(agent, actor_critic, rollouts, use_gae, gamma, gae_lambda, use_proper_time_limits):
+    with torch.no_grad():
+        next_value = actor_critic.get_value(rollouts.obs[-1], rollouts.recurrent_hidden_states[-1],
+            rollouts.masks[-1]).detach()
+
+    rollouts.compute_returns(next_value, use_gae, gamma, gae_lambda, use_proper_time_limits)
+    value_loss, action_loss, dist_entropy, kl_div = agent.update(rollouts)
+    rollouts.after_update()
+    return value_loss, action_loss, dist_entropy, kl_div
