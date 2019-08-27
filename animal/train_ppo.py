@@ -1,9 +1,9 @@
 import copy
 import glob
 import os
+import sys
 import time
 from collections import deque
-from copy import deepcopy
 import random
 
 import gym
@@ -13,14 +13,23 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+sys.path.append('../')
+
 from ppo import algo, utils
-from animal.arguments import get_args
+from arguments import get_args
 from ppo.envs import make_vec_envs
 from ppo.model import Policy
 from ppo.storage import RolloutStorage
+from animal import make_animal_env
 
-from animal.animal import make_animal_env
-
+def save_model(save_path,actor_critic):
+    fname='animal'
+    try:
+        os.makedirs(save_path)
+    except OSError:
+        pass
+    torch.save(actor_critic.state_dict(), os.path.join(save_path, fname + ".state_dict"))
+        
 def main():
     args = get_args()
 
@@ -34,7 +43,7 @@ def main():
     env_make = make_animal_env(log_dir = args.log_dir, allow_early_resets=False,
             inference_mode=args.realtime,  frame_skip=args.frame_skip , greyscale=False, 
             arenas_dir=args.arenas_dir, info_keywords=('arena',))
- 
+
     envs = make_vec_envs(env_make, args.seed, args.num_processes,
                          args.gamma, args.log_dir, device, False)
 
@@ -42,18 +51,17 @@ def main():
                          base_kwargs={'recurrent': args.recurrent_policy})
 
     if args.restart_model:
-        actor_critic.load_state_dict(torch.load(args.restart_model,map_location=device))
+        actor_critic.load_state_dict(torch.load(args.restart_model, map_location=device))
     actor_critic.to(device)
     actor_behaviors = None
     if args.behavior: 
         actor_behaviors = []
         for a in args.behavior:
-            actor = Policy(envs.observation_space.shape,envs.action_space,
-                        base_kwargs={'recurrent': args.recurrent_policy})
+            actor = Policy(envs.observation_space.shape, envs.action_space,
+                            base_kwargs={'recurrent': args.recurrent_policy})
             actor.load_state_dict(torch.load(a,map_location=device))
             actor.to(device)
             actor_behaviors.append(actor) 
-
 
     agent = algo.PPOKL(
         actor_critic,
@@ -117,22 +125,13 @@ def main():
 
         rollouts.after_update()
 
-        # save for every interval-th episode or for the last epoch
         if (j % args.save_interval == 0 or j == num_updates - 1) and args.save_dir != "":
-            save_path = args.save_dir
-            fname='animal'
-            try:
-                os.makedirs(save_path)
-            except OSError:
-                pass
-            torch.save(actor_critic.state_dict(), os.path.join(save_path, fname + ".state_dict"))
+            save_model(args.save_dir,actor_critic)
 
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             total_num_steps = (j + 1) * args.num_processes * args.num_steps
             end = time.time()
             s =  "Update {}, num timesteps {}, FPS {} \n".format(j, total_num_steps,int(total_num_steps / (end - start)))
-            s += "Last {} training episodes: mean/std reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\n".format(len(episode_rewards), np.mean(episode_rewards),
-                        np.std(episode_rewards), np.min(episode_rewards), np.max(episode_rewards))
             s += "Entropy {}, value_loss {}, action_loss {}, kl_divergence {}".format(dist_entropy, value_loss,action_loss,kl_div)
             print(s,flush=True)
 

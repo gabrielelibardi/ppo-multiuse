@@ -1,6 +1,7 @@
 import os
 import sys
 import gym
+import glob
 from os.path import join
 import random
 import numpy as np
@@ -10,9 +11,11 @@ from baselines import bench
 from gym.spaces.box import Box
 import animalai
 from animalai.envs.gym.environment import AnimalAIEnv
-from animal.lab import LabAnimal, RetroEnv
 import time
-
+from animalai.envs.arena_config import ArenaConfig
+from animalai.envs.gym.environment import ActionFlattener
+from ppo.envs import FrameSkipEnv,TransposeImage
+from PIL import Image
 
 def make_animal_env(log_dir, allow_early_resets, inference_mode, 
                     frame_skip, greyscale, arenas_dir, info_keywords=()):
@@ -29,8 +32,6 @@ def make_animal_env(log_dir, allow_early_resets, inference_mode,
                                greyscale=greyscale, inference=inference_mode,resolution=None)
             env = RetroEnv(env)
             env = LabAnimal(env,arenas_dir)
-
-            obs_shape = env.observation_space.shape
 
             if frame_skip > 0: 
                 env = FrameSkipEnv(env, skip=frame_skip)
@@ -54,101 +55,67 @@ def make_animal_env(log_dir, allow_early_resets, inference_mode,
 
 
 
-
-class RecordPosition(gym.Wrapper):
-    def __init__(self, env):
+class LabAnimal(gym.Wrapper):
+    def __init__(self, env, arenas_dir):
         gym.Wrapper.__init__(self, env)
-        self.position = np.array([20,0.5,20])
+        if os.path.isdir(arenas_dir):
+            files = glob.glob("{}/*.yaml".format(arenas_dir))
+        else:
+            #assume is a pattern
+            files = glob.glob(arenas_dir)
+            
+        print(files)
+        
+        self.env_list = [(f,ArenaConfig(f)) for f in files]
+        self._arena_file = ''
 
     def step(self, action):
-        start = time.time()
-        obs, rew, done, info = self.env.step(action)
-        step_time_length = time.time() - start
-
-        self.position  += info['brain_info'].vector_observations[0]*step_time_length
-        info['Position'] = self.position
-
-        if done:
-            info['Time'] = 0
-            self.position = 0
-
-        return obs, rew, done, info
-
-
-
-class FrameCounter(gym.Wrapper):
-    def __init__(self, env):
-        gym.Wrapper.__init__(self, env)
-        self.T_frames = 0
-
-    def step(self, action):
-        obs, rew, done, info = self.env.step(action)
-
-        if done:
-            info['Time'] = 0
-            self.T_frames = 0
-        self.T_frames  += 1
-
-        info['Time'] = self.T_frames
-
-        return obs, rew, done, info
-
-
-
-class FrameSkipEnv(gym.Wrapper):
-    def __init__(self, env, skip=4):
-        """Return only every `skip`-th frame"""
-        gym.Wrapper.__init__(self, env)
-        # most recent raw observations (for max pooling across time steps)
-        self._obs_buffer = np.zeros((2,)+env.observation_space.shape, dtype=np.uint8)
-        self._skip       = skip
-
-    def step(self, action):
-        """Repeat action, sum reward, and max over last observations."""
-        total_reward = 0.0
-        done = None
-        for i in range(self._skip):
-            obs, reward, done, info = self.env.step(action)
-            if i == self._skip - 2: self._obs_buffer[0] = obs
-            if i == self._skip - 1: self._obs_buffer[1] = obs
-            total_reward += reward
-            if done:
-                break
-        # Note that the observation on the done=True frame
-        # doesn't matter
-        #max_frame = self._obs_buffer.max(axis=0)
-        last_frame = obs
-
-        return last_frame, total_reward, done, info
+        action = int(action)
+        obs, reward, done, info = self.env.step(action)
+        if reward < -0.1 and done: #dead
+            reward = -20
+        info['arena']=self._arena_file
+        return obs, reward, done, info 
 
     def reset(self, **kwargs):
-        return self.env.reset(**kwargs)
+        self._arena_file, arena = random.choice(self.env_list)
+        return self.env.reset(arenas_configurations=arena,**kwargs)
+        
 
+class RetroEnv(gym.Wrapper):
+    def __init__(self,env):
+        gym.Wrapper.__init__(self, env)
+        self.flattener = ActionFlattener([3,3])
+        self.action_space = self.flattener.action_space
+        self.observation_space = gym.spaces.Box(0, 255,dtype=np.uint8,shape=(84, 84, 3))
 
-class TransposeObs(gym.ObservationWrapper):
-    def __init__(self, env=None):
+    def step(self, action): 
+        action = self.flattener.lookup_action(action) # convert to multi
+        obs, reward, done, info = self.env.step(action)  #non-retro
+        visual_obs, vector_obs = self._preprocess_obs(obs)
+        info['vector_obs']=vector_obs
+        return visual_obs,reward,done,info
+
+    def reset(self, **kwargs):
+        obs = self.env.reset(**kwargs)
+        visual_obs, _ = self._preprocess_obs(obs)
+        return visual_obs
+
+    def _preprocess_obs(self,obs):
+        visual_obs, vector_obs = obs
+        visual_obs = self._preprocess_single(visual_obs)
+        visual_obs = self._resize_observation(visual_obs)
+        return visual_obs, vector_obs
+
+    @staticmethod
+    def _preprocess_single(single_visual_obs):
+            return (255.0 * single_visual_obs).astype(np.uint8)
+
+    @staticmethod
+    def _resize_observation(observation):
         """
-        Transpose observation space (base class)
+        Re-sizes visual observation to 84x84
         """
-        super(TransposeObs, self).__init__(env)
-
-
-class TransposeImage(TransposeObs):
-    def __init__(self, env=None, op=[2, 0, 1]):
-        """
-        Transpose observation space for images
-        """
-        super(TransposeImage, self).__init__(env)
-        assert len(op) == 3, f"Error: Operation, {str(op)}, must be dim3"
-        self.op = op
-        obs_shape = self.observation_space.shape
-        self.observation_space = Box(
-            self.observation_space.low[0, 0, 0],
-            self.observation_space.high[0, 0, 0], [
-                obs_shape[self.op[0]], obs_shape[self.op[1]],
-                obs_shape[self.op[2]]
-            ],
-            dtype=self.observation_space.dtype)
-
-    def observation(self, ob):
-       return ob.transpose(self.op[0], self.op[1], self.op[2])
+        obs_image = Image.fromarray(observation)
+        obs_image = obs_image.resize((84, 84), Image.NEAREST)
+        return np.array(obs_image)

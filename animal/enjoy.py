@@ -1,18 +1,17 @@
 import argparse
 import os
 import sys
-sys.path.append('a2c_ppo_acktr')
-from a2c_ppo_acktr.model import Policy
+from ppo.model import Policy
 from collections import deque
 import gym
 import torch
-from a2c_ppo_acktr.envs import VecPyTorchFrameStack, TransposeImage, VecPyTorch
+from ppo.envs import VecPyTorchFrameStack, TransposeImage, VecPyTorch
 from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 import numpy as np
 from matplotlib import pyplot as plt
 
-from a2c_ppo_acktr.envs import VecPyTorch, make_vec_envs
+from ppo.envs import VecPyTorch, make_vec_envs
 from animal.animal import make_animal_env
 from animalai.envs.arena_config import ArenaConfig
 

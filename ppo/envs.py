@@ -138,7 +138,6 @@ class VecPyTorchFrameStack(VecEnvWrapper):
 
 
 
-
 class FrameSkipEnv(gym.Wrapper):
     def __init__(self, env, skip=4):
         """Return only every `skip`-th frame"""

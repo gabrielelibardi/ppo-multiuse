@@ -8,15 +8,9 @@ def get_args():
     parser.add_argument(
         '--lr', type=float, default=7e-4, help='learning rate (default: 7e-4)')
     parser.add_argument(
-        '--eps',
-        type=float,
-        default=1e-5,
-        help='RMSprop optimizer epsilon (default: 1e-5)')
+        '--eps',type=float,default=1e-5,help='RMSprop optimizer epsilon (default: 1e-5)')
     parser.add_argument(
-        '--alpha',
-        type=float,
-        default=0.99,
-        help='RMSprop optimizer apha (default: 0.99)')
+        '--alpha',type=float,default=0.99,help='RMSprop optimizer apha (default: 0.99)')
     parser.add_argument(
         '--gamma',
         type=float,
@@ -129,18 +123,13 @@ def get_args():
         default=None,
         help='Device to run on') 
     parser.add_argument(
-        '--frame-skip',
-        type=int,
-        default=0,
+        '--frame-skip',type=int,default=0,
         help='Number of frame to skip for each action')   
     parser.add_argument(
-        '--realtime',
-        action='store_true',
-        default=False,
+        '--realtime',action='store_true',default=False,
         help='If to plot in realtime. ')
     parser.add_argument(
-        '--arenas-dir',
-        default=None,
+        '--arenas-dir',default=None,
         help='directory where the yamls files for the environemnt are (default: None)')   
 
     args = parser.parse_args()
