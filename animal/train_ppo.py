@@ -41,9 +41,10 @@ def main():
     env_make = make_animal_env(log_dir = args.log_dir, allow_early_resets=False,
             inference_mode=args.realtime,  frame_skip=args.frame_skip , greyscale=False, 
             arenas_dir=args.arenas_dir, info_keywords=('arena',))
-
+    spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
+                   gym.spaces.Discrete(9) )
     envs = make_vec_envs(env_make, args.seed, args.num_processes,
-                         args.gamma, args.log_dir, device, False, args.frame_stack)
+                         args.gamma, args.log_dir, device, False, args.frame_stack, spaces)
 
     actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN,
                          base_kwargs={'recurrent': args.recurrent_policy})

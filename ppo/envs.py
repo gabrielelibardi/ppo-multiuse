@@ -11,10 +11,9 @@ from baselines.common.vec_env import VecEnvWrapper
 #from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 from ppo.subproc_vec_env import MySubprocVecEnv
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
-#from baselines.common.vec_env.shmem_vec_env import ShmemVecEnv
+from baselines.common.vec_env.shmem_vec_env import ShmemVecEnv
 from baselines.common.vec_env.vec_normalize import \
     VecNormalize as VecNormalize_
-
 
 def make_vec_envs(make,
                   seed,
@@ -23,15 +22,16 @@ def make_vec_envs(make,
                   log_dir,
                   device,
                   allow_early_resets,
-                  num_frame_stack):
+                  num_frame_stack,
+                  spaces=None):
 
 
     envs = [make(i)  for i in range(num_processes)    ]
 
     if len(envs) > 1:
         #envs = SubprocVecEnv(envs)
-        envs = MySubprocVecEnv(envs)
-        #envs = ShmemVecEnv(envs, context='fork')
+        #envs = MySubprocVecEnv(envs)
+        envs = ShmemVecEnv(envs,spaces=spaces, context='fork')
     else:
         envs = DummyVecEnv(envs)
 
