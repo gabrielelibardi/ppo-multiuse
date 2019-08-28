@@ -93,12 +93,8 @@ def get_args():
         help='number of environment steps to train (default: 10e6)')
     parser.add_argument(
         '--log-dir',
-        default='/tmp/gym/',
-        help='directory to save agent logs (default: /tmp/gym)')
-    parser.add_argument(
-        '--save-dir',
-        default='./trained_models/',
-        help='directory to save agent logs (default: ./trained_models/)')
+        default='/tmp/ppo/',
+        help='directory to save agent logs (default: /tmp/ppo)')
     parser.add_argument(
         '--use-proper-time-limits',
         action='store_true',
@@ -120,11 +116,14 @@ def get_args():
         help='directory that contains expert policies for high-level actions')
     parser.add_argument(
         '--device',
-        default=None,
+        default='cpu',
         help='Device to run on') 
     parser.add_argument(
         '--frame-skip',type=int,default=0,
-        help='Number of frame to skip for each action')   
+        help='Number of frame to skip for each action')
+    parser.add_argument(
+        '--frame-stack',type=int,default=4,
+        help='Number of frame to stack in observation')              
     parser.add_argument(
         '--realtime',action='store_true',default=False,
         help='If to plot in realtime. ')

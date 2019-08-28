@@ -23,7 +23,7 @@ def make_vec_envs(make,
                   log_dir,
                   device,
                   allow_early_resets,
-                  num_frame_stack=None):
+                  num_frame_stack):
 
 
     envs = [make(i)  for i in range(num_processes)    ]
@@ -37,7 +37,7 @@ def make_vec_envs(make,
 
     envs = VecPyTorch(envs, device)
 
-    if num_frame_stack is not None:
+    if num_frame_stack>0:
         envs = VecPyTorchFrameStack(envs, num_frame_stack, device)
 
     return envs

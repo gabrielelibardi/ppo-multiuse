@@ -12,15 +12,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-sys.path.append('../')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/..')
 
 from ppo import algo, utils
 from arguments import get_args
 from ppo.envs import make_vec_envs
 from ppo.model import Policy
+from ppo.model import CNNBase,FixupCNNBase
 from ppo.storage import RolloutStorage
 from ppo.algo.ppokl import ppo_rollout, ppo_update
 from animal import make_animal_env
+
+#some constants
+CNN=CNNBase
+#CNN=FixupCNNBase
 
 
 def main():
@@ -38,9 +43,9 @@ def main():
             arenas_dir=args.arenas_dir, info_keywords=('arena',))
 
     envs = make_vec_envs(env_make, args.seed, args.num_processes,
-                         args.gamma, args.log_dir, device, False)
+                         args.gamma, args.log_dir, device, False, args.frame_stack)
 
-    actor_critic = Policy(envs.observation_space.shape,envs.action_space,
+    actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN,
                          base_kwargs={'recurrent': args.recurrent_policy})
 
     if args.restart_model:
@@ -51,23 +56,14 @@ def main():
     if args.behavior: 
         actor_behaviors = []
         for a in args.behavior:
-            actor = Policy(envs.observation_space.shape, envs.action_space,
+            actor = Policy(envs.observation_space.shape, envs.action_space, base=CNN,
                             base_kwargs={'recurrent': args.recurrent_policy})
             actor.load_state_dict(torch.load(a,map_location=device))
             actor.to(device)
             actor_behaviors.append(actor) 
 
-    agent = algo.PPOKL(
-        actor_critic,
-        args.clip_param,
-        args.ppo_epoch,
-        args.num_mini_batch,
-        args.value_loss_coef,
-        args.entropy_coef,
-        lr=args.lr,
-        eps=args.eps,
-        max_grad_norm=args.max_grad_norm,
-        actor_behaviors=actor_behaviors)
+    agent = algo.PPOKL(actor_critic,args.clip_param,args.ppo_epoch, args.num_mini_batch,args.value_loss_coef,
+            args.entropy_coef,lr=args.lr,eps=args.eps,max_grad_norm=args.max_grad_norm,actor_behaviors=actor_behaviors)
 
 
     rollouts = RolloutStorage(args.num_steps, args.num_processes,
@@ -88,8 +84,8 @@ def main():
         value_loss, action_loss, dist_entropy, kl_div = ppo_update(agent, actor_critic, rollouts,
                                     args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits)
 
-        if (j % args.save_interval == 0 or j == num_updates - 1) and args.save_dir != "":
-            actor_critic.save(os.path.join(args.save_dir, "animal.state_dict"))
+        if (j % args.save_interval == 0 or j == num_updates - 1) and args.log_dir != "":
+            actor_critic.save(os.path.join(args.log_dir, "animal.state_dict"))
 
         if j % args.log_interval == 0:
             total_num_steps = (j + 1) * args.num_processes * args.num_steps

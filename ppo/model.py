@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import os
+import math
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -62,7 +63,7 @@ class Policy(nn.Module):
             action = dist.sample()
 
         action_log_probs = dist.log_probs(action)
-        dist_entropy = dist.entropy().mean() #Gianni, Why mean? it's a number it should be .item()
+        dist_entropy = dist.entropy().mean() 
 
         return value, action, action_log_probs, rnn_hxs, dist_entropy
         
@@ -79,13 +80,9 @@ class Policy(nn.Module):
 
         return value, action_log_probs, dist_entropy, rnn_hxs, dist
 
-    def save(self,save_path):
-        try:
-            os.makedirs(save_path)
-        except OSError:
-            pass
-        torch.save(self.state_dict(), save_path + ".tmp")
-        os.rename(save_path + '.tmp', save_path)
+    def save(self,fname):
+        torch.save(self.state_dict(), fname + ".tmp")
+        os.rename(fname + '.tmp', fname)
 
 
 
@@ -239,6 +236,27 @@ class MLPBase(NNBase):
         return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs
 
 
+class FixupCNNBase(NNBase):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=256, image_size=84):
+        super(FixupCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
+
+        self.main = FixupCNN(image_size,num_inputs,hidden_size)
+
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
+                               constant_(x, 0))
+
+        self.critic_linear = init_(nn.Linear(hidden_size, 1))
+
+        self.train()
+
+    def forward(self, inputs, rnn_hxs, masks):
+        x = self.main(inputs / 255.0)
+
+        if self.is_recurrent:
+            x, rnn_hxs = self._forward_gru(x, rnn_hxs, masks)
+
+        return self.critic_linear(x), x, rnn_hxs
+
 
 
 class FixupCNN(nn.Module):
@@ -247,7 +265,7 @@ class FixupCNN(nn.Module):
     See Fixup: https://arxiv.org/abs/1901.09321.
     """
 
-    def __init__(self, image_size, depth_in):
+    def __init__(self, image_size, depth_in, hidden_size):
         super().__init__()
         layers = []
         for depth_out in [32, 64, 64]:
@@ -263,10 +281,9 @@ class FixupCNN(nn.Module):
             FixupResidual(depth_in, 8),
         ])
         self.conv_layers = nn.Sequential(*layers)
-        self.linear = nn.Linear(math.ceil(image_size / 8) ** 2 * depth_in, 256)
+        self.linear = nn.Linear(math.ceil(image_size / 8) ** 2 * depth_in, hidden_size)
 
     def forward(self, x):
-        x = x.permute(0, 3, 1, 2).contiguous()
         x = self.conv_layers(x)
         x = F.relu(x)
         x = x.view(x.shape[0], -1)
