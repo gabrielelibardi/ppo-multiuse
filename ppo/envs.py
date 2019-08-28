@@ -30,8 +30,8 @@ def make_vec_envs(make,
 
     if len(envs) > 1:
         #envs = SubprocVecEnv(envs)
-        #envs = MySubprocVecEnv(envs)
-        envs = ShmemVecEnv(envs,spaces=spaces, context='fork')
+        envs = MySubprocVecEnv(envs)
+        #envs = ShmemVecEnv(envs,spaces=spaces, context='fork')
     else:
         envs = DummyVecEnv(envs)
 
