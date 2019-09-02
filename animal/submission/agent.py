@@ -1,74 +1,17 @@
+import sys
+sys.path.append('.')
 import torch
 from ppo.model import Policy
+from ppo.model import CNNBase,FixupCNNBase
+from ppo.envs import  VecPyTorch, VecPyTorchFrameStack, FrameSkipEnv, TransposeImage
 from animalai.envs.gym.environment import ActionFlattener
 from PIL import Image
 from ppo.envs import VecPyTorchFrameStack, TransposeImage, VecPyTorch
-from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 import numpy as np
 from gym.spaces import Box
 import gym
 
-
-class FrameSkipEnv(gym.Wrapper):
-    def __init__(self, env, skip=4):
-        """Return only every `skip`-th frame"""
-        gym.Wrapper.__init__(self, env)
-        # most recent raw observations (for max pooling across time steps)
-        self._obs_buffer = np.zeros((2,)+env.observation_space.shape, dtype=np.uint8)
-        self._skip       = skip
-
-    def step(self, action):
-        """Repeat action, sum reward, and max over last observations."""
-        total_reward = 0.0
-        done = None
-        for i in range(self._skip):
-            obs, reward, done, info = self.env.step(action)
-            if i == self._skip - 2: self._obs_buffer[0] = obs
-            if i == self._skip - 1: self._obs_buffer[1] = obs
-            total_reward += reward
-            if done:
-                break
-        # Note that the observation on the done=True frame
-        # doesn't matter
-        #max_frame = self._obs_buffer.max(axis=0)
-        last_frame = obs
-
-        return last_frame, total_reward, done, info
-
-    def reset(self, **kwargs):
-        return self.env.reset(**kwargs)
-
-
-class TransposeObs(gym.ObservationWrapper):
-    def __init__(self, env=None):
-        """
-        Transpose observation space (base class)
-        """
-        super(TransposeObs, self).__init__(env)
-
-
-class TransposeImage(TransposeObs):
-    def __init__(self, env=None, op=[2, 0, 1]):
-        """
-        Transpose observation space for images
-        """
-        super(TransposeImage, self).__init__(env)
-        assert len(op) == 3, f"Error: Operation, {str(op)}, must be dim3"
-        self.op = op
-        obs_shape = self.observation_space.shape
-        self.observation_space = Box(
-            self.observation_space.low[0, 0, 0],
-            self.observation_space.high[0, 0, 0], [
-                obs_shape[self.op[0]], obs_shape[self.op[1]],
-                obs_shape[self.op[2]]
-            ],
-            dtype=self.observation_space.dtype)
-
-    def observation(self, ob):
-       return ob.transpose(self.op[0], self.op[1], self.op[2])
-
-#CAREFULL. IT MUST BE THE SAME AS IN lab.py
 class RetroEnv(gym.Wrapper):
     def __init__(self,env):
         gym.Wrapper.__init__(self, env)
@@ -107,6 +50,7 @@ class RetroEnv(gym.Wrapper):
         obs_image = obs_image.resize((84, 84), Image.NEAREST)
         return np.array(obs_image)
 
+
 class FakeEnv(gym.Env):
     #def __init__(self):
     #    self.action_space = self._flattener.action_space
@@ -124,7 +68,12 @@ class FakeEnv(gym.Env):
     #def reset(self, **kwargs):
     #    return self.observation_space.low
 
-frame_skip = 0 
+frame_skip = 0
+#frame_stack = 4
+#CNN=CNNBase
+
+frame_stack = 2
+CNN=FixupCNNBase
 
 def make_env():
     env = FakeEnv()
@@ -143,11 +92,11 @@ class Agent(object):
         """
         envs = DummyVecEnv([make_env])
         envs = VecPyTorch(envs, device)
-        self.envs = VecPyTorchFrameStack(envs, 4, device)
+        self.envs = VecPyTorchFrameStack(envs, frame_stack, device)
         self.flattener = self.envs.unwrapped.envs[0].flattener
         # Load the configuration and model using *** ABSOLUTE PATHS ***
         self.model_path = '/aaio/data/animal.state_dict'
-        self.policy = Policy(self.envs.observation_space.shape,self.envs.action_space,base_kwargs={'recurrent': True})
+        self.policy = Policy(self.envs.observation_space.shape,self.envs.action_space,base=CNN,base_kwargs={'recurrent': True})
         self.policy.load_state_dict(torch.load(self.model_path,map_location=device))
         self.recurrent_hidden_states = torch.zeros(1, self.policy.recurrent_hidden_state_size).to(device)
         self.masks = torch.zeros(1, 1).to(device)  # set to zero

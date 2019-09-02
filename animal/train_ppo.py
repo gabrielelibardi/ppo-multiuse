@@ -24,8 +24,8 @@ from ppo.algo.ppokl import ppo_rollout, ppo_update
 from animal import make_animal_env
 
 #some constants
-CNN=CNNBase
-#CNN=FixupCNNBase
+#CNN=CNNBase
+CNN=FixupCNNBase
 
 
 def main():

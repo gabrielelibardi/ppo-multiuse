@@ -28,6 +28,11 @@ ENV PATH /opt/conda/envs/python36/bin:/opt/conda/envs/bin:$PATH
 
 COPY agent.py /aaio/agent.py
 COPY data /aaio/data
+RUN mkdir /aaio/ppo
+COPY ppo/distributions.py /aaio/ppo/
+COPY ppo/envs.py /aaio/ppo/
+COPY ppo/model.py /aaio/ppo/
+COPY ppo/utils.py /aaio/ppo/
 
 ENV HTTP_PROXY ""
 ENV HTTPS_PROXY ""
@@ -43,7 +48,7 @@ ENV https_proxy ""
 RUN apt-get install -y vim
 RUN pip install git+git://github.com/compsciencelab/baselines.git
 RUN pip install "git+git://github.com/compsciencelab/AnimalAI-Olympics.git#subdirectory=animalai"
-RUN pip install git+git://github.com/compsciencelab/pytorch-a2c-ppo-acktr-gail.git
+# RUN pip install git+git://github.com/compsciencelab/pytorch-a2c-ppo-acktr-gail.git
 RUN /opt/conda/bin/conda install -n python36 pytorch torchvision cudatoolkit=10.0 -c pytorch
 RUN /opt/conda/bin/conda clean -ya 
 
