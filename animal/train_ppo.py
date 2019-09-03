@@ -93,7 +93,7 @@ def main():
             s =  "Update {}, num timesteps {}, FPS {} \n".format(j, total_num_steps,int(total_num_steps / ( time.time() - start)))
             s += "Entropy {}, value_loss {}, action_loss {}, kl_divergence {}".format(dist_entropy, value_loss,action_loss,kl_div)
             print(s,flush=True)
-
+    
 
 def get_args():
     parser = argparse.ArgumentParser(description='RL')

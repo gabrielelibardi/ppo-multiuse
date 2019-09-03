@@ -64,13 +64,12 @@ class LabAnimal(gym.Wrapper):
             #assume is a pattern
             files = glob.glob(arenas_dir)
             
-        print(files)
+        #print(files)
         
         self.env_list = [(f,ArenaConfig(f)) for f in files]
         self._arena_file = ''
 
     def step(self, action):
-        action = int(action)
         obs, reward, done, info = self.env.step(action)
         if reward < -0.1 and done: #dead
             reward = -20
@@ -90,6 +89,7 @@ class RetroEnv(gym.Wrapper):
         self.observation_space = gym.spaces.Box(0, 255,dtype=np.uint8,shape=(84, 84, 3))
 
     def step(self, action): 
+        action = int(action)
         action = self.flattener.lookup_action(action) # convert to multi
         obs, reward, done, info = self.env.step(action)  #non-retro
         visual_obs, vector_obs = self._preprocess_obs(obs)
