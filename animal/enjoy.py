@@ -1,7 +1,9 @@
 import argparse
 import os
 import sys
-from ppo.model import Policy
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/..')
+
+from ppo.model import Policy, CNNBase, FixupCNNBase
 from collections import deque
 import gym
 import torch
@@ -12,7 +14,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from ppo.envs import VecPyTorch, make_vec_envs
-from animal.animal import make_animal_env
+from animal import make_animal_env
 from animalai.envs.arena_config import ArenaConfig
 
 
@@ -26,7 +28,7 @@ parser.add_argument(
     help='directory to save agent logs (default: )')
 parser.add_argument(
     '--device',
-    default='cuda:0',
+    default='cuda',
     help='Cuda device  or cpu (default:cuda:0 )')
 parser.add_argument(
     '--non-det',
@@ -52,7 +54,12 @@ parser.add_argument(
     '--frame-skip',
     type=int,
     default=0,
-    help='Number of frame to skip for each action')      
+    help='Number of frame to skip for each action')
+parser.add_argument(
+    '--frame-stack',
+    type=int,
+    default=4,
+    help='Number of frame to stack')        
 
 args = parser.parse_args()
 args.det = not args.non_det
@@ -61,13 +68,13 @@ device = torch.device(args.device)
 maker = make_animal_env(log_dir = None, allow_early_resets=False,  
             inference_mode=args.realtime, frame_skip=args.frame_skip , greyscale=False, arenas_dir=args.arenas_dir, info_keywords=())
 
-env = make_vec_envs(maker,0,1,None,None,device=device,allow_early_resets=False)
+env = make_vec_envs(maker,0,1,None,None,device=device,allow_early_resets=False,num_frame_stack=args.frame_stack)
 
 
 # Get a render function
 #render_func = get_render_func(env)
 
-actor_critic = Policy(env.observation_space.shape,env.action_space,base_kwargs={'recurrent': args.recurrent_policy})
+actor_critic = Policy(env.observation_space.shape,env.action_space, base=FixupCNNBase, base_kwargs={'recurrent': args.recurrent_policy})
 
 
 if args.load_model:
