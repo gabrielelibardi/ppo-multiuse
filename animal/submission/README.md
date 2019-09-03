@@ -23,6 +23,7 @@ Everything is in animal/submission/. Copy the new network which must be named ''
 Create new image for submission
 ```
   docker image rm -f submission
+  ./update.sh
   docker build --tag=submission .
 ```
 
