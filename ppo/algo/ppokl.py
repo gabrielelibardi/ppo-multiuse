@@ -145,7 +145,9 @@ def ppo_update(agent, actor_critic, rollouts, use_gae, gamma, gae_lambda, use_pr
     rollouts.after_update()
     return value_loss, action_loss, dist_entropy, kl_div
 
+
 def ppo_save_model(actor_critic, fname, iter):
-    torch.save(actor_critic.state_dict(), fname + ".tmp")
+    #avoid overwrite last model for safety
+    torch.save(actor_critic.state_dict(), fname + ".tmp")  
     os.rename(fname + '.tmp', fname)
     copy2(fname,fname+".{}".format(iter))

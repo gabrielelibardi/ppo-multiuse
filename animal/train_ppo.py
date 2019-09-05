@@ -20,7 +20,7 @@ from ppo.envs import make_vec_envs
 from ppo.model import Policy
 from ppo.model import CNNBase,FixupCNNBase
 from ppo.storage import RolloutStorage
-from ppo.algo.ppokl import ppo_rollout, ppo_update
+from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model
 from animal import make_animal_env
 
 #some constants
@@ -86,7 +86,7 @@ def main():
                                     args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits)
 
         if (j % args.save_interval == 0 or j == num_updates - 1) and args.log_dir != "":
-            actor_critic.save(os.path.join(args.log_dir, "animal.state_dict"))
+            ppo_save_model(actor_critic, os.path.join(args.log_dir, "animal.state_dict"), j)
 
         if j % args.log_interval == 0:
             total_num_steps = (j + 1) * args.num_processes * args.num_steps
