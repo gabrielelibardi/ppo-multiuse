@@ -119,3 +119,19 @@ class RetroEnv(gym.Wrapper):
         obs_image = Image.fromarray(observation)
         obs_image = obs_image.resize((84, 84), Image.NEAREST)
         return np.array(obs_image)
+
+
+class FilterActionEnv(gym.ActionWrapper):
+    """
+    An environment wrapper that limits the action space to
+    looking left/right, jumping, and moving forward.
+    """
+    _ACTIONS = (0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33)
+
+    def __init__(self, env):
+        super().__init__(env)
+        self.actions = self._ACTIONS
+        self.action_space = gym.spaces.Discrete(len(self.actions))
+
+    def action(self, act):
+        return self.actions[act]

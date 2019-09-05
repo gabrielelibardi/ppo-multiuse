@@ -1,8 +1,10 @@
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions.kl import kl_divergence
+from shutil import copy2
 
 
 class PPOKL():
@@ -142,3 +144,8 @@ def ppo_update(agent, actor_critic, rollouts, use_gae, gamma, gae_lambda, use_pr
     value_loss, action_loss, dist_entropy, kl_div = agent.update(rollouts)
     rollouts.after_update()
     return value_loss, action_loss, dist_entropy, kl_div
+
+def ppo_save_model(actor_critic, fname, iter):
+    torch.save(actor_critic.state_dict(), fname + ".tmp")
+    os.rename(fname + '.tmp', fname)
+    copy2(fname,fname+".{}".format(iter))
