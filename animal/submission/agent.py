@@ -20,6 +20,7 @@ class RetroEnv(gym.Wrapper):
         self.observation_space = gym.spaces.Box(0, 255,dtype=np.uint8,shape=(84, 84, 3))
 
     def step(self, action): 
+        action = int(action)
         action = self.flattener.lookup_action(action) # convert to multi
         obs, reward, done, info = self.env.step(action)  #non-retro
         visual_obs, vector_obs = self._preprocess_obs(obs)
