@@ -81,10 +81,6 @@ class Policy(nn.Module):
 
         return value, action_log_probs, dist_entropy, rnn_hxs, dist
 
-    def save(self,fname):
-        torch.save(self.state_dict(), fname + ".tmp")
-        os.rename(fname + '.tmp', fname)
-
 
 
 class NNBase(nn.Module):
