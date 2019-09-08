@@ -71,8 +71,8 @@ class LabAnimal(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        if reward < -0.1 and done: #dead
-            reward = -20
+        if reward < 0 and done: #dead for end of time or hit a killing obj
+            reward += -20
         info['arena']=self._arena_file
         return obs, reward, done, info 
 
