@@ -32,6 +32,7 @@ def make_animal_env(log_dir, allow_early_resets, inference_mode,
                                greyscale=greyscale, inference=inference_mode,resolution=None)
             env = RetroEnv(env)
             env = LabAnimal(env,arenas_dir)
+            env = RewardShaping(env)
 
             if frame_skip > 0: 
                 env = FrameSkipEnv(env, skip=frame_skip)
@@ -54,6 +55,19 @@ def make_animal_env(log_dir, allow_early_resets, inference_mode,
     return make_env
 
 
+def analyze_arena(arena):
+    tot_reward = 0
+    max_good = 0
+    for i in arena.arenas[0].items:
+        if 
+        if i.name in ['GoodGoal','GoodGoalBounce'] and i.size[0] > max_good:
+            max_good = i.size[0] if i.size[]
+        if i.name in ['GoodGoalMulti','GoodGoalMultiBounce']:
+            tot_reward += i.size[0]  
+
+    tot_reward += max_good
+    return tot_reward
+
 
 class LabAnimal(gym.Wrapper):
     def __init__(self, env, arenas_dir):
@@ -63,23 +77,37 @@ class LabAnimal(gym.Wrapper):
         else:
             #assume is a pattern
             files = glob.glob(arenas_dir)
-            
-        #print(files)
         
         self.env_list = [(f,ArenaConfig(f)) for f in files]
         self._arena_file = ''
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        if reward < 0 and done: #dead for end of time or hit a killing obj
-            reward += -20
-        info['arena']=self._arena_file
-        return obs, reward, done, info 
+        info['arena']=self._arena_file  #for monitor
+        info['max_reward']=self._max_reward
+        info['max_time']=self._max_time
+        return obs, reward, done, info        
 
     def reset(self, **kwargs):
         self._arena_file, arena = random.choice(self.env_list)
+        self._max_reward = analyze_arena(arena)
+        self._max_time = arena.arenas[0].t
         return self.env.reset(arenas_configurations=arena,**kwargs)
         
+class RewardShaping(gym.Wrapper):
+    def __init__(self, env):
+        gym.Wrapper.__init__(self, env)
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        if reward < 0 and done: #dead for end of time or hit a killing obj
+            reward += -2
+        if reward > 0 and done: #prize for finishing, unrespecting of ball size (evaluation is really yes/no for arena)
+            reward += 2
+        return obs, reward, done, info
+
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)
 
 class RetroEnv(gym.Wrapper):
     def __init__(self,env):
