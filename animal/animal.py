@@ -59,11 +59,14 @@ def analyze_arena(arena):
     tot_reward = 0
     max_good = 0
     for i in arena.arenas[0].items:
-        if 
-        if i.name in ['GoodGoal','GoodGoalBounce'] and i.size[0] > max_good:
-            max_good = i.size[0] if i.size[]
+        if i.name in ['GoodGoal','GoodGoalBounce']:
+            if len(i.sizes)==0: #arena max cannot be computed
+                return -1
+            max_good = max(i.sizes[0].x,max_good)
         if i.name in ['GoodGoalMulti','GoodGoalMultiBounce']:
-            tot_reward += i.size[0]  
+            if len(i.sizes)==0: #arena max cannot be computed
+                return -1
+            tot_reward += i.sizes[0].x  
 
     tot_reward += max_good
     return tot_reward
