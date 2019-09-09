@@ -34,6 +34,8 @@ def make_animal_env(log_dir, allow_early_resets, inference_mode,
             env = LabAnimal(env,arenas_dir)
             env = RewardShaping(env)
 
+            #env = FilterActionEnv(env)
+
             if frame_skip > 0: 
                 env = FrameSkipEnv(env, skip=frame_skip)
                 print("Frame skip: ", frame_skip, flush=True)
@@ -155,12 +157,14 @@ class RetroEnv(gym.Wrapper):
         return np.array(obs_image)
 
 
+
+#{0: [0, 0], 1: [0, 1], 2: [0, 2], 3: [1, 0], 4: [1, 1], 5: [1, 2], 6: [2, 0], 7: [2, 1], 8: [2, 2]}
 class FilterActionEnv(gym.ActionWrapper):
     """
     An environment wrapper that limits the action space to
     looking left/right, jumping, and moving forward.
     """
-    _ACTIONS = (0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33)
+    _ACTIONS = (0, 1, 2, 3, 4, 5, 6)
 
     def __init__(self, env):
         super().__init__(env)
