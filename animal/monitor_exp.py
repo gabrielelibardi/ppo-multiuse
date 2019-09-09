@@ -24,7 +24,6 @@ while True:
             df['perf']= df['r']/(2+df['max_reward'])#correct for reshaping, but I should really have the real ones in info
             df['perf'].where(df['perf']>0,0,inplace=True)
             df['goal'] = df['perf']>0.9  #guess a threadshold
-            print(df['goal'].iloc[0:100])
 
             roll = 5 
             total_time = df['t'].iloc[-1]
@@ -47,7 +46,7 @@ while True:
             ax = plt.subplot(2, 2, 3)
             df[['f','goal']].rolling(50*roll).mean().iloc[0:-1:40].plot('f','goal', ax=ax,legend=False)
             ax.set_xlabel('N. steps (M)')
-            ax.set_ylabel('Performance')
+            ax.set_ylabel('Goal')
             ax.grid(True)
              
             fig.tight_layout() 
