@@ -86,12 +86,15 @@ class LabAnimal(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
+        self._env_reward += reward
         info['arena']=self._arena_file  #for monitor
         info['max_reward']=self._max_reward
         info['max_time']=self._max_time
+        info['ereward'] = self._env_reward
         return obs, reward, done, info        
 
     def reset(self, **kwargs):
+        self._env_reward = 0
         self._arena_file, arena = random.choice(self.env_list)
         self._max_reward = analyze_arena(arena)
         self._max_time = arena.arenas[0].t
