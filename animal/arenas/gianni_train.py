@@ -59,15 +59,7 @@ np.random.seed(1)
 
 def binomial_learning(narenas):
     for a in range(narenas):
-        arena = ''
-
-        #Rewards
-        num_rewards = np.random.randint(0,10)
-        nums = np.random.binomial(num_rewards, [0.01,0.05,0.6,0.1,0.2,0.1] )
-        nums[0] += 1 #always add at least 1 good reward
-        for i,n in enumerate(nums):
-            for _ in range(n):
-                arena = add_object(arena,reward_objects[i],size=random_size_reward())        
+        arena = ''    
 
         #immovable
         num_immovable = np.random.randint(0,3)
@@ -89,8 +81,16 @@ def binomial_learning(narenas):
             for i,n in enumerate(nums):
                 for _ in range(n):
                     arena = add_object(arena,zone_objects[i],size=random_size_zone())
+
+        #Rewards
+        num_rewards = np.random.randint(0,10)
+        nums = np.random.binomial(num_rewards, [0.01,0.05,0.6,0.1,0.2,0.1] )
+        nums[0] += 1 #always add at least 1 good reward
+        for i,n in enumerate(nums):
+            for _ in range(n):
+                arena = add_object(arena,reward_objects[i],size=random_size_reward())    
             
-            write_arena(str(a),[random.choice(time_limits)], arena)
+        write_arena(str(a),[random.choice(time_limits)], arena)
 
 def cv_learning():
     #Learn green ball
