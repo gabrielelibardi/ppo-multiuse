@@ -31,10 +31,9 @@ def make_animal_env(log_dir, allow_early_resets, inference_mode,
                                seed = 0, n_arenas = 1, arenas_configurations=None, 
                                greyscale=greyscale, inference=inference_mode,resolution=None)
             env = RetroEnv(env)
+            #env = FilterActionEnv(env)
             env = LabAnimal(env,arenas_dir)
             env = RewardShaping(env)
-
-            #env = FilterActionEnv(env)
 
             if frame_skip > 0: 
                 env = FrameSkipEnv(env, skip=frame_skip)
@@ -161,8 +160,7 @@ class RetroEnv(gym.Wrapper):
 #{0: [0, 0], 1: [0, 1], 2: [0, 2], 3: [1, 0], 4: [1, 1], 5: [1, 2], 6: [2, 0], 7: [2, 1], 8: [2, 2]}
 class FilterActionEnv(gym.ActionWrapper):
     """
-    An environment wrapper that limits the action space to
-    looking left/right, jumping, and moving forward.
+    An environment wrapper that limits the action space.
     """
     _ACTIONS = (0, 1, 2, 3, 4, 5, 6)
 
@@ -172,4 +170,5 @@ class FilterActionEnv(gym.ActionWrapper):
         self.action_space = gym.spaces.Discrete(len(self.actions))
 
     def action(self, act):
-        return self.actions[act]
+        act[0] = self.actions[act[0]]  #ugly but I need to return numpy array for some reasons
+        return act
