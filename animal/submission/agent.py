@@ -64,8 +64,7 @@ class FilterActionEnv(gym.ActionWrapper):
         self.action_space = gym.spaces.Discrete(len(self.actions))
 
     def action(self, act):
-        act[0] = self.actions[act[0]]  #ugly but I need to return numpy array for some reasons
-        return act
+        return  self.actions[act]
 
 
 class FakeEnv(gym.Env):
