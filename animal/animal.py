@@ -17,8 +17,7 @@ from animalai.envs.gym.environment import ActionFlattener
 from ppo.envs import FrameSkipEnv,TransposeImage
 from PIL import Image
 
-def make_animal_env(log_dir, allow_early_resets, inference_mode, 
-                    frame_skip, greyscale, arenas_dir, info_keywords=()):
+def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions):
     base_port = random.randint(0,100)
     def make_env(rank):
         def _thunk():
@@ -29,9 +28,10 @@ def make_animal_env(log_dir, allow_early_resets, inference_mode,
             env = AnimalAIEnv(environment_filename = exe,
                                retro=False, worker_id=base_port+rank, docker_training=False, 
                                seed = 0, n_arenas = 1, arenas_configurations=None, 
-                               greyscale=greyscale, inference=inference_mode,resolution=None)
+                               greyscale=False, inference=inference_mode,resolution=None)
             env = RetroEnv(env)
-            #env = FilterActionEnv(env)
+            if reduced_actions:
+                env = FilterActionEnv(env)
             env = LabAnimal(env,arenas_dir)
             env = RewardShaping(env)
 
@@ -41,7 +41,7 @@ def make_animal_env(log_dir, allow_early_resets, inference_mode,
 
             if log_dir is not None:
                 env = bench.Monitor(env, os.path.join(log_dir, str(rank)),
-                                    allow_early_resets=allow_early_resets,
+                                    allow_early_resets=False,
                                     info_keywords=info_keywords)
 
             # If the input has shape (W,H,3), wrap for PyTorch convolutions
@@ -170,5 +170,4 @@ class FilterActionEnv(gym.ActionWrapper):
         self.action_space = gym.spaces.Discrete(len(self.actions))
 
     def action(self, act):
-        act[0] = self.actions[act[0]]  #ugly but I need to return numpy array for some reasons
-        return act
+        return self.actions[act]

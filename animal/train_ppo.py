@@ -38,9 +38,9 @@ def main():
 
     utils.cleanup_log_dir(args.log_dir)
 
-    env_make = make_animal_env(log_dir = args.log_dir, allow_early_resets=False,
-            inference_mode=args.realtime,  frame_skip=args.frame_skip , greyscale=False, 
-            arenas_dir=args.arenas_dir, info_keywords=('ereward','max_reward','max_time','arena'))
+    env_make = make_animal_env(log_dir = args.log_dir, inference_mode=args.realtime,  frame_skip=args.frame_skip , 
+            arenas_dir=args.arenas_dir, info_keywords=('ereward','max_reward','max_time','arena'), 
+            reduced_actions=args.reduced_actions)
     #spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
     #               gym.spaces.Discrete(9) )
     envs = make_vec_envs(env_make, args.seed, args.num_processes,
@@ -155,7 +155,8 @@ def get_args():
         '--realtime',action='store_true',default=False,help='If to plot in realtime. ')
     parser.add_argument(
         '--arenas-dir',default=None,help='directory where the yamls files for the environemnt are (default: None)')   
-
+    parser.add_argument(
+        '--reduced-actions',action='store_true',default=False,help='Use reduced actions set')
     args = parser.parse_args()
     args.log_dir = os.path.expanduser(args.log_dir)
     return args
