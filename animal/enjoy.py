@@ -23,50 +23,30 @@ parser = argparse.ArgumentParser(description='RL')
 parser.add_argument(
     '--arenas-dir', default='', help='yaml dir')
 parser.add_argument(
-    '--load-model',
-    default='',
-    help='directory to save agent logs (default: )')
+    '--load-model', default='', help='directory to save agent logs (default: )')
 parser.add_argument(
-    '--device',
-    default='cuda',
-    help='Cuda device  or cpu (default:cuda:0 )')
+    '--device', default='cuda', help='Cuda device  or cpu (default:cuda:0 )')
 parser.add_argument(
-    '--non-det',
-    action='store_true',
-    default=True,
-    help='whether to use a non-deterministic policy')
+    '--non-det', action='store_true', default=True, help='whether to use a non-deterministic policy')
 parser.add_argument(
-    '--recurrent-policy',
-    action='store_true',
-    default=False,
-    help='use a recurrent policy')
+    '--recurrent-policy', action='store_true', default=False, help='use a recurrent policy')
 parser.add_argument(
-    '--realtime',
-    action='store_true',
-    default=False,
-    help='If to plot in realtime. ') 
+    '--realtime', action='store_true', default=False, help='If to plot in realtime. ') 
 parser.add_argument(
-    '--silent',
-    action='store_true',
-    default=False,
-    help='stop plotting ') 
+    '--silent', action='store_true', default=False, help='stop plotting ') 
 parser.add_argument(
-    '--frame-skip',
-    type=int,
-    default=0,
-    help='Number of frame to skip for each action')
+    '--frame-skip', type=int, default=0, help='Number of frame to skip for each action')
 parser.add_argument(
-    '--frame-stack',
-    type=int,
-    default=4,
-    help='Number of frame to stack')        
+    '--frame-stack', type=int, default=4, help='Number of frame to stack')        
+parser.add_argument(
+    '--reduced-actions',action='store_true',default=False,help='Use reduced actions set')
 
 args = parser.parse_args()
 args.det = not args.non_det
 device = torch.device(args.device)
-#arena = ArenaConfig(args.arena)
-maker = make_animal_env(log_dir = None, allow_early_resets=False,  
-            inference_mode=args.realtime, frame_skip=args.frame_skip , greyscale=False, arenas_dir=args.arenas_dir, info_keywords=())
+
+maker = make_animal_env(log_dir = None, inference_mode=args.realtime, frame_skip=args.frame_skip,
+                        arenas_dir=args.arenas_dir, info_keywords=(),reduced_actions=args.reduced_actions)
 
 env = make_vec_envs(maker,0,1,None,None,device=device,allow_early_resets=False,num_frame_stack=args.frame_stack)
 
