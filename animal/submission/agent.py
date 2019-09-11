@@ -52,6 +52,22 @@ class RetroEnv(gym.Wrapper):
         return np.array(obs_image)
 
 
+class FilterActionEnv(gym.ActionWrapper):
+    """
+    An environment wrapper that limits the action space.
+    """
+    _ACTIONS = (0, 1, 2, 3, 4, 5, 6)
+
+    def __init__(self, env):
+        super().__init__(env)
+        self.actions = self._ACTIONS
+        self.action_space = gym.spaces.Discrete(len(self.actions))
+
+    def action(self, act):
+        act[0] = self.actions[act[0]]  #ugly but I need to return numpy array for some reasons
+        return act
+
+
 class FakeEnv(gym.Env):
     #def __init__(self):
     #    self.action_space = self._flattener.action_space
@@ -70,15 +86,15 @@ class FakeEnv(gym.Env):
     #    return self.observation_space.low
 
 frame_skip = 0
-#frame_stack = 4
-#CNN=CNNBase
-
 frame_stack = 2
 CNN=FixupCNNBase
+reduced_actions = True
 
 def make_env():
     env = FakeEnv()
     env = RetroEnv(env)
+    if reduced_actions:
+       env = FilterActionEnv(env)
     if frame_skip > 0:
         env = FrameSkipEnv(env, skip=frame_skip)
     env = TransposeImage(env, op=[2, 0, 1])
