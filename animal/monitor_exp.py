@@ -21,7 +21,7 @@ while True:
         try:
             df = load_results(d)
             df['f']= df['l'].cumsum()/1000000
-            df['perf']= df['r']/(2+df['max_reward'])#correct for reshaping, but I should really have the real ones in info
+            df['perf']= df['ereward']/(df['max_reward'])
             df['perf'].where(df['perf']>0,0,inplace=True)
             df['goal'] = df['perf']>0.9  #guess a threadshold
 
