@@ -42,7 +42,7 @@ def main():
 
     keywords = ('max_reward', 'max_time', 'arena', 'arena_type')
     env_make = make_animal_env(
-        log_dir = args.log_dir, inference_mode=args.realtime,
+        log_dir=args.log_dir, inference_mode=args.realtime,
         frame_skip=args.frame_skip , arenas_dir=args.arenas_dir,
         info_keywords=keywords + ('cl_stage',) if args.arenas_dir is None else keywords,
         reduced_actions=args.reduced_actions)
@@ -65,8 +65,7 @@ def main():
 
         # create test envs
         test_envs_make = [make_animal_env(
-            log_dir=args.log_dir, greyscale=False,
-            inference_mode=args.realtime, frame_skip=args.frame_skip,
+            log_dir=args.log_dir, inference_mode=args.realtime, frame_skip=args.frame_skip,
             arenas_dir=test_files, info_keywords=keywords + ('finished',),
             mode="test_{}".format(split_num)) for test_files, split_num in zip(
             split_test_files, range(num_test_arenas))]
@@ -74,7 +73,7 @@ def main():
             make=test_envs_make, seed=args.seed,
             num_processes=args.num_processes, gamma=None,
             log_dir=None, device=device_test,
-            allow_early_resets=False,
+            allow_early_resets=True,
             num_frame_stack=args.frame_stack)
 
     actor_critic = Policy(train_envs.observation_space.shape,train_envs.action_space,base=CNN,
