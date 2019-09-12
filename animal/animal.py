@@ -2,22 +2,27 @@ import os
 import sys
 import gym
 import glob
+import uuid
+import time
 from os.path import join
 import random
 import numpy as np
+from collections import deque
 from gym import error, spaces
 from baselines.bench import load_results
 from baselines import bench
 from gym.spaces.box import Box
 import animalai
 from animalai.envs.gym.environment import AnimalAIEnv
-import time
 from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import ActionFlattener
 from ppo.envs import FrameSkipEnv,TransposeImage
 from PIL import Image
+from cl_manager import CLManager
 
-def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions):
+
+def make_animal_env(log_dir, allow_early_resets, inference_mode, frame_skip,
+                    arenas_dir, info_keywords, reduced_actions, mode="train"):
     base_port = random.randint(0,100)
     def make_env(rank):
         def _thunk():
@@ -32,7 +37,12 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
             env = RetroEnv(env)
             if reduced_actions:
                 env = FilterActionEnv(env)
-            env = LabAnimal(env,arenas_dir)
+            if mode != "train":
+                env = LabAnimalTest(env, arenas_dir)
+            elif arenas_dir is None:
+                env = LabAnimalCL(env, CLManager())
+            else:
+                env = LabAnimal(env, arenas_dir)
             env = RewardShaping(env)
 
             if frame_skip > 0: 
@@ -40,9 +50,9 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
                 print("Frame skip: ", frame_skip, flush=True)
 
             if log_dir is not None:
-                env = bench.Monitor(env, os.path.join(log_dir, str(rank)),
-                                    allow_early_resets=False,
-                                    info_keywords=info_keywords)
+                env = bench.Monitor(
+                    env, os.path.join(log_dir, "{}_{}".format(mode, str(rank))),
+                    allow_early_resets=allow_early_resets, info_keywords=info_keywords)
 
             # If the input has shape (W,H,3), wrap for PyTorch convolutions
             obs_shape = env.observation_space.shape
@@ -91,7 +101,7 @@ class LabAnimal(gym.Wrapper):
         info['arena']=self._arena_file  #for monitor
         info['max_reward']=self._max_reward
         info['max_time']=self._max_time
-        info['ereward'] = self._env_reward
+        info['reward'] = self._env_reward
         return obs, reward, done, info        
 
     def reset(self, **kwargs):
@@ -115,6 +125,98 @@ class RewardShaping(gym.Wrapper):
 
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
+
+class LabAnimalCL(gym.Wrapper):
+    def __init__(self, env, cl_manager, reward_buffer_size=10):
+        gym.Wrapper.__init__(self, env)
+        self.recent_performances = deque(maxlen=reward_buffer_size)
+        self.manager = cl_manager
+        self._arena_file = ''
+        self._max_reward = None
+        self._type = None
+        self._max_time = None
+        self._cl_stage = 1
+        self._function_lvl = 1
+        self._episode_reward = 0.0
+
+    def step(self, action):
+        action = int(action)
+        obs, reward, done, info = self.env.step(action)
+
+        self._episode_reward += reward
+        info['arena'] = self._arena_file
+        info['max_reward'] = self._max_reward
+        info['max_time'] = self._max_time
+        info['arena_type'] = self._type
+        info['cl_stage'] = self._cl_stage
+
+        return obs, reward, done, info
+
+    def reset(self, **kwargs):
+
+        # Add performance to reward queue and update cl arenas pool
+        if self._max_reward and self.function_lvl == self._cl_stage:
+            self.recent_performances.append(max(0, self._episode_reward) / self._max_reward)
+            stage = self.manager.update_pool(performance=np.mean(self.recent_performances))
+            if stage > self._cl_stage:
+                self.recent_performances.clear()
+            self._cl_stage = stage
+
+        # Create new arena
+        name = str(uuid.uuid4())
+        arena_func, params, function_lvl = self.manager.sample_arena_from_current_pool()
+        arena_type = arena_func("/tmp/", name, **params)
+        self._arena_file, arena = ("/tmo/{}.yaml".format(name), ArenaConfig(
+            "/tmp/{}.yaml".format(name)))
+        os.remove("/tmp/{}.yaml".format(name))
+
+        self._max_reward = analyze_arena(arena)
+        self._max_time = arena.arenas[0].t
+        self._type = arena_type
+        self.function_lvl = function_lvl
+        self._episode_reward = 0.0
+
+        return self.env.reset(arenas_configurations=arena, **kwargs)
+
+
+class LabAnimalTest(gym.Wrapper):
+    def __init__(self, env, arenas):
+        gym.Wrapper.__init__(self, env)
+        self.env_list = [(f, ArenaConfig(f)) for f in arenas]
+        self._arena_file = ''
+        self._max_reward = None
+        self._max_time = None
+        self._type = None
+        self.next_arena = 0
+
+    def get_num_arenas(self):
+        return len(self.env_list)
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        info['arena'] = self._arena_file  # for monitor
+        info['max_reward'] = self._max_reward
+        info['max_time'] = self._max_time
+        info['arena_type'] = self._type
+        info['finished'] = done
+        return obs, reward, done, info
+
+    def reset(self, **kwargs):
+
+        self._arena_file, arena = self.env_list[self.next_arena]
+        self._max_reward = analyze_arena(arena)
+        self._max_time = arena.arenas[0].t
+        self._type = self._arena_file.split("/")[-1][0:2]
+
+        assert self._type in ["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10"], \
+            "detected incorrect arena type."
+
+        self.next_arena += 1
+        if self.next_arena == self.get_num_arenas():
+            self.next_arena = 0
+
+        return self.env.reset(arenas_configurations=arena, **kwargs)
+
 
 class RetroEnv(gym.Wrapper):
     def __init__(self,env):

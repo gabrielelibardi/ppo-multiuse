@@ -22,6 +22,8 @@ from ppo.model import CNNBase,FixupCNNBase
 from ppo.storage import RolloutStorage
 from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model
 from animal import make_animal_env
+from test_performance import test_performance
+from utils import chunks
 
 #some constants
 #CNN=CNNBase
@@ -38,15 +40,42 @@ def main():
 
     utils.cleanup_log_dir(args.log_dir)
 
+    keywords = ('max_reward', 'max_time', 'arena', 'arena_type')
     env_make = make_animal_env(log_dir = args.log_dir, inference_mode=args.realtime,  frame_skip=args.frame_skip , 
-            arenas_dir=args.arenas_dir, info_keywords=('ereward','max_reward','max_time','arena'), 
+            arenas_dir=args.arenas_dir, info_keywords=keywords + ('cl_stage',) if args.arenas_dir is None else keywords,
             reduced_actions=args.reduced_actions)
     #spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
     #               gym.spaces.Discrete(9) )
-    envs = make_vec_envs(env_make, args.seed, args.num_processes,
+    train_envs = make_vec_envs(env_make, args.seed, args.num_processes,
                          args.gamma, args.log_dir, device, False, args.frame_stack)
 
-    actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN,
+    if args.arenas_test:
+
+        # get test arenas
+        device_test = torch.device(args.device_test)
+        test_arenas = glob.glob("{}/*.yaml".format(args.arenas_test))
+        num_test_arenas = len(test_arenas)
+
+        # split test arenas
+        split_test_files = list(chunks(
+            test_arenas,
+            np.ceil(num_test_arenas / args.num_processes).astype('int')))
+
+        # create test envs
+        test_envs_make = [make_animal_env(
+            log_dir=args.log_dir, allow_early_resets=True, greyscale=False,
+            inference_mode=args.realtime, frame_skip=args.frame_skip,
+            arenas_dir=test_files, info_keywords=keywords + ('finished',),
+            mode="test_{}".format(split_num)) for test_files, split_num in zip(
+            split_test_files, range(num_test_arenas))]
+        test_envs = make_vec_envs(
+            make=test_envs_make, seed=args.seed,
+            num_processes=args.num_processes, gamma=None,
+            log_dir=None, device=device_test,
+            allow_early_resets=False,
+            num_frame_stack=args.frame_stack)
+
+    actor_critic = Policy(train_envs.observation_space.shape,train_envs.action_space,base=CNN,
                          base_kwargs={'recurrent': args.recurrent_policy})
 
     if args.restart_model:
@@ -57,7 +86,7 @@ def main():
     if args.behavior: 
         actor_behaviors = []
         for a in args.behavior:
-            actor = Policy(envs.observation_space.shape, envs.action_space, base=CNN,
+            actor = Policy(train_envs.observation_space.shape, envs.action_space, base=CNN,
                             base_kwargs={'recurrent': args.recurrent_policy})
             actor.load_state_dict(torch.load(a,map_location=device))
             actor.to(device)
@@ -68,10 +97,10 @@ def main():
 
 
     rollouts = RolloutStorage(args.num_steps, args.num_processes,
-                              envs.observation_space.shape, envs.action_space,
+                              train_envs.observation_space.shape, train_envs.action_space,
                               actor_critic.recurrent_hidden_state_size)
 
-    obs = envs.reset()
+    obs = train_envs.reset()
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)  #they live in GPU, converted to torch from the env wrapper
 
@@ -80,7 +109,7 @@ def main():
 
     for j in range(num_updates):
 
-        ppo_rollout(args.num_steps, envs, actor_critic, rollouts)
+        ppo_rollout(args.num_steps, train_envs, actor_critic, rollouts)
 
         value_loss, action_loss, dist_entropy, kl_div = ppo_update(agent, actor_critic, rollouts,
                                     args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits)
@@ -93,6 +122,11 @@ def main():
             s =  "Update {}, num timesteps {}, FPS {} \n".format(j, total_num_steps,int(total_num_steps / ( time.time() - start)))
             s += "Entropy {}, value_loss {}, action_loss {}, kl_divergence {}".format(dist_entropy, value_loss,action_loss,kl_div)
             print(s,flush=True)
+
+        if j % args.log_interval == 0 and args.arenas_test:
+            actor_critic.to(device_test)
+            test_performance(test_envs, actor_critic, device_test, num_test_arenas, args.num_processes)
+            actor_critic.to(device)
     
 
 def get_args():
@@ -157,6 +191,11 @@ def get_args():
         '--arenas-dir',default=None,help='directory where the yamls files for the environemnt are (default: None)')   
     parser.add_argument(
         '--reduced-actions',action='store_true',default=False,help='Use reduced actions set')
+    parser.add_argument(
+        '--arenas-test', default=None,help='directory where the test yamls files are (default: None)')
+    parser.add_argument(
+        '--device-test', default='cpu',help='Device to run test on')
+
     args = parser.parse_args()
     args.log_dir = os.path.expanduser(args.log_dir)
     return args
