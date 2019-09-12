@@ -134,7 +134,7 @@ class Agent(object):
         :return:            a list of actions to execute (of size 2)
         """
         self.envs.unwrapped.envs[0].unwrapped.set_step(obs,reward,done,info) #set obs,etc in fakenv
-        obs, reward, done, info = self.envs.step( torch.Tensor([0]) ) #apply transformations
+        obs, reward, done, info = self.envs.step( torch.Tensor([[0]]) ) #apply transformations
         value, action, action_log_prob, self.recurrent_hidden_states, dist_entropy = self.policy.act(
             obs, self.recurrent_hidden_states, self.masks, deterministic=False)
         self.masks.fill_(1.0)
