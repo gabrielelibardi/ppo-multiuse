@@ -2,7 +2,7 @@
 """ Create sets C1 to C10 of test arenas with known max reward for testing. """
 
 import numpy as np
-from .edit_arena import add_object, write_arena
+from .edit_arenas import add_object, write_arena
 from .sample_features import random_size_rewards
 
 objects_dict = {
