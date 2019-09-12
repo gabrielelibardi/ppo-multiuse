@@ -8,7 +8,7 @@ class CLManager:
     A class to manage which arenas are generated for curriculum learning.
     """
 
-    def __init__(self, threshold=0.75):
+    def __init__(self, threshold=0.8):
         """
         Initialize a Manager.
         """

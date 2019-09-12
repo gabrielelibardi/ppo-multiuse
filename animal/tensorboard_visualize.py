@@ -57,8 +57,9 @@ class Visualizer():
                 logs_dir, file.split("/")[-1]))
 
         target_dir = "{}/tensorboard_files".format(logs_dir)
-        if not os.path.isdir(target_dir):
-            os.mkdir(target_dir)
+        if os.path.isdir(target_dir):
+            shutil.rmtree(target_dir)
+        os.mkdir(target_dir)
 
         df = load_results("{}/logs_train/".format(logs_dir))
         df['l'] -= 1
@@ -124,7 +125,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--logs-dir", help="experiment logs path")
-    parser.add_argument("-i", "--logs-interval", default=1, help="log interval during experiments")
+    parser.add_argument("-i", "--logs-interval", default=10, help="log interval during experiments")
     parser.add_argument("-n", "--num-steps", default=1000, help="train num steps before update")
     parser.add_argument(
         "-p", "--port", help="port to connect tensorboard to", type=int)
@@ -147,7 +148,7 @@ if __name__ == "__main__":
     visualizer = Visualizer(
         logs_dir=arguments.logs_dir,
         num_steps=arguments.num_steps,
-        log_interval=arguments.logs_interval)
+        log_interval=int(arguments.logs_interval))
     time.sleep(5)
 
 
