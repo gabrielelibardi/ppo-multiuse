@@ -25,8 +25,10 @@ def make_vec_envs(make,
                   num_frame_stack,
                   spaces=None):
 
-
-    envs = [make(i)  for i in range(num_processes)    ]
+    if isinstance(make, list):
+        envs = [func(i) for func, i in zip(make, range(num_processes))]
+    else:
+        envs = [make(i)  for i in range(num_processes)]
 
     if len(envs) > 1:
         #envs = SubprocVecEnv(envs)
