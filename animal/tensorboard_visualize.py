@@ -39,7 +39,7 @@ class Visualizer():
     A class to visualize information gathered by logger.
     """
 
-    def __init__(self, logs_dir, num_steps=1000, log_interval=1):
+    def __init__(self, logs_dir, num_steps=1000, log_interval=10):
         """
         Initialize a Visualizer.
         """
@@ -123,13 +123,13 @@ if __name__ == "__main__":
     import subprocess
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-e", "--logs_dir", help="experiment logs path")
+    parser.add_argument("-d", "--logs-dir", help="experiment logs path")
+    parser.add_argument("-i", "--logs-interval", default=1, help="log interval during experiments")
+    parser.add_argument("-n", "--num-steps", default=1000, help="train num steps before update")
     parser.add_argument(
         "-p", "--port", help="port to connect tensorboard to", type=int)
 
     arguments = parser.parse_args()
-
-    arguments.logs_dir = "/home/abou/logs_albert"
 
     if arguments.logs_dir:
         if not os.path.isdir(arguments.logs_dir):
@@ -144,7 +144,10 @@ if __name__ == "__main__":
     else:
         port_num = 8888
 
-    visualizer = Visualizer(logs_dir=arguments.logs_dir)
+    visualizer = Visualizer(
+        logs_dir=arguments.logs_dir,
+        num_steps=arguments.num_steps,
+        log_interval=arguments.logs_interval)
     time.sleep(5)
 
 

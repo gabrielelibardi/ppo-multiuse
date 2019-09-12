@@ -50,7 +50,7 @@ def make_animal_env(log_dir, inference_mode, frame_skip,
                 print("Frame skip: ", frame_skip, flush=True)
 
             if log_dir is not None:
-                env = bench.Monitor(env, os.path.join(log_dir, str(rank)),
+                env = bench.Monitor(env, os.path.join(log_dir, "{}_{}".format(mode, str(rank))),
                                     allow_early_resets=False if mode=="train" else True,
                                     info_keywords=info_keywords)
 
