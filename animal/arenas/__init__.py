@@ -18,10 +18,13 @@ cl_tasks = {
     "parameters": {
         1: {"max_reward": 5, "time": 250, "max_num_good_goals": 1},
         2: {"max_reward": 10, "time": 250, "max_num_good_goals": 1},
-        3: {"max_reward": 15, "time": 250, "max_num_good_goals": 2},
+        3: {"max_reward": 15, "time": 250, "max_num_good_goals": 1},
         4: {"max_reward": 5, "time": 250, "max_num_good_goals": 2},
         5: {"max_reward": 10, "time": 250, "max_num_good_goals": 2},
         6: {"max_reward": 15, "time": 250, "max_num_good_goals": 2},
-        7: {"max_reward": 30, "time": 250, "max_num_good_goals": 5},
+        7: {"max_reward": 20, "time": 250, "max_num_good_goals": 3},
+        8: {"max_reward": 20, "time": 250, "max_num_good_goals": 3},
+        9: {"max_reward": 25, "time": 250, "max_num_good_goals": 4},
+        10: {"max_reward": 30, "time": 250, "max_num_good_goals": 5},
     }
 }
