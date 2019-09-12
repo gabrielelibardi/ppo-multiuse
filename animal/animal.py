@@ -18,7 +18,6 @@ from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import ActionFlattener
 from ppo.envs import FrameSkipEnv,TransposeImage
 from PIL import Image
-from cl_manager import CLManager
 
 
 def make_animal_env(log_dir, inference_mode, frame_skip,
@@ -39,8 +38,6 @@ def make_animal_env(log_dir, inference_mode, frame_skip,
                 env = FilterActionEnv(env)
             if mode != "train":
                 env = LabAnimalTest(env, arenas_dir)
-            elif arenas_dir is None:
-                env = LabAnimalCL(env, CLManager())
             else:
                 env = LabAnimal(env, arenas_dir)
             env = RewardShaping(env)
@@ -125,59 +122,6 @@ class RewardShaping(gym.Wrapper):
 
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
-
-class LabAnimalCL(gym.Wrapper):
-    def __init__(self, env, cl_manager, reward_buffer_size=10):
-        gym.Wrapper.__init__(self, env)
-        self.recent_performances = deque(maxlen=reward_buffer_size)
-        self.manager = cl_manager
-        self._arena_file = ''
-        self._max_reward = None
-        self._type = None
-        self._max_time = None
-        self._cl_stage = 1
-        self._function_lvl = 1
-        self._episode_reward = 0.0
-
-    def step(self, action):
-        action = int(action)
-        obs, reward, done, info = self.env.step(action)
-
-        self._episode_reward += reward
-        info['arena'] = self._arena_file
-        info['max_reward'] = self._max_reward
-        info['max_time'] = self._max_time
-        info['arena_type'] = self._type
-        info['cl_stage'] = self._cl_stage
-
-        return obs, reward, done, info
-
-    def reset(self, **kwargs):
-
-        # Add performance to reward queue and update cl arenas pool
-        if self._max_reward and self.function_lvl == self._cl_stage:
-            self.recent_performances.append(max(0, self._episode_reward) / self._max_reward)
-            stage = self.manager.update_pool(performance=np.mean(self.recent_performances))
-            if stage > self._cl_stage:
-                self.recent_performances.clear()
-            self._cl_stage = stage
-
-        # Create new arena
-        name = str(uuid.uuid4())
-        arena_func, params, function_lvl = self.manager.sample_arena_from_current_pool()
-        arena_type = arena_func("/tmp/", name, **params)
-        self._arena_file, arena = ("/tmo/{}.yaml".format(name), ArenaConfig(
-            "/tmp/{}.yaml".format(name)))
-        os.remove("/tmp/{}.yaml".format(name))
-
-        self._max_reward = analyze_arena(arena)
-        self._max_time = arena.arenas[0].t
-        self._type = arena_type
-        self.function_lvl = function_lvl
-        self._episode_reward = 0.0
-
-        return self.env.reset(arenas_configurations=arena, **kwargs)
-
 
 class LabAnimalTest(gym.Wrapper):
     def __init__(self, env, arenas):

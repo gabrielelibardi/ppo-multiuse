@@ -44,7 +44,7 @@ def main():
     env_make = make_animal_env(
         log_dir=args.log_dir, inference_mode=args.realtime,
         frame_skip=args.frame_skip , arenas_dir=args.arenas_dir,
-        info_keywords=keywords + ('cl_stage',) if args.arenas_dir is None else keywords,
+        info_keywords=keywords,
         reduced_actions=args.reduced_actions)
     #spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
     #               gym.spaces.Discrete(9) )
