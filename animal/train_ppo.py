@@ -41,9 +41,11 @@ def main():
     utils.cleanup_log_dir(args.log_dir)
 
     keywords = ('max_reward', 'max_time', 'arena', 'arena_type')
-    env_make = make_animal_env(log_dir = args.log_dir, inference_mode=args.realtime,  frame_skip=args.frame_skip , 
-            arenas_dir=args.arenas_dir, info_keywords=keywords + ('cl_stage',) if args.arenas_dir is None else keywords,
-            reduced_actions=args.reduced_actions)
+    env_make = make_animal_env(
+        log_dir = args.log_dir, inference_mode=args.realtime,
+        frame_skip=args.frame_skip , arenas_dir=args.arenas_dir,
+        info_keywords=keywords + ('cl_stage',) if args.arenas_dir is None else keywords,
+        reduced_actions=args.reduced_actions)
     #spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
     #               gym.spaces.Discrete(9) )
     train_envs = make_vec_envs(env_make, args.seed, args.num_processes,
@@ -63,7 +65,7 @@ def main():
 
         # create test envs
         test_envs_make = [make_animal_env(
-            log_dir=args.log_dir, allow_early_resets=True, greyscale=False,
+            log_dir=args.log_dir, greyscale=False,
             inference_mode=args.realtime, frame_skip=args.frame_skip,
             arenas_dir=test_files, info_keywords=keywords + ('finished',),
             mode="test_{}".format(split_num)) for test_files, split_num in zip(

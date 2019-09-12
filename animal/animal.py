@@ -21,7 +21,7 @@ from PIL import Image
 from cl_manager import CLManager
 
 
-def make_animal_env(log_dir, allow_early_resets, inference_mode, frame_skip,
+def make_animal_env(log_dir, inference_mode, frame_skip,
                     arenas_dir, info_keywords, reduced_actions, mode="train"):
     base_port = random.randint(0,100)
     def make_env(rank):
@@ -50,9 +50,9 @@ def make_animal_env(log_dir, allow_early_resets, inference_mode, frame_skip,
                 print("Frame skip: ", frame_skip, flush=True)
 
             if log_dir is not None:
-                env = bench.Monitor(
-                    env, os.path.join(log_dir, "{}_{}".format(mode, str(rank))),
-                    allow_early_resets=allow_early_resets, info_keywords=info_keywords)
+                env = bench.Monitor(env, os.path.join(log_dir, str(rank)),
+                                    allow_early_resets=False if mode=="train" else True,
+                                    info_keywords=info_keywords)
 
             # If the input has shape (W,H,3), wrap for PyTorch convolutions
             obs_shape = env.observation_space.shape
