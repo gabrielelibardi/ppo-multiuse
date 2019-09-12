@@ -67,8 +67,8 @@ def main():
         test_envs_make = [make_animal_env(
             log_dir=args.log_dir, inference_mode=args.realtime, frame_skip=args.frame_skip,
             arenas_dir=test_files, info_keywords=keywords + ('finished',),
-            mode="test_{}".format(split_num)) for test_files, split_num in zip(
-            split_test_files, range(num_test_arenas))]
+            mode="test_{}".format(split_num),reduced_actions=args.reduced_actions)
+                          for test_files, split_num in zip(split_test_files, range(num_test_arenas))]
         test_envs = make_vec_envs(
             make=test_envs_make, seed=args.seed,
             num_processes=args.num_processes, gamma=None,
