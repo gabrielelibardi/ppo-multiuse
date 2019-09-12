@@ -18,9 +18,10 @@ def random_pos():
     return (random.randint(1, 400) / 10., 0. / 10., random.randint(1, 400) / 10.)
 
 
-def random_size_rewards():
-    """ y and z axis are ignored by environment.  """
-    return (random.randint(5, 50) / 10., 0., 0.)
+def random_size_reward():
+    #according to docs it's 0.5-5
+    s = random.randint(5, 50)/10
+    return (s,s,s)
 
 
 def sample_position_with_respect_to(reference_position, range="far"):

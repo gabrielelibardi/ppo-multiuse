@@ -107,12 +107,16 @@ class Visualizer():
 
         test_avg = df.groupby('update').mean()
 
+        import ipdb; ipdb.set_trace()
+
         test_writers = SummaryWriter("{}/test".format(target_dir), flush_secs=5)
         for index, row in test_avg.iterrows():
             test_writers.add_scalar(
                 "test/performance", row['perf'], global_step=log_interval * index)
             test_writers.add_scalar(
                 "test/goal", row['goal'], global_step=log_interval * index)
+
+
 
 
 if __name__ == "__main__":
@@ -131,7 +135,7 @@ if __name__ == "__main__":
         "-p", "--port", help="port to connect tensorboard to", type=int)
 
     arguments = parser.parse_args()
-
+    arguments.logs_dir = "/home/abou/logs_albert"
     if arguments.logs_dir:
         if not os.path.isdir(arguments.logs_dir):
             print(colorize(
