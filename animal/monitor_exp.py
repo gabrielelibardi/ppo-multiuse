@@ -12,7 +12,7 @@ from baselines.bench import load_results
 from matplotlib import pylab as plt
 import numpy as np
 
-exps = glob('RUNS/exp_2*')
+exps = glob('RUNS/exp_3*')
 print(exps)
 
 while True:
@@ -25,35 +25,35 @@ while True:
             df['perf'].where(df['perf']>0,0,inplace=True)
             df['goal'] = df['perf']>0.9  #guess a threadshold
 
-            roll = 5 
+            roll = 500 
             total_time = df['t'].iloc[-1]
             total_steps = df['l'].sum()
             total_episodes = df['r'].size
-            
+             
             ax = plt.subplot(2, 2, 1)
             ax.set_title(' {} total time: {:.1f} h FPS {:.1f}'.format(d.upper(),total_time/3600, total_steps/total_time))
-            df[['f','r']].rolling(50*roll).mean().iloc[0:-1:40].plot('f','r',  ax=ax,legend=False)
+            df[['f','r']].rolling(roll).mean().iloc[0:-1:40].plot('f','r',  ax=ax,legend=False)
             ax.set_xlabel('N. steps (M)')
             ax.set_ylabel('Reward')
             ax.grid(True)
     
             ax = plt.subplot(2, 2, 2)
-            df[['f','perf']].rolling(50*roll).mean().iloc[0:-1:40].plot('f','perf', ax=ax,legend=False)
+            df[['f','perf']].rolling(roll).mean().iloc[0:-1:40].plot('f','perf', ax=ax,legend=False)
             ax.set_xlabel('N. steps (M)')
             ax.set_ylabel('Performance')
             ax.grid(True)
 
             ax = plt.subplot(2, 2, 3)
-            df[['f','goal']].rolling(50*roll).mean().iloc[0:-1:40].plot('f','goal', ax=ax,legend=False)
+            df[['f','goal']].rolling(roll).mean().iloc[0:-1:40].plot('f','goal', ax=ax,legend=False)
             ax.set_xlabel('N. steps (M)')
-            ax.set_ylabel('Goal')
+            ax.set_ylabel('Estimated evalai score')
             ax.grid(True)
              
             fig.tight_layout() 
             ax.get_figure().savefig('/webdata/'+d+'.jpg')
-        except:
-            print('Failed at ',d,flush=True)
-        
+            plt.clf()
+        except Exception as e: 
+            print(e) 
     sleep(360)
 
 
