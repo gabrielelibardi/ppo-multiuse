@@ -110,9 +110,10 @@ class RewardShaping(gym.Wrapper):
         if reward < 0 and done: #dead for end of time or hit a killing obj
             reward += -2
         if reward > 0 and done: #prize for finishing well
-            ratio = self.env_reward/self.max_reward
-            ratio = ratio if ratio < 1 else 0.99  #avoid division by zero  
-            reward += max(0.5/(1-ratio),5)
+            reward += 2
+            #ratio = self.env_reward/self.max_reward
+            #ratio = ratio if ratio < 1 else 0.99  #avoid division by zero  
+            #reward += min(0.5/(1-ratio),5)  
         return obs, reward, done, info
 
     def reset(self, **kwargs):
