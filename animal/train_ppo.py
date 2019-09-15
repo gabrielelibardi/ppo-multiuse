@@ -18,15 +18,12 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/..')
 from ppo import algo, utils
 from ppo.envs import make_vec_envs
 from ppo.model import Policy
-from ppo.model import CNNBase,FixupCNNBase
+from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase
 from ppo.storage import RolloutStorage
 from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model
 from animal import make_animal_env
 
-#some constants
-#CNN=CNNBase
-CNN=FixupCNNBase
-
+CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase}
 
 def main():
     args = get_args()
@@ -46,7 +43,7 @@ def main():
     envs = make_vec_envs(env_make, args.seed, args.num_processes,
                          args.gamma, args.log_dir, device, False, args.frame_stack)
 
-    actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN,
+    actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN[args.cnn],
                          base_kwargs={'recurrent': args.recurrent_policy})
 
     if args.restart_model:
@@ -57,7 +54,7 @@ def main():
     if args.behavior: 
         actor_behaviors = []
         for a in args.behavior:
-            actor = Policy(envs.observation_space.shape, envs.action_space, base=CNN,
+            actor = Policy(envs.observation_space.shape, envs.action_space, base=CNN[args.cnn],
                             base_kwargs={'recurrent': args.recurrent_policy})
             actor.load_state_dict(torch.load(a,map_location=device))
             actor.to(device)
@@ -153,6 +150,8 @@ def get_args():
         '--frame-stack',type=int,default=4,help='Number of frame to stack in observation')              
     parser.add_argument(
         '--realtime',action='store_true',default=False,help='If to plot in realtime. ')
+    parser.add_argument(
+        '--cnn',default='Fixup',help='Type of cnn. Options are CNN,Impala,Fixup') 
     parser.add_argument(
         '--arenas-dir',default=None,help='directory where the yamls files for the environemnt are (default: None)')   
     parser.add_argument(
