@@ -25,10 +25,8 @@ def make_vec_envs(make,
                   num_frame_stack,
                   spaces=None):
 
-    if isinstance(make, list): # each test env evaluates an independednt subset of arenas
-        envs = [func(i) for func, i in zip(make, range(num_processes))]
-    else:
-        envs = [make(i)  for i in range(num_processes)]
+
+    envs = [make(i)  for i in range(num_processes)    ]
 
     if len(envs) > 1:
         envs = SubprocVecEnv(envs)

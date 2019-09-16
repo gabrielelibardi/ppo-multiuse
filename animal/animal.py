@@ -2,27 +2,23 @@ import os
 import sys
 import gym
 import glob
-import uuid
-import time
 from os.path import join
 import random
 import numpy as np
-from collections import deque
 from gym import error, spaces
 from baselines.bench import load_results
 from baselines import bench
 from gym.spaces.box import Box
 import animalai
 from animalai.envs.gym.environment import AnimalAIEnv
+import time
 from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import ActionFlattener
 from ppo.envs import FrameSkipEnv,TransposeImage
 from PIL import Image
 
-
-def make_animal_env(log_dir, inference_mode, frame_skip,
-                    arenas_dir, info_keywords, reduced_actions, mode="train"):
-    base_port = random.randint(0,1000) # make less likely that train envs and test envs have same port
+def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions):
+    base_port = random.randint(0,100)
     def make_env(rank):
         def _thunk():
             
@@ -36,10 +32,7 @@ def make_animal_env(log_dir, inference_mode, frame_skip,
             env = RetroEnv(env)
             if reduced_actions:
                 env = FilterActionEnv(env)
-            if mode != "train":
-                env = LabAnimalTest(env, arenas_dir)
-            else:
-                env = LabAnimal(env, arenas_dir)
+            env = LabAnimal(env,arenas_dir)
             env = RewardShaping(env)
 
             if frame_skip > 0: 
@@ -47,8 +40,8 @@ def make_animal_env(log_dir, inference_mode, frame_skip,
                 print("Frame skip: ", frame_skip, flush=True)
 
             if log_dir is not None:
-                env = bench.Monitor(env, os.path.join(log_dir, "{}_{}".format(mode, str(rank))),
-                                    allow_early_resets=False if mode=="train" else True,
+                env = bench.Monitor(env, os.path.join(log_dir, str(rank)),
+                                    allow_early_resets=False,
                                     info_keywords=info_keywords)
 
             # If the input has shape (W,H,3), wrap for PyTorch convolutions
@@ -125,47 +118,6 @@ class RewardShaping(gym.Wrapper):
 
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
-
-class LabAnimalTest(gym.Wrapper):
-    def __init__(self, env, arenas):
-        gym.Wrapper.__init__(self, env)
-        self.env_list = [(f, ArenaConfig(f)) for f in arenas]
-        self._arena_file = ''
-        self._max_reward = None
-        self._max_time = None
-        self._type = None
-        self.next_arena = 0
-
-    def get_num_arenas(self):
-        return len(self.env_list)
-
-    def step(self, action):
-        obs, reward, done, info = self.env.step(action)
-        self._env_reward += reward
-        info['arena'] = self._arena_file  # for monitor
-        info['max_reward'] = self._max_reward
-        info['max_time'] = self._max_time
-        info['arena_type'] = self._type
-        info['ereward'] = self._env_reward
-        info['finished'] = done
-        return obs, reward, done, info
-
-    def reset(self, **kwargs):
-        self._env_reward = 0
-        self._arena_file, arena = self.env_list[self.next_arena]
-        self._max_reward = analyze_arena(arena)
-        self._max_time = arena.arenas[0].t
-        self._type = self._arena_file.split("/")[-1][0:2]
-
-        assert self._type in ["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10"], \
-            "detected incorrect arena type."
-
-        self.next_arena += 1
-        if self.next_arena == self.get_num_arenas():
-            self.next_arena = 0
-
-        return self.env.reset(arenas_configurations=arena, **kwargs)
-
 
 class RetroEnv(gym.Wrapper):
     def __init__(self,env):
