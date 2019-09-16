@@ -183,8 +183,7 @@ class CNNBase(NNBase):
             init_(nn.Conv2d(64, 32, 3, stride=1)), nn.ReLU(), Flatten(),
             init_(nn.Linear(32 * 7 * 7, hidden_size)), nn.ReLU())
 
-        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
-                               constant_(x, 0))
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
 
         self.critic_linear = init_(nn.Linear(hidden_size, 1))
 
@@ -206,8 +205,7 @@ class MLPBase(NNBase):
         if recurrent:
             num_inputs = hidden_size
 
-        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
-                               constant_(x, 0), np.sqrt(2))
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), np.sqrt(2))
 
         self.actor = nn.Sequential(
             init_(nn.Linear(num_inputs, hidden_size)), nn.Tanh(),
@@ -239,8 +237,7 @@ class FixupCNNBase(NNBase):
 
         self.main = FixupCNN(image_size,num_inputs,hidden_size)
 
-        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
-                               constant_(x, 0))
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
 
         self.critic_linear = init_(nn.Linear(hidden_size, 1))
 
@@ -278,7 +275,7 @@ class FixupCNN(nn.Module):
             FixupResidual(depth_in, 8),
         ])
         self.conv_layers = nn.Sequential(*layers)
-        self.linear = nn.Linear(math.ceil(image_size / 8) ** 2 * depth_in, hidden_size)
+        self.linear = nn.Linear(math.ceil(image_size / 8) ** 2 * depth_in, hidden_size)  ##use init_???
 
     def forward(self, x):
         x = self.conv_layers(x)
@@ -314,4 +311,74 @@ class FixupResidual(nn.Module):
         out = self.conv2(out)
         out = out * self.scale
         out = out + self.bias4
+        return out + x
+
+
+class ImpalaCNNBase(NNBase):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=256, image_size=84):
+        super(ImpalaCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
+
+        self.main = ImpalaCNN(image_size,num_inputs,hidden_size)
+
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
+
+        self.critic_linear = init_(nn.Linear(hidden_size, 1))
+
+        self.train()
+
+    def forward(self, inputs, rnn_hxs, masks):
+        x = self.main(inputs / 255.0)
+
+        if self.is_recurrent:
+            x, rnn_hxs = self._forward_gru(x, rnn_hxs, masks)
+
+        return self.critic_linear(x), x, rnn_hxs
+
+class ImpalaCNN(nn.Module):
+    """
+    The CNN architecture used in the IMPALA paper.
+
+    See https://arxiv.org/abs/1802.01561.
+    """
+
+    def __init__(self, image_size, depth_in, hidden_size):
+        super().__init__()
+        layers = []
+        for depth_out in [16, 32, 32]:
+            layers.extend([
+                nn.Conv2d(depth_in, depth_out, 3, padding=1),
+                nn.MaxPool2d(3, stride=2, padding=1),
+                ImpalaResidual(depth_out),
+                ImpalaResidual(depth_out),
+            ])
+            depth_in = depth_out
+        self.conv_layers = nn.Sequential(*layers)
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
+        self.linear = init_(nn.Linear(math.ceil(image_size / 8) ** 2 * depth_in, hidden_size))
+
+    def forward(self, x):
+        x = self.conv_layers(x)
+        x = F.relu(x)
+        x = x.view(x.shape[0], -1)
+        x = self.linear(x)
+        x = F.relu(x)
+        return x
+
+
+class ImpalaResidual(nn.Module):
+    """
+    A residual block for an IMPALA CNN.
+    """
+
+    def __init__(self, depth):
+        super().__init__()
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), nn.init.calculate_gain('relu'))
+        self.conv1 = init_(nn.Conv2d(depth, depth, 3, padding=1))
+        self.conv2 = init_(nn.Conv2d(depth, depth, 3, padding=1))
+
+    def forward(self, x):
+        out = F.relu(x)
+        out = self.conv1(out)
+        out = F.relu(out)
+        out = self.conv2(out)
         return out + x

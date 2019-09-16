@@ -181,4 +181,4 @@ def cv_learning():
     write_arena('C1_manybadbounce',time_limits, arena)
 
 
-binomial_learning(3000)
+binomial_learning(30000)

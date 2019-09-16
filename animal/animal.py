@@ -94,18 +94,18 @@ class LabAnimal(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        self._env_reward += reward
+        self.env_reward += reward
         info['arena']=self._arena_file  #for monitor
-        info['max_reward']=self._max_reward
-        info['max_time']=self._max_time
-        info['reward'] = self._env_reward
+        info['max_reward']=self.max_reward
+        info['max_time']=self.max_time
+        info['ereward'] = self.env_reward
         return obs, reward, done, info        
 
     def reset(self, **kwargs):
-        self._env_reward = 0
+        self.env_reward = 0
         self._arena_file, arena = random.choice(self.env_list)
-        self._max_reward = analyze_arena(arena)
-        self._max_time = arena.arenas[0].t
+        self.max_reward = analyze_arena(arena)
+        self.max_time = arena.arenas[0].t
         return self.env.reset(arenas_configurations=arena,**kwargs)
         
 class RewardShaping(gym.Wrapper):
@@ -116,8 +116,11 @@ class RewardShaping(gym.Wrapper):
         obs, reward, done, info = self.env.step(action)
         if reward < 0 and done: #dead for end of time or hit a killing obj
             reward += -2
-        if reward > 0 and done: #prize for finishing, unrespecting of ball size (evaluation is really yes/no for arena)
+        if reward > 0 and done: #prize for finishing well
             reward += 2
+            #ratio = self.env_reward/self.max_reward
+            #ratio = ratio if ratio < 1 else 0.99  #avoid division by zero  
+            #reward += min(0.5/(1-ratio),5)  
         return obs, reward, done, info
 
     def reset(self, **kwargs):
