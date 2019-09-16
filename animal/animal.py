@@ -22,7 +22,7 @@ from PIL import Image
 
 def make_animal_env(log_dir, inference_mode, frame_skip,
                     arenas_dir, info_keywords, reduced_actions, mode="train"):
-    base_port = random.randint(0,100)
+    base_port = random.randint(0,1000) # make less likely that train envs and test envs have same port
     def make_env(rank):
         def _thunk():
             
@@ -141,15 +141,17 @@ class LabAnimalTest(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
+        self._env_reward += reward
         info['arena'] = self._arena_file  # for monitor
         info['max_reward'] = self._max_reward
         info['max_time'] = self._max_time
         info['arena_type'] = self._type
+        info['ereward'] = self._env_reward
         info['finished'] = done
         return obs, reward, done, info
 
     def reset(self, **kwargs):
-
+        self._env_reward = 0
         self._arena_file, arena = self.env_list[self.next_arena]
         self._max_reward = analyze_arena(arena)
         self._max_time = arena.arenas[0].t

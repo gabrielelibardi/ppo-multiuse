@@ -50,43 +50,17 @@ class Visualizer():
             shutil.copy(file, "{}/logs_test/{}".format(
                 logs_dir, file.split("/")[-1]))
 
-        if not os.path.isdir("{}/logs_train".format(logs_dir)):
-            os.mkdir("{}/logs_train".format(logs_dir))
-        for file in glob.glob(logs_dir + "/train*"):
-            shutil.copy(file, "{}/logs_train/{}".format(
-                logs_dir, file.split("/")[-1]))
 
         target_dir = "{}/tensorboard_files".format(logs_dir)
         if os.path.isdir(target_dir):
             shutil.rmtree(target_dir)
         os.mkdir(target_dir)
 
-        df = load_results("{}/logs_train/".format(logs_dir))
-        df['l'] -= 1
-        df['r'] -= 1/df['max_time']
-        df['update'] = df["l"].cumsum() // (num_steps * df[df['index'] == 0].shape[0])
-        df['discounted_max_reward'] = df['max_reward'] - (df['l'] / df['max_time'])
-        df['perf'] = df['r'] / df['discounted_max_reward']
-        df['perf'].where(df['perf'] > 0, 0, inplace=True)
-        df['goal'] = df['perf'] > 0.9
-        train_avg = df.groupby('update').mean()
-
-        train_writer = SummaryWriter("{}/train".format(target_dir), flush_secs=5)
-        for index, row in train_avg.iterrows():
-            train_writer.add_scalar(
-                "train/performance", row['perf'], global_step=index)
-            train_writer.add_scalar(
-                "train/goal", row['goal'], global_step=index)
-            train_writer.add_scalar(
-                "train/cl_stage", row['cl_stage'], global_step=index)
-
         df = load_results("{}/logs_test/".format(logs_dir))
-
         drop = []
         arenas = []
         update = 0
         num_test_files = len(df['arena'].unique())
-
         arena_update = np.zeros(df.shape[0])
         for index, row in df.iterrows():
             arena_update[index] = update
@@ -101,13 +75,13 @@ class Visualizer():
         df['update'] = arena_update
         df = df.drop(drop)
         df['l'] -= 1
-        df['perf'] = df['r'] / df['max_reward']
+        df['ereward'] -= 1/df['max_time']
+        df['ereward'][df['ereward'] < 0.0] = 0.0
+        df['perf'] = df['ereward'] / df['max_reward']
         df['perf'].where(df['perf'] > 0, 0, inplace=True)
         df['goal'] = df['perf'] > 0.9
 
         test_avg = df.groupby('update').mean()
-
-        import ipdb; ipdb.set_trace()
 
         test_writers = SummaryWriter("{}/test".format(target_dir), flush_secs=5)
         for index, row in test_avg.iterrows():
@@ -116,7 +90,30 @@ class Visualizer():
             test_writers.add_scalar(
                 "test/goal", row['goal'], global_step=log_interval * index)
 
+        arena_types = ["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10"]
+        arena_type_writers = [SummaryWriter("{}/{}".format(target_dir, type), flush_secs=5)
+                              for type in arena_types]
+        arena_type_dfs = [df[df['arena_type'] == type] for type in arena_types]
+        for num_type, arena_type_df in enumerate(arena_type_dfs):
+            arena_type_avg = arena_type_df.groupby('update').mean()
+            for index, row in arena_type_avg.iterrows():
+                arena_type_writers[num_type].add_scalar(
+                    "test/performance_by_type", row['perf'],
+                    global_step=log_interval * index)
+                arena_type_writers[num_type].add_scalar(
+                    "test/goal_by_type", row['goal'], global_step=log_interval * index)
 
+        arena_type_writers = [SummaryWriter("{}/{}".format(target_dir, type), flush_secs=5)
+                              for type in df['arena'].unique()]
+        arena_type_dfs = [df[df['arena'] == type] for type in df['arena'].unique()]
+        for num_type, arena_type_df in enumerate(arena_type_dfs):
+            arena_type_avg = arena_type_df.groupby('update').mean()
+            for index, row in arena_type_avg.iterrows():
+                arena_type_writers[num_type].add_scalar(
+                    "test/performance_by_arena", row['perf'],
+                    global_step=log_interval * index)
+                arena_type_writers[num_type].add_scalar(
+                    "test/goal_by_arena", row['goal'], global_step=log_interval * index)
 
 
 if __name__ == "__main__":
@@ -135,7 +132,6 @@ if __name__ == "__main__":
         "-p", "--port", help="port to connect tensorboard to", type=int)
 
     arguments = parser.parse_args()
-    arguments.logs_dir = "/home/abou/logs_albert"
     if arguments.logs_dir:
         if not os.path.isdir(arguments.logs_dir):
             print(colorize(

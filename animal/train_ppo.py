@@ -48,7 +48,6 @@ def main():
     train_envs = make_vec_envs(env_make, args.seed, args.num_processes,
                          args.gamma, args.log_dir, device, False, args.frame_stack)
 
-<<<<<<< HEAD
     if args.arenas_test:
 
         # get test arenas
@@ -75,9 +74,6 @@ def main():
             num_frame_stack=args.frame_stack)
 
     actor_critic = Policy(train_envs.observation_space.shape,train_envs.action_space,base=CNN,
-=======
-    actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN[args.cnn],
->>>>>>> master
                          base_kwargs={'recurrent': args.recurrent_policy})
 
     if args.restart_model:
@@ -88,11 +84,7 @@ def main():
     if args.behavior: 
         actor_behaviors = []
         for a in args.behavior:
-<<<<<<< HEAD
-            actor = Policy(train_envs.observation_space.shape, envs.action_space, base=CNN,
-=======
-            actor = Policy(envs.observation_space.shape, envs.action_space, base=CNN[args.cnn],
->>>>>>> master
+            actor = Policy(train_envs.observation_space.shape, train_envs.action_space, base=CNN,
                             base_kwargs={'recurrent': args.recurrent_policy})
             actor.load_state_dict(torch.load(a,map_location=device))
             actor.to(device)
