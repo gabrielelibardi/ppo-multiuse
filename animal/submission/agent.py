@@ -2,7 +2,7 @@ import sys
 sys.path.append('.')
 import torch
 from ppo.model import Policy
-from ppo.model import CNNBase,FixupCNNBase
+from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase
 from ppo.envs import  VecPyTorch, VecPyTorchFrameStack, FrameSkipEnv, TransposeImage
 from animalai.envs.gym.environment import ActionFlattener
 from PIL import Image
@@ -84,9 +84,10 @@ class FakeEnv(gym.Env):
     #def reset(self, **kwargs):
     #    return self.observation_space.low
 
-frame_skip = 0
+frame_skip = 2
 frame_stack = 2
-CNN=FixupCNNBase
+#CNN=FixupCNNBase
+CNN=ImpalaCNNBase
 reduced_actions = True
 
 def make_env():
@@ -134,7 +135,7 @@ class Agent(object):
         :return:            a list of actions to execute (of size 2)
         """
         self.envs.unwrapped.envs[0].unwrapped.set_step(obs,reward,done,info) #set obs,etc in fakenv
-        obs, reward, done, info = self.envs.step( torch.Tensor([[0]]) ) #apply transformations
+        obs, reward, done, info = self.envs.step( torch.LongTensor([[0]]) ) #apply transformations
         value, action, action_log_prob, self.recurrent_hidden_states, dist_entropy = self.policy.act(
             obs, self.recurrent_hidden_states, self.masks, deterministic=False)
         self.masks.fill_(1.0)

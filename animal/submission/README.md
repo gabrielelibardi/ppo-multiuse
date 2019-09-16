@@ -42,7 +42,7 @@ Submit it
 
 ## Updates (WIP)
 ```
-   docker run -it -v "$PWD":/aaio/base submission /bin/bash
+   docker run -it -v "$PWD"/test_submission:/aaio/test -v "$PWD":/aaio/base submission /bin/bash
    cp base/agent.py .
    cp base/data/animal.state_dict data/
 ```
