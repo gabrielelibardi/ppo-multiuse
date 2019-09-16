@@ -37,7 +37,7 @@ def main():
 
     utils.cleanup_log_dir(args.log_dir)
 
-    keywords = ('max_reward', 'max_time', 'arena', 'arena_type')
+    keywords = ('max_reward', 'max_time', 'arena', 'arena_type', 'ereward')
     env_make = make_animal_env(
         log_dir=args.log_dir, inference_mode=args.realtime,
         frame_skip=args.frame_skip , arenas_dir=args.arenas_dir,
