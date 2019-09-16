@@ -39,7 +39,7 @@ class Visualizer():
     A class to visualize information gathered by logger.
     """
 
-    def __init__(self, logs_dir, num_steps=1000, log_interval=10):
+    def __init__(self, logs_dir, log_interval=10):
         """
         Initialize a Visualizer.
         """
@@ -147,7 +147,6 @@ if __name__ == "__main__":
 
     visualizer = Visualizer(
         logs_dir=arguments.logs_dir,
-        num_steps=arguments.num_steps,
         log_interval=int(arguments.logs_interval))
     time.sleep(5)
 
