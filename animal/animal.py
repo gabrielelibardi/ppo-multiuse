@@ -34,6 +34,8 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
                 env = FilterActionEnv(env)
             env = LabAnimal(env,arenas_dir)
             env = RewardShaping(env)
+            #
+            env = Stateful(env)
 
             if frame_skip > 0: 
                 env = FrameSkipEnv(env, skip=frame_skip)
@@ -87,6 +89,7 @@ class LabAnimal(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
+        self.steps += 1
         self.env_reward += reward
         info['arena']=self._arena_file  #for monitor
         info['max_reward']=self.max_reward
@@ -95,6 +98,7 @@ class LabAnimal(gym.Wrapper):
         return obs, reward, done, info        
 
     def reset(self, **kwargs):
+        self.steps = 0
         self.env_reward = 0
         self._arena_file, arena = random.choice(self.env_list)
         self.max_reward = analyze_arena(arena)
@@ -118,6 +122,33 @@ class RewardShaping(gym.Wrapper):
 
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
+
+
+class Stateful(gym.Wrapper):
+    def __init__(self, env):
+        gym.Wrapper.__init__(self, env)
+        # self.observation_space = spaces.Dict(
+        #         {'obs': env.observation_space,
+        #          'timeleft': spaces.Box(low=0, high=1, shape=()),
+        #          'speed': spaces.Box(low=0, high=10, shape=()) ,
+        #          'direction': spaces.Box(low=-1, high=1, shape=(3,))})
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        vel = info['vector_obs']
+        mag = np.sqrt(vel.dot(vel))
+        timeleft = (self.max_time - self.steps)/1000 #normalized to a fixed time unit (0.25, 0.5, 1.0)
+        o = vel/mag
+        state = np.array([mag,o[0],o[1],o[2],timeleft,self.env_reward],dtype=np.float32)
+        actions = np.zeros(self.action_space.shape[0],dtype=np.float32)
+        actions[action] = 1  #hotbit
+        state = np.stack(state,actions)
+        info['states'] = state
+        return obs, reward, done, info
+
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)
+
 
 class RetroEnv(gym.Wrapper):
     def __init__(self,env):

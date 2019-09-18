@@ -15,17 +15,11 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space, base=None, base_kwargs=None):
+    def __init__(self, obs_shape, action_space, base, base_kwargs=None):
         super(Policy, self).__init__()
         if base_kwargs is None:
             base_kwargs = {}
-        if base is None:
-            if len(obs_shape) == 3:
-                base = CNNBase
-            elif len(obs_shape) == 1:
-                base = MLPBase
-            else:
-                raise NotImplementedError
+
 
         self.base = base(obs_shape[0], **base_kwargs)
 
@@ -72,7 +66,6 @@ class Policy(nn.Module):
         return value
 
     def evaluate_actions(self, inputs, rnn_hxs, masks, action):
-        # inputs.requires_grad_(False)
         value, actor_features, rnn_hxs = self.base(inputs, rnn_hxs, masks)
         dist = self.dist(actor_features)
 
@@ -231,11 +224,48 @@ class MLPBase(NNBase):
         return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs
 
 
+class MultiStateBase(NNBase):
+    def __init__(self, num_channels, recurrent=False, hidden_size=256, image_size=84, state_size=0):
+        super(MultiStateBase, self).__init__(recurrent, hidden_size, hidden_size)
+
+        self.main = FixupCNN(image_size,num_channels,hidden_size)
+
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
+
+        #self.state_mlp = nn.Sequential(
+        #    init_(nn.Linear(state_size, hidden_size)),nn.ReLU(),
+        #    init_(nn.Linear(hidden_size, hidden_size)),nn.ReLU(),
+        #)
+
+        mixer_size = hidden_size + state_size  
+        self.state_mixer = nn.Sequential(
+            init_(nn.Linear(mixer_size, hidden_size)),nn.ReLU(),
+        #    init_(nn.Linear(hidden_size, hidden_size)),nn.ReLU(),
+        )
+
+        self.critic_linear = init_(nn.Linear(hidden_size, 1))
+
+        self.train()
+
+    def forward(self, inputs, rnn_hxs, masks):
+        obs = inputs[0]
+        states = inputs[1]
+        cnn_out = self.main(obs / 255.0)
+        #flat_states = states.view(states.shape[0], -1)???
+        #states_out = self.state_mlp(flat_states)
+        concatenated = torch.cat([cnn_out, states], dim=-1)
+        x = self.state_mixer(concatenated)
+
+        if self.is_recurrent:
+            x, rnn_hxs = self._forward_gru(x, rnn_hxs, masks)
+
+        return self.critic_linear(x), x, rnn_hxs
+
 class FixupCNNBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=256, image_size=84):
+    def __init__(self, num_channels, recurrent=False, hidden_size=256, image_size=84):
         super(FixupCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
 
-        self.main = FixupCNN(image_size,num_inputs,hidden_size)
+        self.main = FixupCNN(image_size,num_channels,hidden_size)
 
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
 
