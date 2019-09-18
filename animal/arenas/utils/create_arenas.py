@@ -142,7 +142,7 @@ def create_c2_arena(target_path, arena_name, max_reward=5, time=250, max_num_goo
     return 'c2'
 
 
-def create_c3_arena(target_path, arena_name, time=250, num_movable=0, num_immovable=0):
+def create_c3_arena(target_path, arena_name, time=250, max_movable=1, max_immovable=1):
     """
     Create .yaml file for C3-type arena.
         - One random positive reward ball, random sized
@@ -155,8 +155,8 @@ def create_c3_arena(target_path, arena_name, time=250, num_movable=0, num_immova
         arena_name (str): save name arena.
         max_reward (float): set max reward for arena. Relates to arena complexity.
         time (int): episode length.
-        num_movable (int): number movable objects added.
-        num_immovable (int): number immovable objects added.
+        max_movable (int): set a limit to number of movable objects.
+        max_immovable (int): set a limit to number of immovable.
     """
 
     category = random.choice(
@@ -170,15 +170,17 @@ def create_c3_arena(target_path, arena_name, time=250, num_movable=0, num_immova
         size_goal = random_size(category)
         arena = add_object(arena, category, size=size_goal)
 
-    for _ in range(num_movable):
-        category = random.choice(objects_dict['movable_objects'])
-        size_object = random_size(category)
-        arena = add_object(arena, category, size=size_object)
+    for _ in range(max_movable):
+        if random.random() > 0.9:
+            category = random.choice(objects_dict['movable_objects'])
+            size_object = random_size(category)
+            arena = add_object(arena, category, size=size_object)
 
-    for _ in range(num_immovable):
-        category = random.choice(objects_dict['immovable_objects'])
-        size_object = random_size(category)
-        arena = add_object(arena, category, size=size_object)
+    for _ in range(max_immovable):
+        if random.random() > 0.9:
+            category = random.choice(objects_dict['immovable_objects'])
+            size_object = random_size(category)
+            arena = add_object(arena, category, size=size_object)
 
     arena = add_walled(arena, num_walls=np.random.randint(1, 10))
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -187,7 +189,7 @@ def create_c3_arena(target_path, arena_name, time=250, num_movable=0, num_immova
     return 'c3'
 
 
-def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_orange_zones=0, max_movable=0, max_immovable=0):
+def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_orange_zones=1, max_movable=1, max_immovable=1):
     """
     Create .yaml file for C4-type arena.
         - 1 green food (stationary) and some red zones
@@ -202,7 +204,7 @@ def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_oran
         time (int): episode length.
         num_red_zones (int): fixed number of red zones.
         max_orange_zones (int): set a limit to number of orange zones.
-        max_movable (int): set a limit to number of movable objects
+        max_movable (int): set a limit to number of movable objects.
         max_immovable (int): set a limit to number of immovable.
     """
 
@@ -223,13 +225,13 @@ def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_oran
             arena = add_object(arena, 'HotZone', size=size_object)
 
     for _ in range(max_movable):
-        if random.random() > 0.9:
+        if random.random() > 0.8:
             category = random.choice(objects_dict['movable_objects'])
             size_object = random_size(category)
             arena = add_object(arena, category, size=size_object)
 
     for _ in range(max_immovable):
-        if random.random() > 0.9:
+        if random.random() > 0.8:
             category = random.choice(objects_dict['immovable_objects'])
             size_object = random_size(category)
             arena = add_object(arena, category, size=size_object)
@@ -240,7 +242,7 @@ def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_oran
     return 'c4'
 
 
-def create_c5_arena(target_path, arena_name, time=250, num_movable=0, num_immovable=0):
+def create_c5_arena(target_path, arena_name, time=250, max_movable=1, max_immovable=1):
     """
     Create .yaml file for C5-type arena.
         - from 1 to 2 platforms accessible by ramps with a goal on top.
@@ -249,8 +251,8 @@ def create_c5_arena(target_path, arena_name, time=250, num_movable=0, num_immova
         target_path (str): save dir path.
         arena_name (str): save name arena.
         time (int): episode length.
-        num_movable (int): number movable objects added.
-        num_immovable (int): number immovable objects added.
+        max_movable (int): set a limit to number of movable objects.
+        max_immovable (int): set a limit to number of immovable.
     """
 
     arena = ''
@@ -258,17 +260,19 @@ def create_c5_arena(target_path, arena_name, time=250, num_movable=0, num_immova
     arena = add_ramp_scenario(arena)
     arena = add_ramp_scenario(arena)
 
-    for _ in range(num_movable):
-        category = random.choice(objects_dict['movable_objects'])
-        size_object = random_size(category)
-        arena = add_object(arena, category, size=size_object,
-                           RGB=random_color())
+    for _ in range(max_movable):
+        if random.random() > 0.8:
+            category = random.choice(objects_dict['movable_objects'])
+            size_object = random_size(category)
+            arena = add_object(arena, category, size=size_object,
+                               RGB=random_color())
 
-    for _ in range(num_immovable):
-        category = random.choice(['Wall', 'Ramp', 'CylinderTunnel'])
-        size_object = random_size(category)
-        arena = add_object(arena, category, size=size_object,
-                           RGB=random_color())
+    for _ in range(max_immovable):
+        if random.random() > 0.8:
+            category = random.choice(['Wall', 'Ramp', 'CylinderTunnel'])
+            size_object = random_size(category)
+            arena = add_object(arena, category, size=size_object,
+                               RGB=random_color())
 
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
@@ -276,7 +280,7 @@ def create_c5_arena(target_path, arena_name, time=250, num_movable=0, num_immova
     return 'c5'
 
 
-def create_c6_arena(target_path, arena_name, time=250, num_movable=0, num_immovable=0):
+def create_c6_arena(target_path, arena_name, time=250, max_movable=1, max_immovable=1):
     """
     Create .yaml file for C6-type arena.
         - One random positive reward ball, random sized
@@ -289,8 +293,8 @@ def create_c6_arena(target_path, arena_name, time=250, num_movable=0, num_immova
         target_path (str): save dir path.
         arena_name (str): save name arena.
         time (int): episode length.
-        num_movable (int): number movable objects added.
-        num_immovable (int): number immovable objects added.
+        max_movable (int): set a limit to number of movable objects.
+        max_immovable (int): set a limit to number of immovable.
     """
 
     category = random.choice(['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
@@ -309,15 +313,17 @@ def create_c6_arena(target_path, arena_name, time=250, num_movable=0, num_immova
             size_goal = random_size(category)
             arena = add_object(arena, category, size=size_goal)
 
-    for _ in range(num_movable):
-        category = random.choice(objects_dict['movable_objects'])
-        size_object = random_size(category)
-        arena = add_object(arena, category, size=size_object, RGB=random_color())
+    for _ in range(max_movable):
+        if random.random() > 0.8:
+            category = random.choice(objects_dict['movable_objects'])
+            size_object = random_size(category)
+            arena = add_object(arena, category, size=size_object, RGB=random_color())
 
-    for _ in range(num_immovable):
-        category = random.choice(['Wall', 'Ramp', 'CylinderTunnel'])
-        size_object = random_size(category)
-        arena = add_object(arena, category, size=size_object, RGB=random_color())
+    for _ in range(max_immovable):
+        if random.random() > 0.8:
+            category = random.choice(['Wall', 'Ramp', 'CylinderTunnel'])
+            size_object = random_size(category)
+            arena = add_object(arena, category, size=size_object, RGB=random_color())
 
     arena = add_walled(arena, num_walls=np.random.randint(1, 10), random_rgb=True)
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -326,7 +332,7 @@ def create_c6_arena(target_path, arena_name, time=250, num_movable=0, num_immova
     return 'c6'
 
 
-def create_c7_arena(target_path, arena_name, time=250, num_movable=1, num_immovable=1):
+def create_c7_arena(target_path, arena_name, time=250, max_movable=3, max_immovable=3):
     """
     Create .yaml file for C7-type arena.
         - One random positive reward ball, random sized
@@ -340,8 +346,8 @@ def create_c7_arena(target_path, arena_name, time=250, num_movable=1, num_immova
         target_path (str): save dir path.
         arena_name (str): save name arena.
         time (int): episode length.
-        num_movable (int): number movable objects added.
-        num_immovable (int): number immovable objects added.
+        max_movable (int): set a limit to number of movable objects.
+        max_immovable (int): set a limit to number of immovable.
     """
 
     blackout_options = [[-20], [-40], [-60], [25, 30, 50, 55, 75], [50, 55, 75, 80, 100, 105, 125]]
@@ -361,15 +367,17 @@ def create_c7_arena(target_path, arena_name, time=250, num_movable=1, num_immova
             size_goal = random_size(category)
             arena = add_object(arena, category, size=size_goal)
 
-    for _ in range(num_movable):
-        category = random.choice(objects_dict['movable_objects'])
-        size_object = random_size(category)
-        arena = add_object(arena, category, size=size_object)
+    for _ in range(max_movable):
+        if random.random() > 0.5:
+            category = random.choice(objects_dict['movable_objects'])
+            size_object = random_size(category)
+            arena = add_object(arena, category, size=size_object)
 
-    for _ in range(num_immovable):
-        category = random.choice(objects_dict['immovable_objects'])
-        size_object = random_size(category)
-        arena = add_object(arena, category, size=size_object)
+    for _ in range(max_immovable):
+        if random.random() > 0.5:
+            category = random.choice(objects_dict['immovable_objects'])
+            size_object = random_size(category)
+            arena = add_object(arena, category, size=size_object)
 
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena, blackouts=random.choice(blackout_options))

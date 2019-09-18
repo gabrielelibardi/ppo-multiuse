@@ -45,7 +45,7 @@ if __name__ == '__main__':
     for i in range(1, 11):
         create_c4_arena(arguments.target_dir, 'c4_{}'.format(
             str(i).zfill(2)), time=random.choice([250, 500, 1000]),
-                        num_red_zones=2, max_orange_zones=1)
+                        num_red_zones=8, max_orange_zones=3)
 
     # c5
     for i in range(1, 11):
