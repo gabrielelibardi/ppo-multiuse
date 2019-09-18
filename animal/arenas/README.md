@@ -2,7 +2,7 @@
 
 RUN python create_test_set.py --target-dir /path/to/target/directory
 
-to create a basic test set that a successfully trained agent is expected to complete successfully.
+to create a basic test set that a successfully trained agent is expected to complete.
 It includes:
 
     c1 arenas: solve environment with green, orange and red balls of equal size.
