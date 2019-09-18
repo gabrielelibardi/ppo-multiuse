@@ -142,7 +142,7 @@ class Stateful(gym.Wrapper):
         state = np.array([mag,o[0],o[1],o[2],timeleft,self.env_reward],dtype=np.float32) #quantize time?
         actions = np.zeros(self.action_space.n,dtype=np.float32)
         actions[action] = 1  #hotbit
-        state = np.stack(state,actions)
+        state = np.concatenate((state,actions))
         info['states'] = state
         return obs, reward, done, info
 
