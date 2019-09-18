@@ -127,6 +127,7 @@ class RewardShaping(gym.Wrapper):
 class Stateful(gym.Wrapper):
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
+        self.state_size = 1+3+1+1+self.action_space.n
         # self.observation_space = spaces.Dict(
         #         {'obs': env.observation_space,
         #          'timeleft': spaces.Box(low=0, high=1, shape=()),
@@ -139,7 +140,7 @@ class Stateful(gym.Wrapper):
         mag = np.sqrt(vel.dot(vel))
         timeleft = (self.max_time - self.steps)/1000 #normalized to a fixed time unit (0.25, 0.5, 1.0)
         o = vel/mag
-        state = np.array([mag,o[0],o[1],o[2],timeleft,self.env_reward],dtype=np.float32) #quantize time?
+        state = np.array([mag,o[0],o[1],o[2],timeleft,self.env_reward],dtype=np.float32) 
         actions = np.zeros(self.action_space.n,dtype=np.float32)
         actions[action] = 1  #hotbit
         state = np.concatenate((state,actions))

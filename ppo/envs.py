@@ -12,8 +12,7 @@ from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 #from ppo.subproc_vec_env import MySubprocVecEnv
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from baselines.common.vec_env.shmem_vec_env import ShmemVecEnv
-from baselines.common.vec_env.vec_normalize import \
-    VecNormalize as VecNormalize_
+from baselines.common.vec_env.vec_normalize import  VecNormalize as VecNormalize_
 
 def make_vec_envs(make,
                   seed,
@@ -37,10 +36,37 @@ def make_vec_envs(make,
 
     envs = VecPyTorch(envs, device)
 
-    if num_frame_stack>0:
+    if num_frame_stack > 0:
         envs = VecPyTorchFrameStack(envs, num_frame_stack, device)
 
+    state_size = envs.envs[0].state_size
+    state_stack = 2
+    if state_size > 0:
+        envs = VecPyTorchStateStack(envs,state_size,state_stack)
     return envs
+
+class VecPyTorchStateStack(VecEnvWrapper):
+    def __init__(self, envs, state_size, state_stack):
+        super().__init__(envs)
+        self.prev_states = np.zeros([envs.num_envs, state_stack, state_size], dtype=np.float32)
+
+    def reset(self):
+        obses = self.venv.reset()  #TODO> really, I should also return vector obs here because they are available
+        self.prev_states.fill(0)
+        #self.prev_states[:, -1, :] = states  #as (obses,states) above
+        states = torch.from_numpy(self.prev_states.copy()).float().to(self.device)
+        return (obses,states)
+
+    def step_wait(self):
+        obses, rews, dones, infos = self.venv.step_wait()
+        self.prev_states[:, :-1] = self.prev_states[:, 1:] #shift
+        for i, done in enumerate(dones):
+            if done:
+                self.prev_states[i].fill(0.0)
+            else:
+                self.prev_states[i, -1, :] = infos[i]['states'] 
+        states = torch.from_numpy(self.prev_states.copy()).float().to(self.device)
+        return (obses,states), rews, dones, infos
 
 
 class VecPyTorch(VecEnvWrapper):

@@ -32,6 +32,13 @@ class RolloutStorage(object):
         self.num_steps = num_steps
         self.step = 0
 
+    def set_obs(self, step, obs):
+        if isinstance(obs,tuple):
+            self.obs[step].copy_(obs[0])
+            self.states[step].copy_(obs[1])
+        else:
+            self.obs[step].copy_(obs)
+
     def to(self, device):
         self.obs = self.obs.to(device)
         self.recurrent_hidden_states = self.recurrent_hidden_states.to(device)
