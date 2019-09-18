@@ -3,9 +3,8 @@
 
 import random
 import numpy as np
-from .edit_arenas import add_object, write_arena
 from .sample_features import random_size, random_color
-from .edit_arenas import add_ramp_scenario
+from .edit_arenas import add_object, write_arena, add_ramp_scenario, add_walled
 
 objects_dict = {
     'reward_objects': [
@@ -39,13 +38,16 @@ objects_dict = {
 def create_c1_arena(target_path, arena_name, max_reward=5, time=250, max_num_good_goals=1):
     """
     Create .yaml file for C1-type arena.
-     - Only goals.
-     - Fixed random size for all goals.
-     - At least one green ball.
+         - Only goals.
+         - Fixed random size for all goals.
+         - At least one green ball.
+
     Parameters:
         target_path (str): save dir path.
         arena_name (str): save name arena.
         max_reward (float): set max reward for arena. Relates to arena complexity.
+        time (int): episode length.
+        max_num_good_goals: goal limit.
    """
 
     allowed_objects = objects_dict['reward_objects']
@@ -87,13 +89,16 @@ def create_c1_arena(target_path, arena_name, max_reward=5, time=250, max_num_goo
 def create_c2_arena(target_path, arena_name, max_reward=5, time=250, max_num_good_goals=1):
     """
     Create .yaml file for C2-type arena.
-     - Only goals.
-     - Different random size for all goals.
-     - At least one green and one red ball.
+         - Only goals.
+         - Different random size for all goals.
+         - At least one green and one red ball.
+
     Parameters:
         target_path (str): save dir path.
         arena_name (str): save name arena.
         max_reward (float): set max reward for arena. Relates to arena complexity.
+        time (int): episode length.
+        max_num_good_goals: goal limit.
    """
 
     allowed_objects = objects_dict['reward_objects']
@@ -137,15 +142,21 @@ def create_c2_arena(target_path, arena_name, max_reward=5, time=250, max_num_goo
     return 'c2'
 
 
-def create_c3_arena(target_path, arena_name, time=250, num_movable=1, num_immovable=1):
+def create_c3_arena(target_path, arena_name, time=250, num_movable=0, num_immovable=0):
     """
-    - One random positive reward ball, random sized
-    - With probability 0.5 add red ball, random sized
-    - Add multiple movable and immovable objects
-    :param target_path:
-    :param arena_name:
-    :param max_reward:
-    :return:
+    Create .yaml file for C3-type arena.
+        - One random positive reward ball, random sized
+        - With probability 0.5 add red ball, random sized
+        - Create a wall maze by randomly spawning between 1 and 10 walls
+        - If specified randomly add multiple movable and immovable objects
+
+    Parameters:
+        target_path (str): save dir path.
+        arena_name (str): save name arena.
+        max_reward (float): set max reward for arena. Relates to arena complexity.
+        time (int): episode length.
+        num_movable (int): number movable objects added.
+        num_immovable (int): number immovable objects added.
     """
 
     category = random.choice(
@@ -169,22 +180,30 @@ def create_c3_arena(target_path, arena_name, time=250, num_movable=1, num_immova
         size_object = random_size(category)
         arena = add_object(arena, category, size=size_object)
 
+    arena = add_walled(arena, num_walls=np.random.randint(1, 10))
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
     return 'c3'
 
 
-def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_orange_zones=1, max_movable=3, max_immovable=3):
+def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_orange_zones=0, max_movable=0, max_immovable=0):
     """
-    - 1 green food (stationary) and some red zones
-    - add orange zone with probability 0.5
-    - add immobable object with probability 0.1
-    - add movable object with probability 0.1
-    :param target_path:
-    :param arena_name:
-    :param max_reward:
-    :return:
+    Create .yaml file for C4-type arena.
+        - 1 green food (stationary) and some red zones
+        - add orange ball with probability 0.5
+        - add orange zone with probability 0.5
+        - add immobable object with probability 0.1
+        - add movable object with probability 0.1
+
+    Parameters:
+        target_path (str): save dir path.
+        arena_name (str): save name arena.
+        time (int): episode length.
+        num_red_zones (int): fixed number of red zones.
+        max_orange_zones (int): set a limit to number of orange zones.
+        max_movable (int): set a limit to number of movable objects
+        max_immovable (int): set a limit to number of immovable.
     """
 
     size_goal = random_size('GoodGoal')
@@ -221,9 +240,22 @@ def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_oran
     return 'c4'
 
 
-def create_c5_arena(target_path, arena_name, time=250, num_movable=1, num_immovable=1):
+def create_c5_arena(target_path, arena_name, time=250, num_movable=0, num_immovable=0):
+    """
+    Create .yaml file for C5-type arena.
+        - from 1 to 2 platforms accessible by ramps with a goal on top.
+        - if specified, add multiple movable and immovable objects.
+    Parameters:
+        target_path (str): save dir path.
+        arena_name (str): save name arena.
+        time (int): episode length.
+        num_movable (int): number movable objects added.
+        num_immovable (int): number immovable objects added.
+    """
 
     arena = ''
+
+    arena = add_ramp_scenario(arena)
     arena = add_ramp_scenario(arena)
 
     for _ in range(num_movable):
@@ -244,17 +276,21 @@ def create_c5_arena(target_path, arena_name, time=250, num_movable=1, num_immova
     return 'c5'
 
 
-def create_c6_arena(target_path, arena_name, time=250, num_movable=1, num_immovable=1):
+def create_c6_arena(target_path, arena_name, time=250, num_movable=0, num_immovable=0):
     """
-    - One random positive reward ball, random sized
-    - add a second positive rewards , with probability 0.5
-    - add up to 2 red balls , with probability 0.5 each
-    - With probability 0.5 add red balls, random sized
-    - Add multiple movable and immovable objects (with random color)
-    :param target_path:
-    :param arena_name:
-    :param max_reward:
-    :return:
+    Create .yaml file for C6-type arena.
+        - One random positive reward ball, random sized
+        - add a second positive reward , with probability 0.5
+        - add up to 2 red balls , with probability 0.5 each
+        - Add multiple (1 to 10) walls with random color.
+        - If specifiedm add also extra multiple movable and immovable objects (with random color)
+
+    Parameters:
+        target_path (str): save dir path.
+        arena_name (str): save name arena.
+        time (int): episode length.
+        num_movable (int): number movable objects added.
+        num_immovable (int): number immovable objects added.
     """
 
     category = random.choice(['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
@@ -283,24 +319,29 @@ def create_c6_arena(target_path, arena_name, time=250, num_movable=1, num_immova
         size_object = random_size(category)
         arena = add_object(arena, category, size=size_object, RGB=random_color())
 
+    arena = add_walled(arena, num_walls=np.random.randint(1, 10), random_rgb=True)
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
     return 'c6'
 
 
-def create_c7_arena(target_path, arena_name, time=250, num_movable=1, num_immovable=1): # Not correct!
+def create_c7_arena(target_path, arena_name, time=250, num_movable=1, num_immovable=1):
     """
-    - One random positive reward ball, random sized
-    - add a second positive rewards , with probability 0.5
-    - add up to 2 red balls , with probability 0.5 each
-    - With probability 0.5 add red balls, random sized
-    - Add multiple movable and immovable objects
-    - random blackouts
-    :param target_path:
-    :param arena_name:
-    :param max_reward:
-    :return:
+    Create .yaml file for C7-type arena.
+        - One random positive reward ball, random sized
+        - add a second positive rewards , with probability 0.5
+        - add up to 2 red balls , with probability 0.5 each
+        - With probability 0.5 add red balls, random sized
+        - Add multiple movable and immovable objects
+        - random blackouts
+
+    Parameters:
+        target_path (str): save dir path.
+        arena_name (str): save name arena.
+        time (int): episode length.
+        num_movable (int): number movable objects added.
+        num_immovable (int): number immovable objects added.
     """
 
     blackout_options = [[-20], [-40], [-60], [25, 30, 50, 55, 75], [50, 55, 75, 80, 100, 105, 125]]
