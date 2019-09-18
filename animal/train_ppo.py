@@ -69,7 +69,8 @@ def main():
                               actor_critic.recurrent_hidden_state_size)
 
     obs = envs.reset()
-    rollouts.obs[0].copy_(obs)
+    rollouts.set_obs(0,obs)
+
     rollouts.to(device)  #they live in GPU, converted to torch from the env wrapper
 
     start = time.time()
