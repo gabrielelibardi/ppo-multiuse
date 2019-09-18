@@ -10,7 +10,7 @@ ranges = {
 
 
 def distance(p0, p1):
-    return math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2 + (p0[2] - p1[2])**2)
+    return math.sqrt((p0[0] - p1[0])**2 + (p0[2] - p1[2])**2)
 
 
 def random_pos(with_respect_to_center=None):
