@@ -4,7 +4,7 @@
 import random
 import numpy as np
 from .edit_arenas import add_object, write_arena
-from .sample_features import random_size, random_color
+from .sample_features import random_size, random_color, random_pos
 from .edit_arenas import add_ramp_scenario
 
 objects_dict = {
@@ -77,11 +77,14 @@ def create_c1_arena(target_path, arena_name, max_reward=5, time=250, max_num_goo
         arena = add_object(arena, category, size=size_goal)
 
     min_reward -= worst_goal
-    reward = reward - best_goal
+
+    position_agent = random_pos()
+    arena = add_object(arena, "Agent", pos=position_agent)
+
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
-    return 'c1'
+    return 'c1', position_agent
 
 
 def create_c2_arena(target_path, arena_name, max_reward=5, time=250, max_num_good_goals=1):
@@ -130,11 +133,13 @@ def create_c2_arena(target_path, arena_name, max_reward=5, time=250, max_num_goo
         arena = add_object(arena, category, size=size_goal)
 
     min_reward -= worst_goal
-    reward = reward - best_goal
+    position_agent = random_pos()
+    arena = add_object(arena, "Agent", pos=position_agent)
+
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
-    return 'c2'
+    return 'c2', position_agent
 
 
 def create_c3_arena(target_path, arena_name, time=250, num_movable=1, num_immovable=1):
@@ -169,10 +174,13 @@ def create_c3_arena(target_path, arena_name, time=250, num_movable=1, num_immova
         size_object = random_size(category)
         arena = add_object(arena, category, size=size_object)
 
+    position_agent = random_pos()
+    arena = add_object(arena, "Agent", pos=position_agent)
+
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
-    return 'c3'
+    return 'c3', position_agent
 
 
 def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_orange_zones=1, max_movable=3, max_immovable=3):
@@ -215,10 +223,13 @@ def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_oran
             size_object = random_size(category)
             arena = add_object(arena, category, size=size_object)
 
+    position_agent = random_pos()
+    arena = add_object(arena, "Agent", pos=position_agent)
+
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
-    return 'c4'
+    return 'c4', position_agent
 
 
 def create_c5_arena(target_path, arena_name, time=250, num_movable=1, num_immovable=1):
@@ -238,10 +249,13 @@ def create_c5_arena(target_path, arena_name, time=250, num_movable=1, num_immova
         arena = add_object(arena, category, size=size_object,
                            RGB=random_color())
 
+    position_agent = random_pos()
+    arena = add_object(arena, "Agent", pos=position_agent)
+
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
-    return 'c5'
+    return 'c5', position_agent
 
 
 def create_c6_arena(target_path, arena_name, time=250, num_movable=1, num_immovable=1):
@@ -283,10 +297,13 @@ def create_c6_arena(target_path, arena_name, time=250, num_movable=1, num_immova
         size_object = random_size(category)
         arena = add_object(arena, category, size=size_object, RGB=random_color())
 
+    position_agent = random_pos()
+    arena = add_object(arena, "Agent", pos=position_agent)
+
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
-    return 'c6'
+    return 'c6', position_agent
 
 
 def create_c7_arena(target_path, arena_name, time=250, num_movable=1, num_immovable=1): # Not correct!
@@ -330,7 +347,10 @@ def create_c7_arena(target_path, arena_name, time=250, num_movable=1, num_immova
         size_object = random_size(category)
         arena = add_object(arena, category, size=size_object)
 
-    save_name = '{}/{}'.format(target_path, arena_name)
-    write_arena(save_name, time, arena, blackouts=random.choice(blackout_options))
+    position_agent = random_pos()
+    arena = add_object(arena, "Agent", pos=position_agent)
 
-    return 'c7'
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'c7', position_agent
