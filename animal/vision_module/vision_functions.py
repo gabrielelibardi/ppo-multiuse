@@ -7,10 +7,10 @@ import numpy as np
 from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import AnimalAIEnv
 from ppo.envs import TransposeImage
-from ..animal import RetroEnv
+from animal.animal import RetroEnv
 
 
-def make_animal_env():
+def make_animal_env(list_arenas, list_params):
     base_port = random.randint(0, 100)
     def make_env(rank):
         def _thunk():
@@ -27,7 +27,7 @@ def make_animal_env():
                 resolution=None)
 
             env = RetroEnv(env)
-            env = LabAnimalCollect(env)
+            env = LabAnimalCollect(env, list_arenas, list_params)
 
             # If the input has shape (W,H,3), wrap for PyTorch convolutions
             obs_shape = env.observation_space.shape
