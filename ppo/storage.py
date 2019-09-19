@@ -10,10 +10,10 @@ class RolloutStorage(object):
     def __init__(self, num_steps, num_processes, obs, action_space,
                  recurrent_hidden_state_size):
         if isinstance(obs,tuple):
-            obs_shape = obs[0].shape
+            obs_shape = obs[0].shape[1:] #0 is for num_procs
             self.states_size = obs[1].shape
         else:
-            obs_shape = obs.shape
+            obs_shape = obs.shape[1:]
             self.states_size = 0
         self.obs = torch.zeros(num_steps + 1, num_processes, *obs_shape)
         self.recurrent_hidden_states = torch.zeros( num_steps + 1, num_processes, recurrent_hidden_state_size)
