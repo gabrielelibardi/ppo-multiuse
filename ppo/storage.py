@@ -11,10 +11,12 @@ class RolloutStorage(object):
                  recurrent_hidden_state_size):
         if isinstance(obs,tuple):
             obs_shape = obs[0].shape[1:] #0 is for num_procs
-            self.states_size = obs[1].shape
+            states_size = obs[1].shape
+            self.has_states = True
         else:
             obs_shape = obs.shape[1:]
-            self.states_size = 0
+            states_size = 0
+            self.has_states = False
         self.obs = torch.zeros(num_steps + 1, num_processes, *obs_shape)
         self.recurrent_hidden_states = torch.zeros( num_steps + 1, num_processes, recurrent_hidden_state_size)
         self.rewards = torch.zeros(num_steps, num_processes, 1)
@@ -33,7 +35,7 @@ class RolloutStorage(object):
         # Masks that indicate whether it's a true terminal state
         # or time limit end state
         self.bad_masks = torch.ones(num_steps + 1, num_processes, 1)
-        self.states = torch.zeros(num_steps + 1, num_processes, self.states_size)
+        self.states = torch.zeros(num_steps + 1, num_processes, *states_size)
 
         self.num_steps = num_steps
         self.step = 0
@@ -47,7 +49,7 @@ class RolloutStorage(object):
             self.obs[step].copy_(obs)
     
     def get_obs(self, i):
-        if self.states_size>0:
+        if self.has_states:
             return (self.obs[i],self.states[i])
         else:
             return self.obs[i]
@@ -157,7 +159,7 @@ class RolloutStorage(object):
             else:
                 adv_targ = advantages.view(-1, 1)[indices]
 
-            inputs_batch =(obs_batch,states_batch) if self.states_size>0 else obs_batch
+            inputs_batch =(obs_batch,states_batch) if self.has_states else obs_batch
             yield inputs_batch, recurrent_hidden_states_batch, actions_batch, \
                 value_preds_batch, return_batch, masks_batch, old_action_log_probs_batch, adv_targ
 
@@ -216,6 +218,6 @@ class RolloutStorage(object):
             adv_targ = _flatten_helper(T, N, adv_targ)
             states_batch = _flatten_helper(T, N, states_batch)
 
-            inputs_batch =(obs_batch,states_batch) if self.states_size>0 else obs_batch
+            inputs_batch =(obs_batch,states_batch) if self.has_states else obs_batch
             yield inputs_batch, recurrent_hidden_states_batch, actions_batch, \
                 value_preds_batch, return_batch, masks_batch, old_action_log_probs_batch, adv_targ

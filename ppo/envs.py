@@ -52,6 +52,8 @@ class VecPyTorchStateStack(VecEnvWrapper):
     def __init__(self, envs, state_size, state_stack):
         super().__init__(envs)
         self.prev_states = np.zeros([envs.num_envs, state_stack, state_size], dtype=np.float32)
+        self.state_size = state_size
+        self.state_stack = state_stack
 
     def reset(self):
         obses = self.venv.reset()  #TODO> really, I should also return vector obs here because they are available

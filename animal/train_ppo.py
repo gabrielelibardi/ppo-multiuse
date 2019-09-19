@@ -18,12 +18,12 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/..')
 from ppo import algo, utils
 from ppo.envs import make_vec_envs
 from ppo.model import Policy
-from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase
+from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase
 from ppo.storage import RolloutStorage
 from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model
 from animal import make_animal_env
 
-CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase}
+CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase,'State':StateCNNBase}
 
 def main():
     args = get_args()
@@ -43,8 +43,9 @@ def main():
     envs = make_vec_envs(env_make, args.seed, args.num_processes,
                          args.gamma, args.log_dir, device, False, args.frame_stack)
 
+    base_kwargs={'recurrent': args.recurrent_policy,'fullstate_size'=envs.state_size*envs.state_stack}
     actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN[args.cnn],
-                         base_kwargs={'recurrent': args.recurrent_policy})
+                         base_kwargs=base_kwargs})
 
     if args.restart_model:
         actor_critic.load_state_dict(torch.load(args.restart_model, map_location=device))
