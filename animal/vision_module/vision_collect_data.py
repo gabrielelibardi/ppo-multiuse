@@ -50,7 +50,7 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000):
                     deterministic=args.det)
 
             if step < 10:  # wait for things to fall down
-                action = 0
+                action = torch.zeros_like(action)
 
             # Observation reward and next obs
             obs, reward, done, info = env.step(action)
