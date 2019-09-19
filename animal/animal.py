@@ -138,7 +138,7 @@ class Stateful(gym.Wrapper):
         vel = info['vector_obs']
         mag = np.sqrt(vel.dot(vel))
         timeleft = (self.max_time - self.steps)/1000 #normalized to a fixed time unit (0.25, 0.5, 1.0)
-        o = vel/mag
+        o = vel/mag if mag>0 else vel
         state = np.array([mag,o[0],o[1],o[2],timeleft,self.env_reward],dtype=np.float32) 
         actions = np.zeros(self.action_space.n,dtype=np.float32)
         actions[action] = 1  #hotbit

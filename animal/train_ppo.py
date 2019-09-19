@@ -43,9 +43,9 @@ def main():
     envs = make_vec_envs(env_make, args.seed, args.num_processes,
                          args.gamma, args.log_dir, device, False, args.frame_stack)
 
-    base_kwargs={'recurrent': args.recurrent_policy,'fullstate_size'=envs.state_size*envs.state_stack}
+    base_kwargs={'recurrent': args.recurrent_policy,'fullstate_size': envs.state_size*envs.state_stack}
     actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN[args.cnn],
-                         base_kwargs=base_kwargs})
+                         base_kwargs=base_kwargs)
 
     if args.restart_model:
         actor_critic.load_state_dict(torch.load(args.restart_model, map_location=device))

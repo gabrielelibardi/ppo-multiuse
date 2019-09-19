@@ -226,7 +226,7 @@ class MLPBase(NNBase):
 
 class StateCNNBase(NNBase):
     def __init__(self, num_channels, recurrent=False, hidden_size=256, image_size=84, fullstate_size=0):
-        super(MultiStateBase, self).__init__(recurrent, hidden_size, hidden_size)
+        super(StateCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
 
         #self.main = FixupCNN(image_size,num_channels,hidden_size)
         self.main = ImpalaCNN(image_size,num_channels,hidden_size)
