@@ -233,13 +233,13 @@ class StateCNNBase(NNBase):
 
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), nn.init.calculate_gain('relu'))
 
-        self.state_mlp = nn.Sequential(
-            init_(nn.Linear(fullstate_size, hidden_size)),nn.ReLU(),
-            init_(nn.Linear(hidden_size, hidden_size)),nn.ReLU(),
-        )
+        #self.state_mlp = nn.Sequential(
+        #    init_(nn.Linear(fullstate_size, hidden_size)),nn.ReLU(),
+        #    init_(nn.Linear(hidden_size, hidden_size)),nn.ReLU(),
+        #)
 
-        mixer_size = hidden_size + hidden_size  
-        #mixer_size = hidden_size + fullstate_size  
+        #mixer_size = hidden_size + hidden_size  
+        mixer_size = hidden_size + fullstate_size  
         self.state_mixer = nn.Sequential(
             init_(nn.Linear(mixer_size, hidden_size)),nn.ReLU(),
             init_(nn.Linear(hidden_size, hidden_size)),nn.ReLU(),
@@ -255,7 +255,8 @@ class StateCNNBase(NNBase):
         states = inputs[1]
         cnn_out = self.main(obs / 255.0)
         flat_states = states.view(states.shape[0], -1)
-        states_out = self.state_mlp(flat_states)
+        #states_out = self.state_mlp(flat_states)
+        states_out = flat_states
         concatenated = torch.cat([cnn_out, states_out], dim=-1)
         x = self.state_mixer(concatenated)
 
