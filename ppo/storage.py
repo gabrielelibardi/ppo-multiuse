@@ -15,7 +15,7 @@ class RolloutStorage(object):
             self.has_states = True
         else:
             obs_shape = obs.shape[1:]
-            states_size = 0
+            states_size = (0,)
             self.has_states = False
         self.obs = torch.zeros(num_steps + 1, num_processes, *obs_shape)
         self.recurrent_hidden_states = torch.zeros( num_steps + 1, num_processes, recurrent_hidden_state_size)

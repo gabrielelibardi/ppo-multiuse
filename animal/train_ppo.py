@@ -37,15 +37,15 @@ def main():
 
     env_make = make_animal_env(log_dir = args.log_dir, inference_mode=args.realtime,  frame_skip=args.frame_skip , 
             arenas_dir=args.arenas_dir, info_keywords=('ereward','max_reward','max_time','arena'), 
-            reduced_actions=args.reduced_actions, seed=args.seed)
+            reduced_actions=args.reduced_actions, seed=args.seed, state=args.state)
     #spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
     #               gym.spaces.Discrete(9) )
     envs = make_vec_envs(env_make, args.seed, args.num_processes,
                          args.gamma, args.log_dir, device, False, args.frame_stack)
 
-    base_kwargs={'recurrent': args.recurrent_policy,'fullstate_size': envs.state_size*envs.state_stack}
-    actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN[args.cnn],
-                         base_kwargs=base_kwargs)
+    base_kwargs={'recurrent': args.recurrent_policy}
+    if args.state: base_kwargs['fullstate_size'] = envs.state_size*envs.state_stack
+    actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs)
 
     if args.restart_model:
         actor_critic.load_state_dict(torch.load(args.restart_model, map_location=device))
@@ -158,6 +158,7 @@ def get_args():
         '--reduced-actions',action='store_true',default=False,help='Use reduced actions set')
     args = parser.parse_args()
     args.log_dir = os.path.expanduser(args.log_dir)
+    args.state = args.cnn=='State'
     return args
 
 if __name__ == "__main__":

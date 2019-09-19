@@ -17,7 +17,7 @@ from animalai.envs.gym.environment import ActionFlattener
 from ppo.envs import FrameSkipEnv,TransposeImage
 from PIL import Image
 
-def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed):
+def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed, state):
     base_port = random.randint(0,100)+100*seed  # avoid collisions
     def make_env(rank):
         def _thunk():
@@ -34,7 +34,9 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
                 env = FilterActionEnv(env)
             env = LabAnimal(env,arenas_dir)
             env = RewardShaping(env)
-            env = Stateful(env)
+            
+            if state:
+                env = Stateful(env)
 
             if frame_skip > 0: 
                 env = FrameSkipEnv(env, skip=frame_skip)

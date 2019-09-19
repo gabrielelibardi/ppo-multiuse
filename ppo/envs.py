@@ -38,7 +38,8 @@ def make_vec_envs(make,
 
     if num_frame_stack > 0:
         envs = VecPyTorchFrameStack(envs, num_frame_stack, device)
-    try:
+
+    try: #TODO: Ugly
         state_size = envs.envs[0].state_size
         state_stack = 2
         if state_size > 0:
