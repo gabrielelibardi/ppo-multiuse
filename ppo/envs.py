@@ -14,16 +14,7 @@ from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from baselines.common.vec_env.shmem_vec_env import ShmemVecEnv
 from baselines.common.vec_env.vec_normalize import  VecNormalize as VecNormalize_
 
-def make_vec_envs(make,
-                  seed,
-                  num_processes,
-                  gamma,
-                  log_dir,
-                  device,
-                  allow_early_resets,
-                  num_frame_stack,
-                  spaces=None):
-
+def make_vec_envs(make,num_processes,log_dir,device,num_frame_stack,state_size,state_stack,spaces=None):
 
     envs = [make(i)  for i in range(num_processes)    ]
 
@@ -39,22 +30,17 @@ def make_vec_envs(make,
     if num_frame_stack > 0:
         envs = VecPyTorchFrameStack(envs, num_frame_stack, device)
 
-    try: #TODO: Ugly
-        state_size = envs.envs[0].state_size
-        state_stack = 2
-        if state_size > 0:
-            envs = VecPyTorchStateStack(envs,state_size,state_stack)
-    except:
-        print('No state')
-        
+    if state_size > 0:
+        envs = VecPyTorchStateStack(envs,state_size,state_stack)
+    
     return envs
 
 class VecPyTorchStateStack(VecEnvWrapper):
     def __init__(self, envs, state_size, state_stack):
         super().__init__(envs)
         self.prev_states = np.zeros([envs.num_envs, state_stack, state_size], dtype=np.float32)
-        self.state_size = state_size
         self.state_stack = state_stack
+        self.state_size = state_size
 
     def reset(self):
         obses = self.venv.reset()  #TODO> really, I should also return vector obs here because they are available

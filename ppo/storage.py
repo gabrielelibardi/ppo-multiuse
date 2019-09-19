@@ -11,7 +11,7 @@ class RolloutStorage(object):
                  recurrent_hidden_state_size):
         if isinstance(obs,tuple):
             obs_shape = obs[0].shape[1:] #0 is for num_procs
-            states_size = obs[1].shape
+            states_size = obs[1].shape[1:]
             self.has_states = True
         else:
             obs_shape = obs.shape[1:]

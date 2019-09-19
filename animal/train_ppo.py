@@ -40,10 +40,14 @@ def main():
             reduced_actions=args.reduced_actions, seed=args.seed, state=args.state)
     #spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
     #               gym.spaces.Discrete(9) )
-    envs = make_vec_envs(env_make, args.seed, args.num_processes,
-                         args.gamma, args.log_dir, device, False, args.frame_stack)
-
+    if args.reduced_actions: #TODO: hugly hack
+        state_size = 13
+    else:
+        state_size = 15 
+    envs = make_vec_envs(env_make, args.num_processes, args.log_dir, device, args.frame_stack, state_size, args.state_stack)
+    
     base_kwargs={'recurrent': args.recurrent_policy}
+    
     if args.state: base_kwargs['fullstate_size'] = envs.state_size*envs.state_stack
     actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs)
 
@@ -147,7 +151,9 @@ def get_args():
     parser.add_argument(
         '--frame-skip',type=int,default=0,help='Number of frame to skip for each action')
     parser.add_argument(
-        '--frame-stack',type=int,default=4,help='Number of frame to stack in observation')              
+        '--frame-stack',type=int,default=4,help='Number of frame to stack in observation') 
+    parser.add_argument(
+        '--state-stack',type=int,default=4,help='Number of steps to stack in states')               
     parser.add_argument(
         '--realtime',action='store_true',default=False,help='If to plot in realtime. ')
     parser.add_argument(

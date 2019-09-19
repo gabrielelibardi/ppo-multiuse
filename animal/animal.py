@@ -124,11 +124,10 @@ class RewardShaping(gym.Wrapper):
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
 
-
+STATEFUL_BASE_SIZE = 1+3+1+1 # and hotbit for actions
 class Stateful(gym.Wrapper):
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
-        self.state_size = 1+3+1+1+self.action_space.n
         # self.observation_space = spaces.Dict(
         #         {'obs': env.observation_space,
         #          'timeleft': spaces.Box(low=0, high=1, shape=()),
