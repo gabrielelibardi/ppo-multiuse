@@ -10,7 +10,7 @@ ranges = {
 
 
 def distance(p0, p1):
-    return math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2 + (p0[2] - p1[2])**2)
+    return math.sqrt((p0[0] - p1[0])**2 + (p0[2] - p1[2])**2)
 
 
 def random_pos(with_respect_to_center=None):
@@ -38,7 +38,7 @@ def random_size(category):
     elif category in ['UObject', 'LObject', 'LObject2']:
         s = (random.randint(10, 50) / 10., random.randint(3, 20) / 10., random.randint(30, 200) / 10.)
     elif category in ['DeathZone', 'HotZone']:
-        s = (random.randint(10, 400) / 10., 0. , random.randint(10, 400) / 10.)
+        s = (random.randint(10, 100) / 10., 0. , random.randint(10, 100) / 10.)
 
     return s
 
