@@ -63,8 +63,9 @@ class LabAnimalCollect(gym.Wrapper):
         info['arena'] = self._arena_file
         info['arena_type'] = self._type
 
+        action_ = self.flattener.lookup_action(action)
         self._agent_pos, self._agent_rot = get_new_position(
-            action, info['vector_obs'], self._agent_pos, self._agent_rot)
+            action_, info['vector_obs'], self._agent_pos, self._agent_rot)
 
         info['agent_position'] = self._agent_pos
         info['agent_rotation'] = self._agent_rot
