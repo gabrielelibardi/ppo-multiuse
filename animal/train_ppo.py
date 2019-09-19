@@ -63,13 +63,11 @@ def main():
     agent = algo.PPOKL(actor_critic,args.clip_param,args.ppo_epoch, args.num_mini_batch,args.value_loss_coef,
             args.entropy_coef,lr=args.lr,eps=args.eps,max_grad_norm=args.max_grad_norm,actor_behaviors=actor_behaviors)
 
-
+    obs = envs.reset()
     rollouts = RolloutStorage(args.num_steps, args.num_processes,
-                              envs.observation_space.shape, envs.action_space,
+                              obs, envs.action_space,
                               actor_critic.recurrent_hidden_state_size)
 
-    obs = envs.reset()
-    rollouts.set_obs(0,obs)
 
     rollouts.to(device)  #they live in GPU, converted to torch from the env wrapper
 
