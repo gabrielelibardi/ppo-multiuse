@@ -157,7 +157,6 @@ class RolloutStorage(object):
             else:
                 adv_targ = advantages.view(-1, 1)[indices]
 
-            :
             inputs_batch =(obs_batch,states_batch) if self.states_size>0 else obs_batch
             yield inputs_batch, recurrent_hidden_states_batch, actions_batch, \
                 value_preds_batch, return_batch, masks_batch, old_action_log_probs_batch, adv_targ

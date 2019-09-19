@@ -119,8 +119,7 @@ def ppo_rollout(num_steps, envs, actor_critic, rollouts):
         # Sample actions
         with torch.no_grad():
             value, action, action_log_prob, recurrent_hidden_states, _ = actor_critic.act(
-                rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],
-                rollouts.masks[step])
+                rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
 
         # Obser reward and next obs
         obs, reward, done, infos = envs.step(action)

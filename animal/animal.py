@@ -35,7 +35,7 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
             env = LabAnimal(env,arenas_dir)
             env = RewardShaping(env)
             #
-            env = Stateful(env)
+            #env = Stateful(env)
 
             if frame_skip > 0: 
                 env = FrameSkipEnv(env, skip=frame_skip)
