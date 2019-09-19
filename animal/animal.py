@@ -2,7 +2,6 @@ import os
 import sys
 import gym
 import glob
-import uuid
 from os.path import join
 import random
 import numpy as np
@@ -17,7 +16,6 @@ from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import ActionFlattener
 from ppo.envs import FrameSkipEnv,TransposeImage
 from PIL import Image
-
 
 def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed):
     base_port = random.randint(0,100)+100*seed  # avoid collisions
@@ -102,51 +100,7 @@ class LabAnimal(gym.Wrapper):
         self.max_reward = analyze_arena(arena)
         self.max_time = arena.arenas[0].t
         return self.env.reset(arenas_configurations=arena,**kwargs)
-
-
-class LabAnimalPosition(gym.Wrapper):
-    def __init__(self, env, list_arenas, list_params):
-
-        gym.Wrapper.__init__(self, env)
-        self._num_arenas = len(list_arenas)
-        assert self._num_arenas == len(list_params)
-        self.list_arenas = list_arenas
-        self.list_params = list_params
-        self._arena_file = ''
-        self._type = None
-        self._env_steps = None
-        self._agent_pos = None
-
-    def step(self, action):
-        action = int(action)
-        obs, reward, done, info = self.env.step(action)
-
-        self._env_steps += 1
-        info['arena'] = self._arena_file
-        info['arena_type'] = self._type
-        info['agent_initial_position'] = self._agent_pos
-
-        return obs, reward, done, info
-
-    def reset(self, **kwargs):
-
-        # Create new arena
-        name = str(uuid.uuid4())
-        index = random.choice(range(self._num_arenas))
-        arena_func = self.list_arenas[index]
-        params = self.list_params[index]
-        arena_type, agent_pos = arena_func("/tmp/", name, **params)
-        self._arena_file, arena = ("/tmo/{}.yaml".format(name), ArenaConfig(
-            "/tmp/{}.yaml".format(name)))
-        os.remove("/tmp/{}.yaml".format(name))
-
-        self._type = arena_type
-        self._env_steps = 0
-        self._agent_pos = agent_pos
-
-        return self.env.reset(arenas_configurations=arena, **kwargs)
-
-
+        
 class RewardShaping(gym.Wrapper):
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
