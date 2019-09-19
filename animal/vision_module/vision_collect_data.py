@@ -36,9 +36,9 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000):
 
     obs_rollouts = []
     pos_rollouts = []
-    collected_samples = 0
 
-    for _ in range(num_samples):
+    t = tqdm.tqdm(range(num_samples))
+    for _ in t:
 
         obs = env.reset()
 
