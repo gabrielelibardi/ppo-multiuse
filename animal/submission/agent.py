@@ -23,16 +23,16 @@ class FakeAnimalEnv(gym.Env):
 
     def step(self, action_unused):
         self.steps += 1
-        self.env_reward += reward
+        self.env_reward += self.reward
         return self.obs,self.reward,self.done,self.info
 
-    def set_maxtime(self,maxtime):
-        self.maxtime = maxtime
+    def set_maxtime(self,max_time):
+        self.max_time = max_time
 
     def reset(self):
         self.steps = 0
         self.env_reward = 0
-        return np.zeros((84,84,3),dtype=np.float32)
+        return (np.zeros((84,84,3),dtype=np.float32),None)
 
 
 frame_skip = 2
