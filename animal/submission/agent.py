@@ -14,11 +14,7 @@ from gym.spaces import Box
 import gym
 
 class FakeAnimalEnv(gym.Env):
-    def __init__(self):
-        pass
-    #    self.action_space = self._flattener.action_space
-    #    self.observation_space = Box(0, 255,dtype=np.uint8,shape=(84, 84, 3))
-
+ 
     def set_step(self,obs,reward,done,info):
         self.obs = obs
         self.reward = reward
@@ -36,7 +32,7 @@ class FakeAnimalEnv(gym.Env):
     def reset(self):
         self.steps = 0
         self.env_reward = 0
-        
+        return np.zeros((84,84,3),dtype=np.float32)
 
 
 frame_skip = 2
