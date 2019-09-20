@@ -5,7 +5,7 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from vision_model import ImpalaCNNBase
 from vision_dataset import DatasetVision
-from vision_functions import loss_func
+from vision_functions import loss_func, plot_prediction
 
 
 def vision_train(model, epochs, log_dir):
@@ -65,6 +65,10 @@ def vision_train(model, epochs, log_dir):
             loss.backward()
             optimizer.step()
 
+        if epoch % 10 == 0:
+            figure = plot_prediction(pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+            writer.add_figure('figure_epoch_{}'.format(epoch), figure, epoch)
+
         if epoch % 100 == 0:
             model.save("{}/model_{}.lol".format(log_dir, epoch), net_parameters)
 
@@ -82,7 +86,7 @@ if __name__ == "__main__":
 
     import os
 
-    log_dir = "/home/abou/vae_logs"
+    log_dir = "/home/abou/vision_module_logs"
 
     if not os.path.isdir(log_dir):
         os.mkdir(log_dir)

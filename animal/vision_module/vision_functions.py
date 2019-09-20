@@ -6,7 +6,8 @@ import torch
 import random
 import animalai
 import numpy as np
-import torch.nn.functional as F
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import AnimalAIEnv
 from ppo.envs import TransposeImage
@@ -149,16 +150,43 @@ def pos_loss(pos1, pos2):
     pos1 = torch.clamp(pos1, 0, 40)
     pos2 = torch.clamp(pos2, 0, 40)
 
-    loss = torch.sqrt((pos1[:, 0] - pos2[:, 0]) ** 2 + (pos1[:, 1] - pos2[:, 1]) ** 2)
-    loss /= math.sqrt(40 ** 2 * 2)
+    loss = (pos1[:, 0] - pos2[:, 0]) ** 2 + (pos1[:, 1] - pos2[:, 1]) ** 2
+    loss /= 40 ** 2 * 2
 
     return loss.unsqueeze(-1)
+
 
 def rot_loss(rot1, rot2):
 
     aaa = abs(rot1 - rot2)
     bbb = torch.min(rot1, rot2) + 360
-    ccc = torch.min(aaa, abs(bbb - torch.max(rot1, rot2)))
-    ccc /= 180.
+    loss = torch.min(aaa, abs(bbb - torch.max(rot1, rot2)))
+    loss /= 180.
 
-    return ccc
+    return loss
+
+
+def plot_prediction(real_pos, real_rot, pred_pos, pred_rot):
+
+    real_pos = torch.clamp(real_pos[0, :], 0, 40).cpu().detach().numpy()
+    pred_pos = torch.clamp(pred_pos[0, :], 0, 40).cpu().detach().numpy()
+
+    fig = plt.figure(figsize=(40, 40), dpi=4)
+    gs = gridspec.GridSpec(1, 1)
+    gs.update(wspace=0., hspace=0., left=0., right=1., bottom=0., top=1.)
+
+    ax1 = plt.subplot(gs[0, 0])
+    plt.tick_params(
+        axis='both',
+        which='both',
+        bottom=False,
+        top=False,
+        left=False,
+        labelbottom=False,
+        labelleft=False)
+
+    ax1.scatter(real_pos, color='r')
+    ax1.scatter(pred_pos, color='b')
+
+    return fig
+
