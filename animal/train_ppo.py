@@ -47,7 +47,6 @@ def main():
     envs = make_vec_envs(env_make, args.num_processes, args.log_dir, device, args.frame_stack, state_size, args.state_stack)
     
     base_kwargs={'recurrent': args.recurrent_policy}
-    
     if args.state: base_kwargs['fullstate_size'] = envs.state_size*envs.state_stack
     actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs)
 
@@ -157,7 +156,7 @@ def get_args():
     parser.add_argument(
         '--realtime',action='store_true',default=False,help='If to plot in realtime. ')
     parser.add_argument(
-        '--cnn',default='Fixup',help='Type of cnn. Options are CNN,Impala,Fixup') 
+        '--cnn',default='Fixup',help='Type of cnn. Options are CNN,Impala,Fixup,State') 
     parser.add_argument(
         '--arenas-dir',default=None,help='directory where the yamls files for the environemnt are (default: None)')   
     parser.add_argument(
