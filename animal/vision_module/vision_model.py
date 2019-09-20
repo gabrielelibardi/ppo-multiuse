@@ -43,21 +43,19 @@ class NNBase(nn.Module):
     def output_size(self):
         return self._hidden_size
 
+
 class ImpalaCNNBase(NNBase):
     def __init__(self, num_inputs, recurrent=False, hidden_size=256, image_size=84):
         super(ImpalaCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
 
+        self.num_inputs = num_inputs
+        self.image_size = image_size
         self.main = ImpalaCNN(image_size,num_inputs,hidden_size)
-
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
-
         self.critic_linear = init_(nn.Linear(hidden_size, 3))
-
-        self.train()
 
     def forward(self, inputs, rnn_hxs):
         x = self.main(inputs / 255.0)
-
         if self.is_recurrent:
             x, rnn_hxs = self.gru(x, rnn_hxs)
 
@@ -74,6 +72,7 @@ class ImpalaCNNBase(NNBase):
             tar.add(name, arcname="state.torch")
             shutil.rmtree(temporary_directory)
         return filename
+
 
 class ImpalaCNN(nn.Module):
     """
@@ -98,11 +97,21 @@ class ImpalaCNN(nn.Module):
         self.linear = init_(nn.Linear(math.ceil(image_size / 8) ** 2 * depth_in, hidden_size))
 
     def forward(self, x):
+
+        batch_size = x.shape[0]
+        sequence_len = x.shape[1]
+        chennels = x.shape[2]
+        height = x.shape[3]
+        width = x.shape[4]
+
+        x = x.view(batch_size*sequence_len, chennels, height, width)
         x = self.conv_layers(x)
         x = F.relu(x)
         x = x.view(x.shape[0], -1)
         x = self.linear(x)
         x = F.relu(x)
+        x = x.view(batch_size, sequence_len, -1)
+
         return x
 
 

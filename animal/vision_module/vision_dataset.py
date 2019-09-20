@@ -56,7 +56,7 @@ class DatasetVisionRecurrent(Dataset):
         self.positions = data['positions']
         self.rotations = data['rotations']
         self.frames_per_episode = data['frames_per_episode']
-        self.num_samples = self.observations.shape[0] // self.frames_per_episode
+        self.num_samples = (self.observations.shape[0] // self.frames_per_episode) - 1
 
 
     def __len__(self):
@@ -64,7 +64,7 @@ class DatasetVisionRecurrent(Dataset):
 
     def __getitem__(self, idx):
         obs = self.observations[idx:idx + 20, :, :, :]
-        pos = self.positions[idx:idx + 20, ::1][0:3:2]
+        pos = self.positions[idx:idx + 20, 0:3:2]
         rot = self.rotations[idx:idx + 20, :]
         return (torch.FloatTensor(obs),
                 torch.FloatTensor(pos), torch.FloatTensor(rot))

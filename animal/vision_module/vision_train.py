@@ -7,21 +7,22 @@ from vision_dataset import DatasetVision, DatasetVisionRecurrent
 from vision_functions import loss_func, plot_prediction
 
 
-def vision_train(model, epochs, log_dir):
+def vision_train(model, epochs, log_dir, train_data, test_data, batch_size=32):
 
     # Define logger
     writer = SummaryWriter(log_dir, flush_secs=5)
 
     # Get data
-    dataset_train = DatasetVisionRecurrent("/home/abou/train_position_data.npz")
-    dataset_test = DatasetVisionRecurrent("/home/abou/test_position_data.npz")
+    dataset_train = DatasetVisionRecurrent(train_data)
+    dataset_test = DatasetVisionRecurrent(test_data)
 
     # Define dataloader
     dataloader_parameters = {
         "num_workers": 0,
         "shuffle": True,
         "pin_memory": True,
-        "batch_size": 128,
+        "batch_size": batch_size,
+        "drop_last": True
     }
 
     dataloader_train = DataLoader(dataset_train, **dataloader_parameters)
@@ -32,9 +33,6 @@ def vision_train(model, epochs, log_dir):
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5, patience=5)
     model.to(device)
 
-    recurrent_hidden_states = torch.zeros(
-        1, model.recurrent_hidden_state_size).to(device)
-
     for epoch in range(epochs):
 
         print('Epoch {}'.format(epoch))
@@ -43,21 +41,23 @@ def vision_train(model, epochs, log_dir):
         t = tqdm.tqdm(dataloader_train)
         for idx, data in enumerate(t):
 
+            recurrent_hidden_states = torch.zeros(
+                1, batch_size, model.recurrent_hidden_state_size).to(device)
+
             if idx != 0:
                 t.set_postfix(train_loss=avg_loss)
 
-            images, pos, rot, masks = data
+            images, pos, rot = data
 
             images = images.to(device)
-            pos = pos.to(device)
-            rot = rot.to(device)
-            masks = masks.to(device)
+            pos = pos.view(-1, 2).to(device)
+            rot = rot.view(-1, 1).to(device)
 
             optimizer.zero_grad()
             pred_position, hx = model(
-                masks=masks,
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
+            pred_position = pred_position.view(-1, 3)
 
             loss = loss_func(
                 pos, rot, pred_position[:, 0:2], pred_position[:, -1])
@@ -75,6 +75,8 @@ def vision_train(model, epochs, log_dir):
         scheduler.step(avg_loss)
 
         if epoch % 10 == 0:
+            images = images.view(
+                -1, model.num_inputs, model.image_size, model.image_size)
             figure = plot_prediction(
                 images, pos, rot, pred_position[:, 0:2], pred_position[:, -1])
             writer.add_figure(
@@ -83,26 +85,28 @@ def vision_train(model, epochs, log_dir):
         writer.add_scalar('train_loss', avg_loss, epoch)
         writer.add_scalar('lr', optimizer.param_groups[0]['lr'], epoch)
 
-        model.eval()
+        model.train()
         epoch_loss = 0
         t = tqdm.tqdm(dataloader_test)
         for idx, data in enumerate(t):
 
+            recurrent_hidden_states = torch.zeros(
+                1, batch_size, model.recurrent_hidden_state_size).to(device)
+
             if idx != 0:
                 t.set_postfix(test_loss=avg_loss)
 
-            images, pos, rot, masks = data
+            images, pos, rot = data
 
             images = images.to(device)
-            pos = pos.to(device)
-            rot = rot.to(device)
-            masks = masks.to(device)
+            pos = pos.view(-1, 2).to(device)
+            rot = rot.view(-1, 1).to(device)
 
             optimizer.zero_grad()
             pred_position, hx = model(
-                masks=masks,
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
+            pred_position = pred_position.view(-1, 3)
 
             loss = loss_func(
                 pos, rot, pred_position[:, 0:2], pred_position[:, -1])
@@ -112,6 +116,8 @@ def vision_train(model, epochs, log_dir):
             avg_loss = epoch_loss / (idx + 1)
 
         if epoch % 10 == 0:
+            images = images.view(
+                -1, model.num_inputs, model.image_size, model.image_size)
             figure = plot_prediction(
                 images, pos, rot, pred_position[:, 0:2], pred_position[:, -1])
             writer.add_figure(
@@ -138,4 +144,8 @@ if __name__ == "__main__":
 
     model = ImpalaCNNBase(**net_parameters)
 
-    vision_train(model, 5000, log_dir)
+    vision_train(
+        model, 5000, log_dir,
+        train_data="/home/abou/train_position_data.npz",
+        test_data="/home/abou/test_position_data.npz",
+    )
