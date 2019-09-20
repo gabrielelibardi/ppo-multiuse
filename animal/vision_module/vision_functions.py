@@ -1,9 +1,12 @@
 import os
 import gym
 import uuid
+import math
+import torch
 import random
 import animalai
 import numpy as np
+import torch.nn.functional as F
 from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import AnimalAIEnv
 from ppo.envs import TransposeImage
@@ -131,3 +134,22 @@ def get_new_position(action, speed, current_pos, current_rot):
     current_pos += (step * speed * direction)
 
     return current_pos, current_rot
+
+
+def loss_func(real_pos, real_rot, pred_pos, pred_rot):
+
+    import ipdb; ipdb.set_trace()
+    pos_term = F.mse_loss(real_pos, pred_pos, reduction='sum') / math.sqrt(40**2*2)
+    rot_term = rot_loss(real_rot, pred_rot)
+
+    return pos_term + rot_term
+
+
+def rot_loss(rot1, rot2):
+
+    aaa = abs(rot1 - rot2)
+    bbb = min(rot1, rot2) + 360
+    ccc = min(aaa, abs(bbb - max(rot1, rot2)))
+    ccc /= 180.
+
+    return ccc

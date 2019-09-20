@@ -12,7 +12,7 @@ from ppo.model import Policy, FixupCNNBase
 from vision_functions import make_animal_env
 
 
-def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000):
+def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000, frames_episode=20):
 
     args.det = not args.non_det
     device = torch.device(args.device)
@@ -22,7 +22,7 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000):
     env = make_vec_envs(
         make=maker, seed=0, num_processes=1, gamma=None,
         device=device, log_dir=None, allow_early_resets=True,
-        num_frame_stack=args.frame_stack)
+        num_frame_stack=1)
 
     actor_critic = Policy(
         env.observation_space.shape, env.action_space,
@@ -34,15 +34,16 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000):
         1, actor_critic.recurrent_hidden_state_size).to(device)
     masks = torch.zeros(1, 1).to(device)
 
-    obs_rollouts = []
-    pos_rollouts = []
+    obs_rollouts = np.zeros([num_samples, 3, 84, 84])
+    pos_rollouts = np.zeros([num_samples, 3])
+    rot_rollouts = np.zeros([num_samples, 1])
 
-    t = tqdm.tqdm(range(num_samples))
-    for _ in t:
+    t = tqdm.tqdm(range(num_samples // frames_episode))
+    for episode_num in t:
 
         obs = env.reset()
 
-        for step in range(30):
+        for step in range(frames_episode + 10):
 
             with torch.no_grad():
                 _, action, _, _, _ = actor_critic.act(
@@ -55,15 +56,19 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000):
             # Observation reward and next obs
             obs, reward, done, info = env.step(action)
 
-            if step > 10:
-                obs_rollouts.append(obs)
-                pos_rollouts.append(info['agent_position'])
+            if step >= 10:
+                idx = episode_num * 20 + step - 10
+                obs_rollouts[idx, :, :, :] = obs[0].cpu().numpy()
+                pos_rollouts[idx, :] = info[0]['agent_position']
+                rot_rollouts[idx, :] = info[0]['agent_rotation']
 
             masks.fill_(0.0 if done else 1.0)
 
     np.savez(target_dir + "/position_data",
              observations=np.array(obs_rollouts),
-             positions=pos_rollouts)
+             positions=pos_rollouts,
+             rotations=rot_rollouts,
+             frames_per_episode=frames_episode)
 
 if __name__ == "__main__":
 
@@ -93,8 +98,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--frame-skip', type=int, default=0,
         help='Number of frame to skip for each action')
-    parser.add_argument(
-        '--frame-stack', type=int, default=4, help='Number of frame to stack')
+
     args = parser.parse_args()
 
     collect_data(
