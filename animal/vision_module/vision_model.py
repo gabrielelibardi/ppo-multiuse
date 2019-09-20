@@ -1,12 +1,17 @@
-import numpy as np
-import torch
-import os
 import math
+import json
+import shutil
+import tarfile
+import tempfile
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ppo.distributions import Bernoulli, Categorical, DiagGaussian
-from ppo.utils import init
+
+def init(module, weight_init, bias_init, gain=1):
+    weight_init(module.weight.data, gain=gain)
+    bias_init(module.bias.data)
+    return module
 
 
 class NNBase(nn.Module):
@@ -102,6 +107,10 @@ class ImpalaCNNBase(NNBase):
 
         self.main = ImpalaCNN(image_size,num_inputs,hidden_size)
 
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
+
+        self.critic_linear = init_(nn.Linear(hidden_size, 3))
+
         self.train()
 
     def forward(self, inputs, rnn_hxs, masks):
@@ -110,7 +119,19 @@ class ImpalaCNNBase(NNBase):
         if self.is_recurrent:
             x, rnn_hxs = self._forward_gru(x, rnn_hxs, masks)
 
-        return x, rnn_hxs
+        return self.critic_linear(x), rnn_hxs
+
+    def save(self, filename, net_parameters):
+        with tarfile.open(filename, "w") as tar:
+            temporary_directory = tempfile.mkdtemp()
+            name = "{}/net_params.json".format(temporary_directory)
+            json.dump(net_parameters, open(name, "w"))
+            tar.add(name, arcname="net_params.json")
+            name = "{}/state.torch".format(temporary_directory)
+            torch.save(self.state_dict(), name)
+            tar.add(name, arcname="state.torch")
+            shutil.rmtree(temporary_directory)
+        return filename
 
 class ImpalaCNN(nn.Module):
     """

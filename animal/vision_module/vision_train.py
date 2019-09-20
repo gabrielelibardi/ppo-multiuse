@@ -2,9 +2,8 @@ import torch
 import time
 import tqdm
 from tensorboardX import SummaryWriter
-from torch.nn import ConstantPad2d
 from torch.utils.data import DataLoader
-from ppo.model import ImpalaCNNBase
+from vision_model import ImpalaCNNBase
 from vision_dataset import DatasetVision
 from vision_functions import loss_func
 
@@ -15,7 +14,7 @@ def vision_train(model, epochs, log_dir):
     writer = SummaryWriter(log_dir, flush_secs=5)
 
     # Get data
-    dataset = DatasetVision(".../recordings.npz")
+    dataset = DatasetVision("/home/abou/position_data.npz")
 
     # Define dataloader
     dataloader_parameters = {
@@ -48,6 +47,7 @@ def vision_train(model, epochs, log_dir):
             images = images.to(device)
             pos = pos.to(device)
             rot = rot.to(device)
+            masks = masks.to(device)
 
             optimizer.zero_grad()
             pred_position, hx = model(
@@ -55,9 +55,8 @@ def vision_train(model, epochs, log_dir):
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
 
-            import ipdb; ipdb.set_trace()
-
-            loss = loss_func(recon_images, images, mu, logvar)
+            loss = loss_func(
+                pos, rot, pred_position[:, 0:2], pred_position[:, -1])
 
             train_loss = loss.item()
             epoch_loss += train_loss
@@ -67,7 +66,7 @@ def vision_train(model, epochs, log_dir):
             optimizer.step()
 
         if epoch % 100 == 0:
-            model.save("{}/vae_{}.lol".format(log_dir, epoch), net_parameters)
+            model.save("{}/model_{}.lol".format(log_dir, epoch), net_parameters)
 
         end = time.process_time()
         scheduler.step(avg_loss)

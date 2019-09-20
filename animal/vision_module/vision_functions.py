@@ -138,18 +138,27 @@ def get_new_position(action, speed, current_pos, current_rot):
 
 def loss_func(real_pos, real_rot, pred_pos, pred_rot):
 
-    import ipdb; ipdb.set_trace()
-    pos_term = F.mse_loss(real_pos, pred_pos, reduction='sum') / math.sqrt(40**2*2)
-    rot_term = rot_loss(real_rot, pred_rot)
+    pos_term = pos_loss(real_pos, pred_pos)
+    rot_term = rot_loss(real_rot, pred_rot.unsqueeze(-1))
 
-    return pos_term + rot_term
+    return torch.mean(pos_term + rot_term)
 
+
+def pos_loss(pos1, pos2):
+
+    pos1 = torch.clamp(pos1, 0, 40)
+    pos2 = torch.clamp(pos2, 0, 40)
+
+    loss = torch.sqrt((pos1[:, 0] - pos2[:, 0]) ** 2 + (pos1[:, 1] - pos2[:, 1]) ** 2)
+    loss /= math.sqrt(40 ** 2 * 2)
+
+    return loss.unsqueeze(-1)
 
 def rot_loss(rot1, rot2):
 
     aaa = abs(rot1 - rot2)
-    bbb = min(rot1, rot2) + 360
-    ccc = min(aaa, abs(bbb - max(rot1, rot2)))
+    bbb = torch.min(rot1, rot2) + 360
+    ccc = torch.min(aaa, abs(bbb - torch.max(rot1, rot2)))
     ccc /= 180.
 
     return ccc
