@@ -64,7 +64,7 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000, f
 
             masks.fill_(0.0 if done else 1.0)
 
-    np.savez(target_dir + "/position_data",
+    np.savez(target_dir,
              observations=np.array(obs_rollouts),
              positions=pos_rollouts,
              rotations=rot_rollouts,
@@ -102,7 +102,30 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     collect_data(
-        target_dir, args, num_samples=1000,
+        target_dir + "train_position_data.npy",
+        args, num_samples=80000,
+        list_arenas=[
+            create_c1_arena,
+            create_c2_arena,
+            create_c3_arena,
+            create_c4_arena,
+            create_c5_arena,
+            create_c6_arena,
+            create_c7_arena,
+        ],
+        list_params=[
+            {"max_reward": 5, "time": 250},
+            {"max_reward": 5, "time": 250},
+            {"time": 250, "num_movable": 1, "num_immovable": 1},
+            {"time": 250, "num_red_zones": 8, "max_orange_zones": 3},
+            {"time": 250},
+            {"time": 250},
+            {"time": 250},
+        ])
+
+    collect_data(
+        target_dir + "test_position_data.npy",
+        args, num_samples=10000,
         list_arenas=[
             create_c1_arena,
             create_c2_arena,

@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+
 class DatasetVision(Dataset):
     """
     Creates a dataset to train a VAE.
@@ -37,3 +38,33 @@ class DatasetVision(Dataset):
 
         return (torch.FloatTensor(obs), torch.FloatTensor(pos),
                 torch.FloatTensor(rot), mask)
+
+
+class DatasetVisionRecurrent(Dataset):
+    """
+    Creates a dataset to train a VAE.
+    """
+
+    def __init__(
+            self,
+            data_filename,
+    ):
+
+        data = np.load(data_filename)
+
+        self.observations = data['observations']
+        self.positions = data['positions']
+        self.rotations = data['rotations']
+        self.frames_per_episode = data['frames_per_episode']
+        self.num_samples = self.observations.shape[0] // self.frames_per_episode
+
+
+    def __len__(self):
+        return self.num_samples
+
+    def __getitem__(self, idx):
+        obs = self.observations[idx:idx + 20, :, :, :]
+        pos = self.positions[idx:idx + 20, ::1][0:3:2]
+        rot = self.rotations[idx:idx + 20, :]
+        return (torch.FloatTensor(obs),
+                torch.FloatTensor(pos), torch.FloatTensor(rot))

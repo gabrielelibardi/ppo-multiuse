@@ -166,16 +166,24 @@ def rot_loss(rot1, rot2):
     return loss
 
 
-def plot_prediction(real_pos, real_rot, pred_pos, pred_rot):
+def plot_prediction(obs, real_pos, real_rot, pred_pos, pred_rot):
 
+    obs = obs[0, :, :, :].permute(1, 2, 0).cpu().detach().numpy()
     real_pos = torch.clamp(real_pos[0, :], 0, 40).cpu().detach().numpy()
     pred_pos = torch.clamp(pred_pos[0, :], 0, 40).cpu().detach().numpy()
 
-    fig = plt.figure(figsize=(40, 40), dpi=4)
-    gs = gridspec.GridSpec(1, 1)
-    gs.update(wspace=0., hspace=0., left=0., right=1., bottom=0., top=1.)
+    fig = plt.figure()
+    gs = gridspec.GridSpec(1, 2)
+    gs.update(wspace=0.1, hspace=0.1, left=0.1, right=0.9, bottom=0.1, top=0.9)
 
     ax1 = plt.subplot(gs[0, 0])
+    plt.ylim(0, 40)
+    plt.xlim(0, 40)
+    ax1.scatter(real_pos[0], real_pos[1], color='r')
+    ax1.scatter(pred_pos[0], pred_pos[1], color='b')
+    plt.legend(['real', 'pred'])
+
+    ax2 = plt.subplot(gs[0, 1])
     plt.tick_params(
         axis='both',
         which='both',
@@ -184,9 +192,7 @@ def plot_prediction(real_pos, real_rot, pred_pos, pred_rot):
         left=False,
         labelbottom=False,
         labelleft=False)
-
-    ax1.scatter(real_pos, color='r')
-    ax1.scatter(pred_pos, color='b')
+    ax2.imshow(obs / 255.)
 
     return fig
 

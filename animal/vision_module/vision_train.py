@@ -1,10 +1,9 @@
-import torch
-import time
 import tqdm
+import torch
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from vision_model import ImpalaCNNBase
-from vision_dataset import DatasetVision
+from vision_dataset import DatasetVision, DatasetVisionRecurrent
 from vision_functions import loss_func, plot_prediction
 
 
@@ -14,7 +13,8 @@ def vision_train(model, epochs, log_dir):
     writer = SummaryWriter(log_dir, flush_secs=5)
 
     # Get data
-    dataset = DatasetVision("/home/abou/position_data.npz")
+    dataset_train = DatasetVisionRecurrent("/home/abou/train_position_data.npz")
+    dataset_test = DatasetVisionRecurrent("/home/abou/test_position_data.npz")
 
     # Define dataloader
     dataloader_parameters = {
@@ -23,7 +23,9 @@ def vision_train(model, epochs, log_dir):
         "pin_memory": True,
         "batch_size": 128,
     }
-    dataloader_train = DataLoader(dataset, **dataloader_parameters)
+
+    dataloader_train = DataLoader(dataset_train, **dataloader_parameters)
+    dataloader_test = DataLoader(dataset_test, **dataloader_parameters)
 
     device = torch.device("cuda:0")
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
@@ -34,8 +36,10 @@ def vision_train(model, epochs, log_dir):
         1, model.recurrent_hidden_state_size).to(device)
 
     for epoch in range(epochs):
+
+        print('Epoch {}'.format(epoch))
+        model.train()
         epoch_loss = 0
-        start = time.process_time()
         t = tqdm.tqdm(dataloader_train)
         for idx, data in enumerate(t):
 
@@ -65,21 +69,55 @@ def vision_train(model, epochs, log_dir):
             loss.backward()
             optimizer.step()
 
-        if epoch % 10 == 0:
-            figure = plot_prediction(pos, rot, pred_position[:, 0:2], pred_position[:, -1])
-            writer.add_figure('figure_epoch_{}'.format(epoch), figure, epoch)
-
         if epoch % 100 == 0:
             model.save("{}/model_{}.lol".format(log_dir, epoch), net_parameters)
 
-        end = time.process_time()
         scheduler.step(avg_loss)
 
-        print("Epoch[{}/{}] Loss: {:.3f} Time: {}".format(epoch+1,epochs, avg_loss,end-start))
-        print("Learning rate {}".format(optimizer.param_groups[0]['lr']))
+        if epoch % 10 == 0:
+            figure = plot_prediction(
+                images, pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+            writer.add_figure(
+                'train_figure_epoch_{}'.format(epoch), figure, epoch)
 
-        writer.add_scalar('loss', avg_loss, epoch)
+        writer.add_scalar('train_loss', avg_loss, epoch)
         writer.add_scalar('lr', optimizer.param_groups[0]['lr'], epoch)
+
+        model.eval()
+        epoch_loss = 0
+        t = tqdm.tqdm(dataloader_test)
+        for idx, data in enumerate(t):
+
+            if idx != 0:
+                t.set_postfix(test_loss=avg_loss)
+
+            images, pos, rot, masks = data
+
+            images = images.to(device)
+            pos = pos.to(device)
+            rot = rot.to(device)
+            masks = masks.to(device)
+
+            optimizer.zero_grad()
+            pred_position, hx = model(
+                masks=masks,
+                inputs=images,
+                rnn_hxs=recurrent_hidden_states)
+
+            loss = loss_func(
+                pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+
+            train_loss = loss.item()
+            epoch_loss += train_loss
+            avg_loss = epoch_loss / (idx + 1)
+
+        if epoch % 10 == 0:
+            figure = plot_prediction(
+                images, pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+            writer.add_figure(
+                'test_figure_epoch_{}'.format(epoch), figure, epoch)
+
+        writer.add_scalar('test_loss', avg_loss, epoch)
 
 
 if __name__ == "__main__":
@@ -93,7 +131,7 @@ if __name__ == "__main__":
 
     net_parameters = {
         'num_inputs': 3,
-        'recurrent': False,
+        'recurrent': True,
         'hidden_size': 256,
         'image_size': 84
     }
