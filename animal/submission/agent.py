@@ -2,9 +2,9 @@ import sys
 sys.path.append('.')
 import torch
 from ppo.model import Policy
-from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase
-from ppo.envs import  VecPyTorch, VecPyTorchFrameStack, FrameSkipEnv, TransposeImage
-from wrappers import RetroEnv,Stateful,FilterActionEnv
+from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase
+from ppo.envs import  VecPyTorch, VecPyTorchFrameStack, FrameSkipEnv, TransposeImage, VecPyTorchStateStack
+from ppo.wrappers import RetroEnv,Stateful,FilterActionEnv
 from animalai.envs.gym.environment import ActionFlattener
 from PIL import Image
 from ppo.envs import VecPyTorchFrameStack, TransposeImage, VecPyTorch
@@ -14,7 +14,8 @@ from gym.spaces import Box
 import gym
 
 class FakeAnimalEnv(gym.Env):
-    #def __init__(self):
+    def __init__(self):
+        pass
     #    self.action_space = self._flattener.action_space
     #    self.observation_space = Box(0, 255,dtype=np.uint8,shape=(84, 84, 3))
 
@@ -29,11 +30,14 @@ class FakeAnimalEnv(gym.Env):
         self.env_reward += reward
         return self.obs,self.reward,self.done,self.info
 
-    def reset(self,t, **kwargs):
+    def set_maxtime(self,maxtime):
+        self.maxtime = maxtime
+
+    def reset(self):
         self.steps = 0
         self.env_reward = 0
-        self.max_time = t
-        return None
+        
+
 
 frame_skip = 2
 frame_stack = 2
@@ -64,16 +68,17 @@ class Agent(object):
         envs = DummyVecEnv([make_env])
         envs = VecPyTorch(envs, device)
         envs = VecPyTorchFrameStack(envs, frame_stack, device)
-        if args.reduced_actions: #TODO: hugly hack
+        if reduced_actions: #TODO: hugly hack
             state_size = 13
         else:
-            state_size = 15 
+            state_size = 15
         if state_stack > 0:
-            self.envs = VecPyTorchStateStack(envs,state_size,state_stack)
+            envs = VecPyTorchStateStack(envs,state_size,state_stack)
+        self.envs = envs
         self.flattener = self.envs.unwrapped.envs[0].flattener
         # Load the configuration and model using *** ABSOLUTE PATHS ***
         self.model_path = '/aaio/data/animal.state_dict'
-        base_kwargs={'recurrent': args.recurrent_policy}
+        base_kwargs={'recurrent': True}
         base_kwargs['fullstate_size'] = envs.state_size*envs.state_stack
         self.policy = Policy(self.envs.observation_space.shape,self.envs.action_space,base=CNN,base_kwargs=base_kwargs)
         self.policy.load_state_dict(torch.load(self.model_path,map_location=device))
@@ -87,7 +92,8 @@ class Agent(object):
         Leave blank if nothing needs to happen there
         :param t the number of timesteps in the episode
         """
-        self.envs.reset(t)#set arena's time
+        self.envs.reset()
+        self.envs.unwrapped.envs[0].unwrapped.set_maxtime(t)
         self.recurrent_hidden_states = torch.zeros(1, self.policy.recurrent_hidden_state_size).to(self.device)
         self.masks = torch.zeros(1, 1).to(self.device)
 
@@ -104,4 +110,5 @@ class Agent(object):
         self.masks.fill_(1.0)
         action = self.flattener.lookup_action(int(action))
         return action
+
 
