@@ -57,7 +57,7 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000, f
             obs, reward, done, info = env.step(action)
 
             if step >= 10:
-                idx = episode_num * 20 + step - 10
+                idx = episode_num * frames_episode + step - 10
                 obs_rollouts[idx, :, :, :] = obs[0].cpu().numpy()
                 pos_rollouts[idx, :] = info[0]['agent_position']
                 rot_rollouts[idx, :] = info[0]['agent_rotation']
@@ -102,8 +102,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     collect_data(
-        target_dir + "train_position_data.npy",
-        args, num_samples=80000,
+        target_dir + "train_position_data",
+        args, num_samples=100000,
         list_arenas=[
             create_c1_arena,
             create_c2_arena,
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         ])
 
     collect_data(
-        target_dir + "test_position_data.npy",
+        target_dir + "test_position_data",
         args, num_samples=10000,
         list_arenas=[
             create_c1_arena,

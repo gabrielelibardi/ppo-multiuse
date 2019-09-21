@@ -30,14 +30,11 @@ class DatasetVision(Dataset):
 
     def __getitem__(self, idx):
         obs = self.observations[idx, :, :, :]
-        pos = self.positions[idx, ::1][0:3:2]
+        pos = self.positions[idx, 0:3:2]
         rot = self.rotations[idx, :]
-        mask = torch.zeros(1, 1) if (
-            idx % self.frames_per_episode == 0 and idx != 0) else torch.ones(
-            1, 1)
 
         return (torch.FloatTensor(obs), torch.FloatTensor(pos),
-                torch.FloatTensor(rot), mask)
+                torch.FloatTensor(rot))
 
 
 class DatasetVisionRecurrent(Dataset):
@@ -63,8 +60,14 @@ class DatasetVisionRecurrent(Dataset):
         return self.num_samples
 
     def __getitem__(self, idx):
-        obs = self.observations[idx:idx + 20, :, :, :]
-        pos = self.positions[idx:idx + 20, 0:3:2]
-        rot = self.rotations[idx:idx + 20, :]
+        obs = self.observations[
+              self.frames_per_episode * idx:self.frames_per_episode * idx +
+              self.frames_per_episode, :, :, :]
+        pos = self.positions[
+              self.frames_per_episode * idx:self.frames_per_episode * idx +
+              self.frames_per_episode, 0:3:2]
+        rot = self.rotations[
+              self.frames_per_episode * idx:self.frames_per_episode * idx +
+              self.frames_per_episode, :]
         return (torch.FloatTensor(obs),
                 torch.FloatTensor(pos), torch.FloatTensor(rot))

@@ -98,19 +98,23 @@ class ImpalaCNN(nn.Module):
 
     def forward(self, x):
 
-        batch_size = x.shape[0]
-        sequence_len = x.shape[1]
-        chennels = x.shape[2]
-        height = x.shape[3]
-        width = x.shape[4]
+        in_shape = x.shape
+        if len(in_shape) == 5:
+            batch_size = x.shape[0]
+            sequence_len = x.shape[1]
+            channels = x.shape[2]
+            height = x.shape[3]
+            width = x.shape[4]
+            x = x.view(batch_size*sequence_len, channels, height, width)
 
-        x = x.view(batch_size*sequence_len, chennels, height, width)
         x = self.conv_layers(x)
         x = F.relu(x)
         x = x.view(x.shape[0], -1)
         x = self.linear(x)
         x = F.relu(x)
-        x = x.view(batch_size, sequence_len, -1)
+
+        if len(in_shape) == 5:
+            x = x.view(batch_size, sequence_len, -1)
 
         return x
 

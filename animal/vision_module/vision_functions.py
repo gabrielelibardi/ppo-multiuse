@@ -139,10 +139,10 @@ def get_new_position(action, speed, current_pos, current_rot):
 
 def loss_func(real_pos, real_rot, pred_pos, pred_rot):
 
-    pos_term = pos_loss(real_pos, pred_pos)
-    rot_term = rot_loss(real_rot, pred_rot.unsqueeze(-1))
+    pos_term, pos_error = pos_loss(real_pos, pred_pos)
+    rot_term,  rot_error = rot_loss(real_rot, pred_rot.unsqueeze(-1))
 
-    return torch.mean(pos_term + rot_term)
+    return torch.mean(pos_term + rot_term), pos_error, rot_error
 
 
 def pos_loss(pos1, pos2):
@@ -150,20 +150,20 @@ def pos_loss(pos1, pos2):
     pos1 = torch.clamp(pos1, 0, 40)
     pos2 = torch.clamp(pos2, 0, 40)
 
-    loss = (pos1[:, 0] - pos2[:, 0]) ** 2 + (pos1[:, 1] - pos2[:, 1]) ** 2
-    loss /= 40 ** 2 * 2
+    unnormalized_loss = (pos1[:, 0] - pos2[:, 0]) ** 2 + (pos1[:, 1] - pos2[:, 1]) ** 2
+    loss = unnormalized_loss / 40 ** 2 * 2
 
-    return loss.unsqueeze(-1)
+    return loss.unsqueeze(-1), torch.sqrt(torch.mean(unnormalized_loss))
 
 
 def rot_loss(rot1, rot2):
 
     aaa = abs(rot1 - rot2)
     bbb = torch.min(rot1, rot2) + 360
-    loss = torch.min(aaa, abs(bbb - torch.max(rot1, rot2)))
-    loss /= 180.
+    unnormalized_loss = torch.min(aaa, abs(bbb - torch.max(rot1, rot2)))
+    loss = unnormalized_loss / 180.
 
-    return loss
+    return loss, torch.mean(unnormalized_loss)
 
 
 def plot_prediction(obs, real_pos, real_rot, pred_pos, pred_rot):
