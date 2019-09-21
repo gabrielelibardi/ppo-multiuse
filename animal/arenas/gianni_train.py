@@ -24,7 +24,7 @@ movable_objects=['Cardbox1','Cardbox2','UObject','LObject','LObject2']
 zone_objects = ['DeathZone','HotZone']
 
 #time_limits = [250,500,1000]
-time_limits = [250,500]
+time_limits = [250,500,1000]
 
 def add_object(s, object_name, pos=None, size=None, RGB=None):
     s += "    - !Item \n      name: {} \n".format(object_name)
@@ -43,6 +43,8 @@ def add_object(s, object_name, pos=None, size=None, RGB=None):
         s+= "      sizes: \n      - !Vector3 {{x: {}, y: {}, z: {}}}\n".format(size[0],size[1],size[2])
     if RGB is not None:
         s+= "      colors: \n      - !RGB {{r: {}, g: {}, b: {}}}\n".format(RGB[0],RGB[1],RGB[2])
+    if size is None and object_name in reward_objects:
+        print("Warning: Reward without size")
     return s
 
 
@@ -84,8 +86,9 @@ def binomial_learning(narenas):
 
         #Rewards
         num_rewards = np.random.randint(0,10)
-        nums = np.random.binomial(num_rewards, [0.01,0.05,0.6,0.1,0.2,0.1] )
-        nums[0] += 1 #always add at least 1 good reward
+        nums = np.random.binomial(num_rewards, [0.01,0.05,0.6,0.1,0.15,0.1] )
+        if num_movable+num_immovable>1 and nums.sum()==0: #if hard to see have one ball somewhere
+            nums[0]=1
         for i,n in enumerate(nums):
             for _ in range(n):
                 arena = add_object(arena,reward_objects[i],size=random_size_reward())    
@@ -94,91 +97,84 @@ def binomial_learning(narenas):
 
 def cv_learning():
     #Learn green ball
-    arena = add_object('','GoodGoal')
+    arena = add_object('','GoodGoal',size=random_size_reward())
     write_arena('C1_good1',time_limits, arena)
 
     #Learn green ball bouncing
-    arena = add_object('','GoodGoalBounce')
+    arena = add_object('','GoodGoalBounce',size=random_size_reward())
     write_arena('C1_goodbounce1',time_limits, arena)
 
     #Learn gold ball behavior
-    arena = add_object('','GoodMultiGoal')
-    arena = add_object(arena,'GoodMultiGoal')
+    arena = add_object('','GoodMultiGoal',size=random_size_reward())
+    arena = add_object(arena,'GoodMultiGoal',size=random_size_reward())
     write_arena('C1_goodmulti2',time_limits, arena)
 
     #Learn gold ball behavior bouncing
-    arena = add_object('','GoodMultiGoalBounce')
-    arena = add_object(arena,'GoodMultiGoalBounce')
+    arena = add_object('','GoodMultiGoalBounce',size=random_size_reward())
+    arena = add_object(arena,'GoodMultiGoalBounce',size=random_size_reward())
     write_arena('C1_goodmultibounce2',time_limits, arena)
 
     #Learn size matters
-    arena = add_object('','GoodGoal')
-    arena = add_object(arena,'GoodGoal')
+    arena = add_object('','GoodGoal',size=random_size_reward())
+    arena = add_object(arena,'GoodGoal',size=random_size_reward())
     write_arena('C1_good2', time_limits, arena)
 
     #Learn size matters bouncing
-    arena = add_object('','GoodGoalBounce')
-    arena = add_object(arena,'GoodGoalBounce')
+    arena = add_object('','GoodGoalBounce',size=random_size_reward())
+    arena = add_object(arena,'GoodGoalBounce',size=random_size_reward())
     write_arena('C1_goodbounce2', time_limits, arena)
 
     #Learn trade-off easy-more if moving is larger
-    arena = add_object('','GoodGoal')
-    arena = add_object(arena,'GoodGoalBounce')
+    arena = add_object('','GoodGoal',size=random_size_reward())
+    arena = add_object(arena,'GoodGoalBounce',size=random_size_reward())
     write_arena('C1_good_goodbounce', time_limits, arena)
 
     #Learn to prefer food that keeps you alive first
-    arena = add_object('','GoodGoal')
-    arena = add_object(arena,'GoodGoalMulti')
+    arena = add_object('','GoodGoal',size=random_size_reward())
+    arena = add_object(arena,'GoodGoalMulti',size=random_size_reward())
     write_arena('C1_good_goodmulti', time_limits, arena)
 
     #Learn to prefer food that keeps you alive first, even if harder to get
-    arena = add_object('','GoodGoal')
-    arena = add_object(arena,'GoodGoalMultiBounce')
+    arena = add_object('','GoodGoal',size=random_size_reward())
+    arena = add_object(arena,'GoodGoalMultiBounce',size=random_size_reward())
     write_arena('C1_good_goodmultibounce', time_limits, arena)
 
     #Learn to die early if nothing there
-    arena = add_object('','BadGoal')
+    arena = add_object('','BadGoal',size=random_size_reward())
+    arena = add_object('','BadGoal',size=random_size_reward())
     write_arena('C1_bad1',time_limits, arena)
 
     #Learn to die early if nothing there
-    arena = add_object('','BadGoalBounce')
+    arena = add_object('','BadGoalBounce',size=random_size_reward())
     write_arena('C1_badbounce1',time_limits, arena)
 
     #Learn to avoid red balls if there is food
-    arena = add_object('','BadGoal')
-    arena = add_object(arena,'GoodGoal')
+    arena = add_object('','BadGoal',size=random_size_reward())
+    arena = add_object(arena,'GoodGoal',size=random_size_reward())
     write_arena('C1_badgood2',time_limits, arena)
 
     #Learn to avoid red balls if there is food
-    arena = add_object('','BadGoal')
-    arena = add_object(arena,'GoodGoalMulti')
+    arena = add_object('','BadGoal',size=random_size_reward())
+    arena = add_object(arena,'GoodGoalMulti',size=random_size_reward())
     write_arena('C1_badgoodmulti2',time_limits, arena)
 
     #Learn to navigate around many bad
-    arena = add_object('','GoodGoal')
-    arena = add_object(arena,'BadGoal')
-    arena = add_object(arena,'BadGoal')
-    arena = add_object(arena,'BadGoal')
-    arena = add_object(arena,'BadGoal')
+    arena = add_object('','GoodGoal',size=random_size_reward())
+    arena = add_object(arena,'BadGoal',size=random_size_reward())
+    arena = add_object(arena,'BadGoal',size=random_size_reward())
+    arena = add_object(arena,'BadGoal',size=random_size_reward())
+    arena = add_object(arena,'BadGoal',size=random_size_reward())
     write_arena('C1_manybad',time_limits, arena)
 
     #Learn to navigate around many bad
-    arena = add_object('','GoodGoal')
-    arena = add_object(arena,'BadGoalBounce')
-    arena = add_object(arena,'BadGoalBounce')
-    arena = add_object(arena,'BadGoalBounce')
-    arena = add_object(arena,'BadGoalBounce')
-    write_arena('C1_manybadbounce',time_limits, arena)
-
-    #Learn to navigate around many bad
-    arena = add_object('','GoodGoal')
-    arena = add_object(arena,'GoodGoalMulti')
-    arena = add_object(arena,'GoodGoalMulti')
-    arena = add_object(arena,'GoodGoalMulti')
-    arena = add_object(arena,'GoodGoalMulti')
-    arena = add_object(arena,'BadGoalBounce')
-    arena = add_object(arena,'BadGoalBounce')
+    arena = add_object('','GoodGoal',size=random_size_reward())
+    arena = add_object(arena,'BadGoalBounce',size=random_size_reward())
+    arena = add_object(arena,'BadGoalBounce',size=random_size_reward())
+    arena = add_object(arena,'BadGoalBounce',size=random_size_reward())
+    arena = add_object(arena,'BadGoalBounce',size=random_size_reward())
     write_arena('C1_manybadbounce',time_limits, arena)
 
 
-binomial_learning(30000)
+
+binomial_learning(5000)
+#cv_learning()
