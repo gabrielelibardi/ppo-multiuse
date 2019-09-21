@@ -34,7 +34,7 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
             if reduced_actions:
                 env = FilterActionEnv(env)
             env = LabAnimal(env,arenas_dir)
-            env = RewardShaping(env)
+            #env = RewardShaping(env)
             
             if state:
                 env = Stateful(env)
@@ -63,17 +63,24 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
 def analyze_arena(arena):
     tot_reward = 0
     max_good = 0
+    max_bad = -10
     for i in arena.arenas[0].items:
         if i.name in ['GoodGoal','GoodGoalBounce']:
             if len(i.sizes)==0: #arena max cannot be computed
                 return -1
             max_good = max(i.sizes[0].x,max_good)
+        if i.name in ['BadGoal','BadGoalBounce']:
+            if len(i.sizes)==0: #arena max cannot be computed
+                return -1
+            max_bad = max(i.sizes[0].x,max_bad)        
         if i.name in ['GoodGoalMulti','GoodGoalMultiBounce']:
             if len(i.sizes)==0: #arena max cannot be computed
                 return -1
             tot_reward += i.sizes[0].x  
 
     tot_reward += max_good
+    if tot_reward == 0:
+        tot_reward = max_bad  #optimal is to die
     return tot_reward
 
 
