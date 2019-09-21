@@ -85,9 +85,9 @@ def binomial_learning(narenas):
                     arena = add_object(arena,zone_objects[i],size=random_size_zone())
 
         #Rewards
-        num_rewards = np.random.randint(0,10)
-        nums = np.random.binomial(num_rewards, [0.01,0.05,0.6,0.1,0.15,0.1] )
-        if num_movable+num_immovable>1 and nums.sum()==0: #if hard to see have one ball somewhere
+        num_rewards = np.random.randint(1,10)
+        nums = np.random.binomial(num_rewards, [0.01,0.05,0.5,0.1,0.15,0.1] )
+        if  nums[[0,1,4,5]].sum()==0: 
             nums[0]=1
         for i,n in enumerate(nums):
             for _ in range(n):
