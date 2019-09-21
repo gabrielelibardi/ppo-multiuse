@@ -66,7 +66,7 @@ def vision_train(model, epochs, log_dir, train_data, test_data, batch_size=128):
             rot = rot.view(-1, 1).to(device)
 
             optimizer.zero_grad()
-            pred_position, hx = model(
+            pred_position, hx, _ = model(
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
             pred_position = pred_position.view(-1, 3)
@@ -121,7 +121,7 @@ def vision_train(model, epochs, log_dir, train_data, test_data, batch_size=128):
             pos = pos.view(-1, 2).to(device)
             rot = rot.view(-1, 1).to(device)
 
-            pred_position, hx = model(
+            pred_position, hx, _ = model(
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
             pred_position = pred_position.view(-1, 3)
