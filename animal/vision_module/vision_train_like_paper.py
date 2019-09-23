@@ -7,15 +7,15 @@ from vision_dataset import DatasetVisionPaper
 from vision_functions import loss_func_paper, plot_prediction
 
 
-def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_size=128):
+def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_size=128, N=512, M=512):
 
 
     # Define logger
     writer = SummaryWriter(log_dir, flush_secs=5)
 
     # Get data
-    dataset_train = DatasetVisionPaper(train_data)
-    dataset_test = DatasetVisionPaper(test_data)
+    dataset_train = DatasetVisionPaper(train_data, N=N, M=M)
+    dataset_test = DatasetVisionPaper(test_data, N=N, M=M)
 
     # Define dataloader
     dataloader_parameters = {
@@ -40,8 +40,6 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
         print('Epoch {}'.format(epoch))
         model.train()
         epoch_loss = 0
-        epoch_pos_error = 0
-        epoch_rot_error = 0
         t = tqdm.tqdm(dataloader_train)
         for idx, data in enumerate(t):
 
@@ -51,94 +49,79 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
             if idx != 0:
                 t.set_postfix(
                     train_loss=avg_loss,
-                    train_position_error=avg_pos_error,
-                    train_rotation_error=avg_rot_error,
                 )
 
-            images, pos, rot = data
+            images, y, z = data
 
             images = images.to(device)
-            pos = pos.view(-1, 2).to(device)
-            rot = rot.view(-1, 1).to(device)
+            y = y.view(-1, M).to(device)
+            z = z.view(-1, N).to(device)
 
             optimizer.zero_grad()
-            pred_position, hx, _ = model(
+            c, h, hx, _ = model(
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
-            pred_position = pred_position.view(-1, 3)
+            c = c.view(-1, M).to(device)
+            h = h.view(-1, N).to(device)
 
-            loss, pos_error, rot_error = loss_func(
-                pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+            loss = loss_func_paper(y, z, c, h)
 
             epoch_loss += loss.item()
             avg_loss = epoch_loss / (idx + 1)
-            epoch_pos_error += pos_error.item()
-            avg_pos_error = epoch_pos_error / (idx + 1)
-            epoch_rot_error += rot_error.item()
-            avg_rot_error = epoch_rot_error / (idx + 1)
 
             loss.backward()
             optimizer.step()
 
         scheduler.step(avg_loss)
 
-        if epoch % 10 == 0:
-            images = images.view(
-                -1, model.num_inputs, model.image_size, model.image_size)
-            figure = plot_prediction(
-                images, pos, rot, pred_position[:, 0:2], pred_position[:, -1])
-            writer.add_figure(
-                'train_figure_epoch_{}'.format(epoch), figure, epoch)
+        # if epoch % 10 == 0:
+        #     images = images.view(
+        #         -1, model.num_inputs, model.image_size, model.image_size)
+        #     figure = plot_prediction(
+        #         images, pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+        #     writer.add_figure(
+        #         'train_figure_epoch_{}'.format(epoch), figure, epoch)
 
         writer.add_scalar('lr', optimizer.param_groups[0]['lr'], epoch)
         writer.add_scalar('train/loss', avg_loss, epoch)
-        writer.add_scalar('train/position_error', avg_pos_error, epoch)
-        writer.add_scalar('train/rotation_error', avg_rot_error, epoch)
 
         model.eval()
         epoch_loss = 0
-        epoch_pos_error = 0
-        epoch_rot_error = 0
         t = tqdm.tqdm(dataloader_test)
         for idx, data in enumerate(t):
             if idx != 0:
                 t.set_postfix(
                     test_loss=avg_loss,
-                    test_position_error=avg_pos_error,
-                    test_rotation_error=avg_rot_error,
                 )
 
             recurrent_hidden_states = torch.zeros(
                 1, batch_size, model.recurrent_hidden_state_size).to(device)
 
-            images, pos, rot = data
+            images, y, z = data
 
             images = images.to(device)
-            pos = pos.view(-1, 2).to(device)
-            rot = rot.view(-1, 1).to(device)
+            y = y.view(-1, M).to(device)
+            z = z.view(-1, N).to(device)
 
-            pred_position, hx, _ = model(
+            optimizer.zero_grad()
+            c, h, hx, _ = model(
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
-            pred_position = pred_position.view(-1, 3)
+            c = c.view(-1, M).to(device)
+            h = h.view(-1, N).to(device)
 
-            loss, pos_error, rot_error = loss_func(
-                pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+            loss = loss_func_paper(y, z, c, h)
 
             epoch_loss += loss.item()
             avg_loss = epoch_loss / (idx + 1)
-            epoch_pos_error += pos_error.item()
-            avg_pos_error = epoch_pos_error / (idx + 1)
-            epoch_rot_error += rot_error.item()
-            avg_rot_error = epoch_rot_error / (idx + 1)
 
-        if epoch % 10 == 0:
-            images = images.view(
-                -1, model.num_inputs, model.image_size, model.image_size)
-            figure = plot_prediction(
-                images, pos, rot, pred_position[:, 0:2], pred_position[:, -1])
-            writer.add_figure(
-                'test_figure_epoch_{}'.format(epoch), figure, epoch)
+        # if epoch % 10 == 0:
+        #     images = images.view(
+        #         -1, model.num_inputs, model.image_size, model.image_size)
+        #     figure = plot_prediction(
+        #         images, pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+        #     writer.add_figure(
+        #         'test_figure_epoch_{}'.format(epoch), figure, epoch)
 
         if avg_loss < lowest_test_loss:
             lowest_test_loss = avg_loss
@@ -146,8 +129,6 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
                 "{}/model_{}.ckpt".format(log_dir, epoch), net_parameters)
 
         writer.add_scalar('test/loss', avg_loss, epoch)
-        writer.add_scalar('test/position_error', avg_pos_error, epoch)
-        writer.add_scalar('test/rotation_error', avg_rot_error, epoch)
 
 
 if __name__ == "__main__":
