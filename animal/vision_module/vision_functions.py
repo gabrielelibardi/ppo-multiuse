@@ -8,6 +8,7 @@ import animalai
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from torch.distributions import MultivariateNormal
 from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import AnimalAIEnv
 from ppo.envs import TransposeImage
@@ -195,4 +196,17 @@ def plot_prediction(obs, real_pos, real_rot, pred_pos, pred_rot):
     ax2.imshow(obs / 255.)
 
     return fig
+
+
+def loss_func_original(y, z, c, h):
+
+    # y shape is (bs, N)
+    # c shape is (bs, N)
+    # z shape is (bs, M)
+    # h shape is (bs, M)
+
+    return (-torch.mean(torch.sum(c * torch.log(y), dim=1) +
+                       torch.sum(h * torch.log(z), dim=1)))
+
+
 

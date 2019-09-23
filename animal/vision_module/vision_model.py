@@ -43,24 +43,6 @@ class NNBase(nn.Module):
     def output_size(self):
         return self._hidden_size
 
-
-class ImpalaCNNBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=256, image_size=84):
-        super(ImpalaCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
-
-        self.num_inputs = num_inputs
-        self.image_size = image_size
-        self.main = ImpalaCNN(image_size,num_inputs,hidden_size)
-        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
-        self.linear = init_(nn.Linear(hidden_size, 3))
-
-    def forward(self, inputs, rnn_hxs):
-        x = self.main(inputs / 255.0)
-        if self.is_recurrent:
-            x, rnn_hxs = self.gru(x, rnn_hxs)
-
-        return self.linear(x), rnn_hxs, x
-
     def save(self, filename, net_parameters):
         with tarfile.open(filename, "w") as tar:
             temporary_directory = tempfile.mkdtemp()
@@ -88,6 +70,45 @@ class ImpalaCNNBase(NNBase):
                 )
             )
         return net, net_parameters
+
+
+class ImpalaCNNBase(NNBase):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=256, image_size=84):
+        super(ImpalaCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
+
+        self.num_inputs = num_inputs
+        self.image_size = image_size
+        self.main = ImpalaCNN(image_size,num_inputs,hidden_size)
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
+        self.linear = init_(nn.Linear(hidden_size, 3))
+
+    def forward(self, inputs, rnn_hxs):
+        x = self.main(inputs / 255.0)
+        if self.is_recurrent:
+            x, rnn_hxs = self.gru(x, rnn_hxs)
+
+        return self.linear(x), rnn_hxs, x
+
+
+class ImpalaCNNOriginal(NNBase):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=256,
+                 image_size=84, N=512, M=512):
+        super(ImpalaCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
+
+        self.num_inputs = num_inputs
+        self.image_size = image_size
+        self.main = ImpalaCNN(image_size, num_inputs, hidden_size)
+        init_ = lambda m: init(m, nn.init.orthogonal_,
+                               lambda x: nn.init.constant_(x, 0))
+        self.linear_y = init_(nn.Linear(hidden_size, N))
+        self.linear_z = init_(nn.Linear(hidden_size, M))
+
+    def forward(self, inputs, rnn_hxs):
+        x = self.main(inputs / 255.0)
+        if self.is_recurrent:
+            x, rnn_hxs = self.gru(x, rnn_hxs)
+
+        return self.linear_y(x), self.linear_z(x), rnn_hxs, x
 
 
 class ImpalaCNN(nn.Module):

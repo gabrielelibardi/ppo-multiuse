@@ -83,9 +83,10 @@ if __name__ == "__main__":
         create_c7_arena,
     )
 
-    target_dir = "/home/abou/"
-
     parser = argparse.ArgumentParser(description='RL')
+    parser.add_argument(
+        '--target_dir',
+        help='Directory to save data.')
     parser.add_argument(
         '--device', default='cuda:0',
         help='Cuda device  or cpu (default:cuda:0 )')
@@ -102,7 +103,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     collect_data(
-        target_dir + "train_position_data",
+        args.target_dir + "train_position_data",
         args, num_samples=100000,
         list_arenas=[
             create_c1_arena,
@@ -124,7 +125,7 @@ if __name__ == "__main__":
         ])
 
     collect_data(
-        target_dir + "test_position_data",
+        args.target_dir + "test_position_data",
         args, num_samples=10000,
         list_arenas=[
             create_c1_arena,

@@ -160,6 +160,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='RL')
+    parser.add_argument('--data-dir', help='Data directory')
+    parser.add_argument('--log-dir', help='Target log directory')
     parser.add_argument(
         '--device', default='cuda:0',
         help='Cuda device  or cpu (default:cuda:0 )')
@@ -169,11 +171,10 @@ if __name__ == "__main__":
     parser.add_argument(
         '--frame-skip', type=int, default=0,
         help='Number of frame to skip for each action')
+    args = parser.parse_args()
 
-    log_dir = "/home/abou/vision_module_logs"
-
-    if not os.path.isdir(log_dir):
-        os.mkdir(log_dir)
+    if not os.path.isdir(args.log_dir):
+        os.mkdir(args.log_dir)
 
     net_parameters = {
         'num_inputs': 3,
@@ -185,7 +186,7 @@ if __name__ == "__main__":
     model = ImpalaCNNBase(**net_parameters)
 
     vision_train(
-        model, 5000, log_dir,
-        train_data="/home/abou/train_position_data.npz",
-        test_data="/home/abou/test_position_data.npz",
+        model, 5000, args.log_dir,
+        train_data=args.data_dir + "/train_position_data.npz",
+        test_data=args.data_dir + "/test_position_data.npz",
     )
