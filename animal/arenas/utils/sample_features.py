@@ -21,6 +21,10 @@ def random_pos(with_respect_to_center=None):
     return (random.randint(1, 400) / 10., 5. / 10., random.randint(1, 400) / 10.)
 
 
+def random_rotation():
+    return random.randint(0, 360)
+
+
 def random_size(category):
 
     if category in ['GoodGoal', 'GoodGoalBounce', 'BadGoal', 'BadGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce']:
