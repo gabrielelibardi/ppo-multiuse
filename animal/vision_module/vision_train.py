@@ -7,8 +7,7 @@ from vision_dataset import DatasetVision, DatasetVisionRecurrent
 from vision_functions import loss_func, plot_prediction
 
 
-def vision_train(model, epochs, log_dir, train_data, test_data, batch_size=128):
-
+def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_size=128):
 
     # Define logger
     writer = SummaryWriter(log_dir, flush_secs=5)
@@ -33,7 +32,7 @@ def vision_train(model, epochs, log_dir, train_data, test_data, batch_size=128):
     dataloader_train = DataLoader(dataset_train, **dataloader_parameters)
     dataloader_test = DataLoader(dataset_test, **dataloader_parameters)
 
-    device = torch.device("cuda:0")
+    device = torch.device(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5, patience=10)
     model.to(device)
@@ -189,4 +188,5 @@ if __name__ == "__main__":
         model, 5000, args.log_dir,
         train_data=args.data_dir + "/train_position_data.npz",
         test_data=args.data_dir + "/test_position_data.npz",
+        device=args.device,
     )

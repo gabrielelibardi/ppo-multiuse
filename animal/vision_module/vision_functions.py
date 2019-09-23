@@ -198,7 +198,7 @@ def plot_prediction(obs, real_pos, real_rot, pred_pos, pred_rot):
     return fig
 
 
-def loss_func_original(y, z, c, h):
+def loss_func_paper(y, z, c, h):
 
     # y shape is (bs, N)
     # c shape is (bs, N)
