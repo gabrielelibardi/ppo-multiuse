@@ -7,6 +7,9 @@ import tqdm
 import torch
 import random
 import numpy as np
+
+import ipdb; ipdb.set_trace()
+
 from ppo.envs import make_vec_envs
 from ppo.model import Policy, FixupCNNBase
 from vision_functions import make_animal_env
@@ -104,7 +107,7 @@ if __name__ == "__main__":
 
     collect_data(
         args.target_dir + "train_position_data",
-        args, num_samples=100000,
+        args, num_samples=250000,
         list_arenas=[
             create_c1_arena,
             create_c2_arena,
@@ -126,7 +129,7 @@ if __name__ == "__main__":
 
     collect_data(
         args.target_dir + "test_position_data",
-        args, num_samples=10000,
+        args, num_samples=30000,
         list_arenas=[
             create_c1_arena,
             create_c2_arena,

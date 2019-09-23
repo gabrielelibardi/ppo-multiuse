@@ -178,12 +178,12 @@ if __name__ == "__main__":
 
     net_parameters = {
         'num_inputs': 3,
-        'recurrent': False,
+        'recurrent': args.recurrent,
         'hidden_size': 256,
         'image_size': 84
     }
 
-    model = ImpalaCNNBase(**net_parameters)
+    model = ImpalaCNNVision(**net_parameters)
 
     vision_train(
         model, 5000, args.log_dir,

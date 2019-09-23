@@ -90,10 +90,10 @@ class ImpalaCNNVision(NNBase):
         return self.linear(x), rnn_hxs, x
 
 
-class ImpalaCNNOriginal(NNBase):
+class ImpalaCNNPaper(NNBase):
     def __init__(self, num_inputs, recurrent=False, hidden_size=256,
                  image_size=84, N=512, M=512):
-        super(ImpalaCNNOriginal, self).__init__(recurrent, hidden_size, hidden_size)
+        super(ImpalaCNNPaper, self).__init__(recurrent, hidden_size, hidden_size)
 
         self.num_inputs = num_inputs
         self.image_size = image_size

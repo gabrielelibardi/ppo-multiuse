@@ -39,7 +39,7 @@ class DatasetVision(Dataset):
                 torch.FloatTensor(rot))
 
 
-class DatasetVisionOriginal(Dataset):
+class DatasetVisionPaper(Dataset):
     """
     Creates a dataset to train a VAE.
     """

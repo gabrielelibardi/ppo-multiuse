@@ -1,8 +1,8 @@
 ## Vision module usage:
 
-RUN python vision_collect_data.py --target_dir '/target/data/directory' to collect a dataset.
+(ipython) %run animal/vision_module/vision_collect_data.py --target_dir '/target/data/directory' to collect a dataset.
 
-RUN python vision_train.py --data_dir '/origin/data/directory' --logs_dir '/target/logs/directory' to train a vision network.
+(ipython) %run animal/vision_module/vision_train.py --data_dir '/origin/data/directory' --logs_dir '/target/logs/directory' to train a vision network.
 
 
 ## Trained network
