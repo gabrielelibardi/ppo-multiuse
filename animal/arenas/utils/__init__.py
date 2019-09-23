@@ -3,6 +3,7 @@ from .edit_arenas import add_object, write_arena
 from .sample_features import (
     random_pos,
     random_size,
+    random_rotation,
     sample_position_with_respect_to,
 )
 from .create_arenas import (
