@@ -40,6 +40,7 @@ parser.add_argument(
     '--frame-stack', type=int, default=4, help='Number of frame to stack')        
 parser.add_argument(
     '--reduced-actions',action='store_true',default=False,help='Use reduced actions set')
+
 args = parser.parse_args()
 args.det = not args.non_det
 device = torch.device(args.device)
