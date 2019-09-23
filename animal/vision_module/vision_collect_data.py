@@ -7,9 +7,6 @@ import tqdm
 import torch
 import random
 import numpy as np
-
-import ipdb; ipdb.set_trace()
-
 from ppo.envs import make_vec_envs
 from ppo.model import Policy, FixupCNNBase
 from vision_functions import make_animal_env
