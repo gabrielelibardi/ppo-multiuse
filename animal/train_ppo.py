@@ -18,12 +18,12 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/..')
 from ppo import algo, utils
 from ppo.envs import make_vec_envs
 from ppo.model import Policy
-from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase
+from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase
 from ppo.storage import RolloutStorage
 from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model
 from animal import make_animal_env
 
-CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase}
+CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase,'State':StateCNNBase}
 
 def main():
     args = get_args()
@@ -37,14 +37,18 @@ def main():
 
     env_make = make_animal_env(log_dir = args.log_dir, inference_mode=args.realtime,  frame_skip=args.frame_skip , 
             arenas_dir=args.arenas_dir, info_keywords=('ereward','max_reward','max_time','arena'), 
-            reduced_actions=args.reduced_actions, seed=args.seed)
+            reduced_actions=args.reduced_actions, seed=args.seed, state=args.state)
     #spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
     #               gym.spaces.Discrete(9) )
-    envs = make_vec_envs(env_make, args.seed, args.num_processes,
-                         args.gamma, args.log_dir, device, False, args.frame_stack)
-
-    actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN[args.cnn],
-                         base_kwargs={'recurrent': args.recurrent_policy})
+    if args.reduced_actions: #TODO: hugly hack
+        state_size = 13
+    else:
+        state_size = 15 
+    envs = make_vec_envs(env_make, args.num_processes, args.log_dir, device, args.frame_stack, state_size, args.state_stack)
+    
+    base_kwargs={'recurrent': args.recurrent_policy}
+    if args.state: base_kwargs['fullstate_size'] = envs.state_size*envs.state_stack
+    actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs)
 
     if args.restart_model:
         actor_critic.load_state_dict(torch.load(args.restart_model, map_location=device))
@@ -63,13 +67,12 @@ def main():
     agent = algo.PPOKL(actor_critic,args.clip_param,args.ppo_epoch, args.num_mini_batch,args.value_loss_coef,
             args.entropy_coef,lr=args.lr,eps=args.eps,max_grad_norm=args.max_grad_norm,actor_behaviors=actor_behaviors)
 
-
+    obs = envs.reset()
     rollouts = RolloutStorage(args.num_steps, args.num_processes,
-                              envs.observation_space.shape, envs.action_space,
+                              obs, envs.action_space,
                               actor_critic.recurrent_hidden_state_size)
 
-    obs = envs.reset()
-    rollouts.obs[0].copy_(obs)
+
     rollouts.to(device)  #they live in GPU, converted to torch from the env wrapper
 
     start = time.time()
@@ -147,17 +150,20 @@ def get_args():
     parser.add_argument(
         '--frame-skip',type=int,default=0,help='Number of frame to skip for each action')
     parser.add_argument(
-        '--frame-stack',type=int,default=4,help='Number of frame to stack in observation')              
+        '--frame-stack',type=int,default=4,help='Number of frame to stack in observation') 
+    parser.add_argument(
+        '--state-stack',type=int,default=4,help='Number of steps to stack in states')               
     parser.add_argument(
         '--realtime',action='store_true',default=False,help='If to plot in realtime. ')
     parser.add_argument(
-        '--cnn',default='Fixup',help='Type of cnn. Options are CNN,Impala,Fixup') 
+        '--cnn',default='Fixup',help='Type of cnn. Options are CNN,Impala,Fixup,State') 
     parser.add_argument(
         '--arenas-dir',default=None,help='directory where the yamls files for the environemnt are (default: None)')   
     parser.add_argument(
         '--reduced-actions',action='store_true',default=False,help='Use reduced actions set')
     args = parser.parse_args()
     args.log_dir = os.path.expanduser(args.log_dir)
+    args.state = args.cnn=='State'
     return args
 
 if __name__ == "__main__":

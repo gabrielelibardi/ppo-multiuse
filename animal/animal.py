@@ -16,8 +16,9 @@ from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import ActionFlattener
 from ppo.envs import FrameSkipEnv,TransposeImage
 from PIL import Image
+from wrappers import RetroEnv,Stateful,FilterActionEnv
 
-def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed):
+def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed, state):
     base_port = random.randint(0,100)+100*seed  # avoid collisions
     def make_env(rank):
         def _thunk():
@@ -33,10 +34,13 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
             if reduced_actions:
                 env = FilterActionEnv(env)
             env = LabAnimal(env,arenas_dir)
-            env = RewardShaping(env)
+            #env = RewardShaping(env)
+            
+            if state:
+                env = Stateful(env)
 
             if frame_skip > 0: 
-                env = FrameSkipEnv(env, skip=frame_skip)
+                env = FrameSkipEnv(env, skip=frame_skip)   #TODO:Is this wrong here? Are we double counting rewards? Infos?
                 print("Frame skip: ", frame_skip, flush=True)
 
             if log_dir is not None:
@@ -59,17 +63,24 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
 def analyze_arena(arena):
     tot_reward = 0
     max_good = 0
+    max_bad = -10
     for i in arena.arenas[0].items:
         if i.name in ['GoodGoal','GoodGoalBounce']:
             if len(i.sizes)==0: #arena max cannot be computed
                 return -1
             max_good = max(i.sizes[0].x,max_good)
+        if i.name in ['BadGoal','BadGoalBounce']:
+            if len(i.sizes)==0: #arena max cannot be computed
+                return -1
+            max_bad = max(i.sizes[0].x,max_bad)        
         if i.name in ['GoodGoalMulti','GoodGoalMultiBounce']:
             if len(i.sizes)==0: #arena max cannot be computed
                 return -1
             tot_reward += i.sizes[0].x  
 
     tot_reward += max_good
+    if tot_reward == 0:
+        tot_reward = max_bad  #optimal is to die
     return tot_reward
 
 
@@ -87,6 +98,7 @@ class LabAnimal(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
+        self.steps += 1
         self.env_reward += reward
         info['arena']=self._arena_file  #for monitor
         info['max_reward']=self.max_reward
@@ -95,6 +107,7 @@ class LabAnimal(gym.Wrapper):
         return obs, reward, done, info        
 
     def reset(self, **kwargs):
+        self.steps = 0
         self.env_reward = 0
         self._arena_file, arena = random.choice(self.env_list)
         self.max_reward = analyze_arena(arena)
@@ -119,58 +132,3 @@ class RewardShaping(gym.Wrapper):
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
 
-class RetroEnv(gym.Wrapper):
-    def __init__(self,env):
-        gym.Wrapper.__init__(self, env)
-        self.flattener = ActionFlattener([3,3])
-        self.action_space = self.flattener.action_space
-        self.observation_space = gym.spaces.Box(0, 255,dtype=np.uint8,shape=(84, 84, 3))
-
-    def step(self, action): 
-        action = int(action)
-        action = self.flattener.lookup_action(action) # convert to multi
-        obs, reward, done, info = self.env.step(action)  #non-retro
-        visual_obs, vector_obs = self._preprocess_obs(obs)
-        info['vector_obs']=vector_obs
-        return visual_obs,reward,done,info
-
-    def reset(self, **kwargs):
-        obs = self.env.reset(**kwargs)
-        visual_obs, _ = self._preprocess_obs(obs)
-        return visual_obs
-
-    def _preprocess_obs(self,obs):
-        visual_obs, vector_obs = obs
-        visual_obs = self._preprocess_single(visual_obs)
-        visual_obs = self._resize_observation(visual_obs)
-        return visual_obs, vector_obs
-
-    @staticmethod
-    def _preprocess_single(single_visual_obs):
-            return (255.0 * single_visual_obs).astype(np.uint8)
-
-    @staticmethod
-    def _resize_observation(observation):
-        """
-        Re-sizes visual observation to 84x84
-        """
-        obs_image = Image.fromarray(observation)
-        obs_image = obs_image.resize((84, 84), Image.NEAREST)
-        return np.array(obs_image)
-
-
-
-#{0: [0, 0], 1: [0, 1], 2: [0, 2], 3: [1, 0], 4: [1, 1], 5: [1, 2], 6: [2, 0], 7: [2, 1], 8: [2, 2]}
-class FilterActionEnv(gym.ActionWrapper):
-    """
-    An environment wrapper that limits the action space.
-    """
-    _ACTIONS = (0, 1, 2, 3, 4, 5, 6)
-
-    def __init__(self, env):
-        super().__init__(env)
-        self.actions = self._ACTIONS
-        self.action_space = gym.spaces.Discrete(len(self.actions))
-
-    def action(self, act):
-        return self.actions[act]

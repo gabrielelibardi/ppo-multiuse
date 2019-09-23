@@ -49,11 +49,9 @@ class PPOKL():
 
         for e in range(self.ppo_epoch):
             if self.actor_critic.is_recurrent:
-                data_generator = rollouts.recurrent_generator(
-                    advantages, self.num_mini_batch)
+                data_generator = rollouts.recurrent_generator( advantages, self.num_mini_batch)
             else:
-                data_generator = rollouts.feed_forward_generator(
-                    advantages, self.num_mini_batch)
+                data_generator = rollouts.feed_forward_generator( advantages, self.num_mini_batch)
 
             for sample in data_generator:
                 obs_batch, recurrent_hidden_states_batch, actions_batch, \
@@ -121,8 +119,7 @@ def ppo_rollout(num_steps, envs, actor_critic, rollouts):
         # Sample actions
         with torch.no_grad():
             value, action, action_log_prob, recurrent_hidden_states, _ = actor_critic.act(
-                rollouts.obs[step], rollouts.recurrent_hidden_states[step],
-                rollouts.masks[step])
+                rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
 
         # Obser reward and next obs
         obs, reward, done, infos = envs.step(action)
@@ -137,7 +134,7 @@ def ppo_rollout(num_steps, envs, actor_critic, rollouts):
 
 def ppo_update(agent, actor_critic, rollouts, use_gae, gamma, gae_lambda, use_proper_time_limits):
     with torch.no_grad():
-        next_value = actor_critic.get_value(rollouts.obs[-1], rollouts.recurrent_hidden_states[-1],
+        next_value = actor_critic.get_value(rollouts.get_obs(-1), rollouts.recurrent_hidden_states[-1],
             rollouts.masks[-1]).detach()
 
     rollouts.compute_returns(next_value, use_gae, gamma, gae_lambda, use_proper_time_limits)

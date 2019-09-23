@@ -2,8 +2,9 @@ import sys
 sys.path.append('.')
 import torch
 from ppo.model import Policy
-from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase
-from ppo.envs import  VecPyTorch, VecPyTorchFrameStack, FrameSkipEnv, TransposeImage
+from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase
+from ppo.envs import  VecPyTorch, VecPyTorchFrameStack, FrameSkipEnv, TransposeImage, VecPyTorchStateStack
+from ppo.wrappers import RetroEnv,Stateful,FilterActionEnv
 from animalai.envs.gym.environment import ActionFlattener
 from PIL import Image
 from ppo.envs import VecPyTorchFrameStack, TransposeImage, VecPyTorch
@@ -12,66 +13,8 @@ import numpy as np
 from gym.spaces import Box
 import gym
 
-class RetroEnv(gym.Wrapper):
-    def __init__(self,env):
-        gym.Wrapper.__init__(self, env)
-        self.flattener = ActionFlattener([3,3])
-        self.action_space = self.flattener.action_space
-        self.observation_space = gym.spaces.Box(0, 255,dtype=np.uint8,shape=(84, 84, 3))
-
-    def step(self, action): 
-        action = int(action)
-        action = self.flattener.lookup_action(action) # convert to multi
-        obs, reward, done, info = self.env.step(action)  #non-retro
-        visual_obs, vector_obs = self._preprocess_obs(obs)
-        info['vector_obs']=vector_obs
-        return visual_obs,reward,done,info
-
-    def reset(self, **kwargs):
-        obs = self.env.reset(**kwargs)
-        visual_obs, _ = self._preprocess_obs(obs)
-        return visual_obs
-
-    def _preprocess_obs(self,obs):
-        visual_obs, vector_obs = obs
-        visual_obs = self._preprocess_single(visual_obs)
-        visual_obs = self._resize_observation(visual_obs)
-        return visual_obs, vector_obs
-
-    @staticmethod
-    def _preprocess_single(single_visual_obs):
-            return (255.0 * single_visual_obs).astype(np.uint8)
-
-    @staticmethod
-    def _resize_observation(observation):
-        """
-        Re-sizes visual observation to 84x84
-        """
-        obs_image = Image.fromarray(observation)
-        obs_image = obs_image.resize((84, 84), Image.NEAREST)
-        return np.array(obs_image)
-
-
-class FilterActionEnv(gym.ActionWrapper):
-    """
-    An environment wrapper that limits the action space.
-    """
-    _ACTIONS = (0, 1, 2, 3, 4, 5, 6)
-
-    def __init__(self, env):
-        super().__init__(env)
-        self.actions = self._ACTIONS
-        self.action_space = gym.spaces.Discrete(len(self.actions))
-
-    def action(self, act):
-        return  self.actions[act]
-
-
-class FakeEnv(gym.Env):
-    #def __init__(self):
-    #    self.action_space = self._flattener.action_space
-    #    self.observation_space = Box(0, 255,dtype=np.uint8,shape=(84, 84, 3))
-
+class FakeAnimalEnv(gym.Env):
+ 
     def set_step(self,obs,reward,done,info):
         self.obs = obs
         self.reward = reward
@@ -79,22 +22,33 @@ class FakeEnv(gym.Env):
         self.info = info
 
     def step(self, action_unused):
+        self.steps += 1
+        self.env_reward += self.reward
         return self.obs,self.reward,self.done,self.info
 
-    #def reset(self, **kwargs):
-    #    return self.observation_space.low
+    def set_maxtime(self,max_time):
+        self.max_time = max_time
+
+    def reset(self):
+        self.steps = 0
+        self.env_reward = 0
+        return (np.zeros((84,84,3),dtype=np.float32),None)
+
 
 frame_skip = 2
 frame_stack = 2
+state_stack = 4
 #CNN=FixupCNNBase
-CNN=ImpalaCNNBase
+CNN=StateCNNBase
 reduced_actions = True
 
 def make_env():
-    env = FakeEnv()
+    env = FakeAnimalEnv()
     env = RetroEnv(env)
     if reduced_actions:
        env = FilterActionEnv(env)
+    env = Stateful(env)
+
     if frame_skip > 0:
         env = FrameSkipEnv(env, skip=frame_skip)
     env = TransposeImage(env, op=[2, 0, 1])
@@ -109,11 +63,20 @@ class Agent(object):
         """
         envs = DummyVecEnv([make_env])
         envs = VecPyTorch(envs, device)
-        self.envs = VecPyTorchFrameStack(envs, frame_stack, device)
+        envs = VecPyTorchFrameStack(envs, frame_stack, device)
+        if reduced_actions: #TODO: hugly hack
+            state_size = 13
+        else:
+            state_size = 15
+        if state_stack > 0:
+            envs = VecPyTorchStateStack(envs,state_size,state_stack)
+        self.envs = envs
         self.flattener = self.envs.unwrapped.envs[0].flattener
         # Load the configuration and model using *** ABSOLUTE PATHS ***
         self.model_path = '/aaio/data/animal.state_dict'
-        self.policy = Policy(self.envs.observation_space.shape,self.envs.action_space,base=CNN,base_kwargs={'recurrent': True})
+        base_kwargs={'recurrent': True}
+        base_kwargs['fullstate_size'] = envs.state_size*envs.state_stack
+        self.policy = Policy(self.envs.observation_space.shape,self.envs.action_space,base=CNN,base_kwargs=base_kwargs)
         self.policy.load_state_dict(torch.load(self.model_path,map_location=device))
         self.recurrent_hidden_states = torch.zeros(1, self.policy.recurrent_hidden_state_size).to(device)
         self.masks = torch.zeros(1, 1).to(device)  # set to zero
@@ -125,6 +88,8 @@ class Agent(object):
         Leave blank if nothing needs to happen there
         :param t the number of timesteps in the episode
         """
+        self.envs.reset()
+        self.envs.unwrapped.envs[0].unwrapped.set_maxtime(t)
         self.recurrent_hidden_states = torch.zeros(1, self.policy.recurrent_hidden_state_size).to(self.device)
         self.masks = torch.zeros(1, 1).to(self.device)
 
@@ -141,4 +106,5 @@ class Agent(object):
         self.masks.fill_(1.0)
         action = self.flattener.lookup_action(int(action))
         return action
+
 

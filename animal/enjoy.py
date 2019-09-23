@@ -3,7 +3,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/..')
 
-from ppo.model import Policy, CNNBase, FixupCNNBase
+from ppo.model import Policy, CNNBase, FixupCNNBase, ImpalaCNNBase, StateCNNBase
 from collections import deque
 import gym
 import torch
@@ -17,6 +17,7 @@ from ppo.envs import VecPyTorch, make_vec_envs
 from animal import make_animal_env
 from animalai.envs.arena_config import ArenaConfig
 
+CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase,'State':StateCNNBase}
 
 
 parser = argparse.ArgumentParser(description='RL')
@@ -35,27 +36,38 @@ parser.add_argument(
 parser.add_argument(
     '--silent', action='store_true', default=False, help='stop plotting ') 
 parser.add_argument(
-    '--frame-skip', type=int, default=0, help='Number of frame to skip for each action')
+    '--frame-skip', type=int, default=2, help='Number of frame to skip for each action')
 parser.add_argument(
     '--frame-stack', type=int, default=4, help='Number of frame to stack')        
 parser.add_argument(
     '--reduced-actions',action='store_true',default=False,help='Use reduced actions set')
+parser.add_argument(
+    '--cnn',default='Fixup',help='Type of cnn. Options are CNN,Impala,Fixup,State')
+parser.add_argument(
+    '--state-stack',type=int,default=4,help='Number of steps to stack in states')    
 
 args = parser.parse_args()
 args.det = not args.non_det
+args.state = args.cnn=='State'
 device = torch.device(args.device)
 
 maker = make_animal_env(log_dir = None, inference_mode=args.realtime, frame_skip=args.frame_skip,
-                        arenas_dir=args.arenas_dir, info_keywords=(),reduced_actions=args.reduced_actions)
+                        arenas_dir=args.arenas_dir, info_keywords=(),reduced_actions=args.reduced_actions,
+                        seed=1, state=args.state)
 
-env = make_vec_envs(maker,0,1,None,None,device=device,allow_early_resets=False,num_frame_stack=args.frame_stack)
+if args.reduced_actions: #TODO: hugly hack
+    state_size = 13
+else:
+    state_size = 15 
 
+env = make_vec_envs(maker, 1, None, device=device, num_frame_stack=args.frame_stack, 
+                        state_size=state_size, state_stack=args.state_stack)
 
 # Get a render function
 #render_func = get_render_func(env)
-
-actor_critic = Policy(env.observation_space.shape,env.action_space, base=FixupCNNBase, base_kwargs={'recurrent': args.recurrent_policy})
-
+base_kwargs={'recurrent': args.recurrent_policy}
+if args.state: base_kwargs['fullstate_size'] = env.state_size*env.state_stack
+actor_critic = Policy(env.observation_space.shape,env.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs)
 
 if args.load_model:
     actor_critic.load_state_dict(torch.load(args.load_model,map_location=device))

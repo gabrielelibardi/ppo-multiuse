@@ -1,3 +1,5 @@
+""" Create a basic test set. """
+
 import random
 from utils import (
     create_c1_arena,
@@ -27,35 +29,35 @@ if __name__ == '__main__':
     # c1
     for i in range(1, 11):
             create_c1_arena(arguments.target_dir, 'c1_{}'.format(
-                str(i).zfill(2)), max_reward=i)
+                str(i).zfill(2)), max_reward=5)
 
     # c2
     for i in range(1, 11):
             create_c2_arena(arguments.target_dir, 'c2_{}'.format(
-                str(i).zfill(2)), max_reward=i)
+                str(i).zfill(2)), max_reward=5)
 
     # c3
     for i in range(1, 11):
         create_c3_arena(arguments.target_dir, 'c3_{}'.format(
-            str(i).zfill(2)), time=random.choice([250, 500, 1000]), num_movable=3, num_immovable=3)
+            str(i).zfill(2)), time=random.choice([250, 500, 1000]))
 
     # c4
     for i in range(1, 11):
         create_c4_arena(arguments.target_dir, 'c4_{}'.format(
             str(i).zfill(2)), time=random.choice([250, 500, 1000]),
-                        num_red_zones=2, max_orange_zones=2, max_movable=2, max_immovable=2)
+                        num_red_zones=8, max_orange_zones=3)
 
     # c5
     for i in range(1, 11):
         create_c5_arena(arguments.target_dir, 'c5_{}'.format(str(i).zfill(2)),
-                        time=random.choice([250, 500, 1000]), num_movable=3, num_immovable=3)
+                        time=random.choice([250, 500, 1000]))
 
     # c6
     for i in range(1, 11):
         create_c6_arena(arguments.target_dir, 'c6_{}'.format(str(i).zfill(2)),
-                        time=random.choice([250, 500, 1000]), num_movable=3, num_immovable=3)
+                        time=random.choice([250, 500, 1000]))
 
     # c7
     for i in range(1, 11):
         create_c7_arena(arguments.target_dir, 'c7_{}'.format(str(i).zfill(2)),
-                        time=random.choice([250, 500, 1000]), num_movable=3, num_immovable=3)
+                        time=random.choice([250, 500, 1000]))
