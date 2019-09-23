@@ -2,7 +2,7 @@ import tqdm
 import torch
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
-from vision_model import ImpalaCNNBase
+from vision_model import ImpalaCNNVision
 from vision_dataset import DatasetVision, DatasetVisionRecurrent
 from vision_functions import loss_func, plot_prediction
 

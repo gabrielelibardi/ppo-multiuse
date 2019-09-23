@@ -72,9 +72,9 @@ class NNBase(nn.Module):
         return net, net_parameters
 
 
-class ImpalaCNNBase(NNBase):
+class ImpalaCNNVision(NNBase):
     def __init__(self, num_inputs, recurrent=False, hidden_size=256, image_size=84):
-        super(ImpalaCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
+        super(ImpalaCNNVision, self).__init__(recurrent, hidden_size, hidden_size)
 
         self.num_inputs = num_inputs
         self.image_size = image_size
@@ -93,7 +93,7 @@ class ImpalaCNNBase(NNBase):
 class ImpalaCNNOriginal(NNBase):
     def __init__(self, num_inputs, recurrent=False, hidden_size=256,
                  image_size=84, N=512, M=512):
-        super(ImpalaCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
+        super(ImpalaCNNOriginal, self).__init__(recurrent, hidden_size, hidden_size)
 
         self.num_inputs = num_inputs
         self.image_size = image_size
