@@ -61,6 +61,7 @@ class Agent(object):
         """
          Load your agent here and initialize anything needed
         """
+        print(device)
         envs = DummyVecEnv([make_env])
         envs = VecPyTorch(envs, device)
         envs = VecPyTorchFrameStack(envs, frame_stack, device)
@@ -78,6 +79,7 @@ class Agent(object):
         base_kwargs['fullstate_size'] = envs.state_size*envs.state_stack
         self.policy = Policy(self.envs.observation_space.shape,self.envs.action_space,base=CNN,base_kwargs=base_kwargs)
         self.policy.load_state_dict(torch.load(self.model_path,map_location=device))
+        self.policy.to(device)
         self.recurrent_hidden_states = torch.zeros(1, self.policy.recurrent_hidden_state_size).to(device)
         self.masks = torch.zeros(1, 1).to(device)  # set to zero
         self.device = device
