@@ -1,8 +1,8 @@
 ## Vision module usage:
 
-RUN python vision_collect_data.py --target_dir ´/target/data/directory´ to collect a dataset.
+RUN python vision_collect_data.py --target_dir '/target/data/directory' to collect a dataset.
 
-RUN python vision_train.py --data_dir ´/origin/data/directory´ --logs_dir ´/target/logs/directory´ to train a vision network.
+RUN python vision_train.py --data_dir '/origin/data/directory' --logs_dir '/target/logs/directory' to train a vision network.
 
 
 ## Trained network
@@ -16,7 +16,6 @@ which can be loaded with the following code snippet:
 from animal.vision_module import ImpalaCNNVision
 
 vision_model= ImpalaCNNVision.load(ckpt_path)
-
 
 ```
 
