@@ -1,5 +1,11 @@
 
-from .edit_arenas import add_object, write_arena
+from .edit_arenas import (
+    add_object,
+    write_arena,
+    create_wall,
+    string_block,
+    string_block_rand,
+)
 from .sample_features import (
     random_pos,
     random_size,
@@ -8,6 +14,7 @@ from .sample_features import (
 )
 from .create_arenas import (
     create_c1_arena,
+    create_c1_arena_weird,
     create_c2_arena,
     create_c3_arena,
     create_c4_arena,
