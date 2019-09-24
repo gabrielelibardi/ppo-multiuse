@@ -76,7 +76,7 @@ class Agent(object):
         # Load the configuration and model using *** ABSOLUTE PATHS ***
         self.model_path = '/aaio/data/animal.state_dict'
         base_kwargs={'recurrent': True}
-        base_kwargs['fullstate_size'] = envs.state_size*envs.state_stack
+        if state_stack > 0: base_kwargs['fullstate_size'] = envs.state_size*envs.state_stack
         self.policy = Policy(self.envs.observation_space.shape,self.envs.action_space,base=CNN,base_kwargs=base_kwargs)
         self.policy.load_state_dict(torch.load(self.model_path,map_location=device))
         self.policy.to(device)
