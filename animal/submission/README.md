@@ -12,7 +12,7 @@ Read the [submission documentation](../../documentation/submission.md)
 ```
 
 ## Local tests
-This is to test as close as possible as the real test environment but on our testset. WORK IN PROGRESS. DO NOT USE
+This is to test as close as possible as the real test environment but on our testset. 
 ```
     docker run -v "$PWD"/test_submission:/aaio/test -v "$PWD":/myaaio submission python /aaio/test/testDockerLab.py 
 ```
@@ -40,7 +40,7 @@ Submit it
   evalai push submission:latest --phase animalai-main-396
 ```
 
-## Updates (WIP)
+## Updates
 ```
    docker run -it -v "$PWD"/test_submission:/aaio/test -v "$PWD":/aaio/base submission /bin/bash
    cp base/agent.py .
