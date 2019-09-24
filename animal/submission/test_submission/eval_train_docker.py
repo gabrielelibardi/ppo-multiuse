@@ -3,6 +3,29 @@ import glob
 from animalai.envs.gym.environment import AnimalAIEnv
 from animalai.envs.arena_config import ArenaConfig
 
+def analyze_arena(arena):
+    tot_reward = 0
+    max_good = 0
+    max_bad = -10
+    for i in arena.arenas[0].items:
+        if i.name in ['GoodGoal','GoodGoalBounce']:
+            if len(i.sizes)==0: #arena max cannot be computed
+                return -1
+            max_good = max(i.sizes[0].x,max_good)
+        if i.name in ['BadGoal','BadGoalBounce']:
+            if len(i.sizes)==0: #arena max cannot be computed
+                return -1
+            max_bad = max(i.sizes[0].x,max_bad)        
+        if i.name in ['GoodGoalMulti','GoodGoalMultiBounce']:
+            if len(i.sizes)==0: #arena max cannot be computed
+                return -1
+            tot_reward += i.sizes[0].x  
+
+    tot_reward += max_good
+    if tot_reward == 0:
+        tot_reward = max_bad  #optimal is to die
+    return tot_reward
+
 
 def main():
     # Load the agent from the submission
@@ -49,8 +72,12 @@ def main():
 
     print('Running arenas')
     total_reward = 0
+    total_perf = 0
     for count,a in enumerate(arenas):
         arena_config_in = ArenaConfig(a)
+        max_reward = analyze_arena(arena_config_in)
+        if max_reward<0
+            print("Warning: Arena {} max_reward cannot be computed".format(a))
         env.reset(arenas_configurations=arena_config_in)
         cumulated_reward = 0
 
@@ -72,9 +99,11 @@ def main():
             print('Episode {} failed'.format(a))
             raise e
         total_reward += cumulated_reward
-        print('Episode {0} completed, reward {1}'.format(a, cumulated_reward))
+        performance = cumulated_reward/max_reward
+        total_perf += performance
+        print('Episode {} completed, reward {}:{}  performance {}:{}'.format(a, cumulated_reward, cumulated_reward/count, performance,perfomance/count))
 
-    print('SUCCESS {}'.format(total_reward/count))
+    print('SUCCESS {} {}'.format(total_reward/count,total_perf/count))
 
 
 if __name__ == '__main__':
