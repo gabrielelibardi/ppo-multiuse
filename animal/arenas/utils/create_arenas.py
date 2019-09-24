@@ -3,8 +3,7 @@
 
 import random
 import numpy as np
-from .edit_arenas import (
-    add_object, write_arena, create_wall, string_block, string_block_rand)
+from .edit_arenas import (add_object, write_arena, create_wall)
 from .sample_features import (
     random_size, random_color, random_pos, random_rotation)
 from .edit_arenas import add_ramp_scenario
@@ -470,60 +469,74 @@ def create_c7_arena(target_path, arena_name, time=250, max_movable=3, max_immova
     return 'c7', position_agent, rotation_agent
 
 
-def create_maze(target_path, arena_name, time=250, num_cells=3, obj=None, is_train=False):
+def create_maze(target_path, arena_name, time=250,
+                num_cells=np.random.randint(2, 5),
+                obj=random.choice(['CylinderTunnel','door']),
+                is_train=False):
+    """ _ """
 
-        arena = ''
+    arena = ''
 
-        if obj == 'CylinderTunnel':
-            gap = 3
-        else:
-            gap = 2
+    if obj == 'CylinderTunnel':
+        gap = 3
+    else:
+        gap = 2
 
-        num_cells_x = num_cells
-        num_cells_y = num_cells
+    num_cells_x = num_cells
+    num_cells_y = num_cells
 
-        side_wall_len_x = int(40 / num_cells_x)
-        side_wall_len_y = int(40 / num_cells_y)
+    side_wall_len_x = int(40 / num_cells_x)
+    side_wall_len_y = int(40 / num_cells_y)
 
-        location_pillars_x = list(range(0, 40, side_wall_len_x))[1:]
-        location_pillars_y = list(range(0, 40, side_wall_len_y))[1:]
+    location_pillars_x = list(range(0, 40, side_wall_len_x))[1:]
+    location_pillars_y = list(range(0, 40, side_wall_len_y))[1:]
 
-        walls_loc_x = location_pillars_x
-        walls_loc_x.append(40)
+    walls_loc_x = location_pillars_x
+    walls_loc_x.append(40)
 
-        walls_loc_y = location_pillars_y
-        walls_loc_y.append(40)
+    walls_loc_y = location_pillars_y
+    walls_loc_y.append(40)
 
-        prev_y = 0
+    prev_y = 0
+    prev_x = 0
+
+    for y in walls_loc_y:
+        for x in walls_loc_x:
+
+            size_1, pos_1, size_2, pos_2 = create_wall(
+                (prev_x, y), (x, y), obj='door', gap=gap)
+
+            arena = add_object(arena, 'Wall', size=size_1, pos=pos_1)
+            arena = add_object(arena, 'Wall', size=size_2, pos=pos_2)
+
+            if obj != 'door':
+                size, pos = create_wall((prev_x, y), (x, y), obj=obj, gap=gap)
+                arena = add_object(arena, obj, size=size, pos=pos)
+
+            size_1, pos_1, size_2, pos_2 = create_wall(
+                (x, prev_y), (x, y), obj='door', gap=gap)
+            arena = add_object(arena, 'Wall', size=size_1, pos=pos_1)
+            arena = add_object(arena, 'Wall', size=size_1, pos=pos_1)
+
+            if obj != 'door':
+                size, pos = create_wall(
+                    (x, prev_y), (x, y), obj=obj, gap=gap)
+                arena = add_object(arena, obj, size=size, pos=pos)
+            prev_x = x
+
         prev_x = 0
+        prev_y = y
 
-        for y in walls_loc_y:
-            for x in walls_loc_x:
+    size_goal = random_size('GoodGoal') if not is_train else None
+    position_goal = random_pos() if not is_train else None
+    arena = add_object('', 'GoodGoal', size=size_goal, pos=position_goal)
 
-                size_1, pos_1, size_2, pos_2 = create_wall(
-                    (prev_x, y), (x, y), obj='door', gap=gap)
+    position_agent = random_pos() if not is_train else None
+    rotation_agent = random_rotation() if not is_train else None
+    arena = add_object(arena, "Agent", pos=position_agent,
+                       rot=rotation_agent)
 
-                arena = add_object(arena, 'Wall', size=size_1, pos=pos_1)
-                arena = add_object(arena, 'Wall', size=size_2, pos=pos_2)
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
 
-                if obj != 'door':
-                    size, pos = create_wall((prev_x, y), (x, y), obj=obj, gap=gap)
-                    f.write(string_block(obj, pos, size))
-
-                size_1, pos_1, size_2, pos_2 = create_wall((x, prev_y), (x, y),
-                                                           obj='door', gap=gap)
-                f.write(string_block('Wall', pos_1, size_1))
-                f.write(string_block('Wall', pos_2, size_2))
-
-                if obj != 'door':
-                    size, pos = create_wall((x, prev_y), (x, y), obj=obj,
-                                            gap=gap)
-                    f.write(string_block(obj, pos, size, orient=90))
-
-                prev_x = x
-
-            prev_x = 0
-            prev_y = y
-
-        f.write(string_block_rand('GoodGoal'))
-
+    return 'maze', position_agent, rotation_agent

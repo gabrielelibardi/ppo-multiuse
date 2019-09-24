@@ -3,8 +3,6 @@ from .edit_arenas import (
     add_object,
     write_arena,
     create_wall,
-    string_block,
-    string_block_rand,
 )
 from .sample_features import (
     random_pos,

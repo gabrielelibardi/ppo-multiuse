@@ -230,23 +230,3 @@ def create_wall(A, B, obj ='CylinderTunnel', gap=2):
             return ((gap, 2, 3), (x_pos, 0.5, y_pos))
 
     return ((x_size, z_size, y_size),(x_pos,z_pos,y_pos))
-
-
-def string_block(object_name, pos, size, orient=0):
-    s = ''
-    s += "    - !Item \n      name: {} \n".format(object_name)
-    x_pos, y_pos, z_pos = pos
-    y_pos = 0
-    s+= "      positions: \n      - !Vector3 {{x: {}, y: {}, z: {}}}\n".format(x_pos,y_pos,z_pos)
-    x_siz, y_siz, z_siz = size
-    s+= "      sizes: \n      - !Vector3 {{x: {}, y: {}, z: {}}}\n".format(x_siz,y_siz,z_siz)
-    s+= "      colors:\n      - !RGB {r: 153, g: 153, b: 153}\n"
-    s += "      rotations: [{}]\n".format(orient)
-
-    return s
-
-def string_block_rand(object_name):
-    s = ''
-    s += "    - !Item \n      name: {} \n".format(object_name)
-
-    return s
