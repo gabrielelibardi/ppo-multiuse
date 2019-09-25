@@ -40,3 +40,4 @@ It includes:
     - 500 c7 arenas: solve environment with multiple objects and blackouts.
     - 200 c8 arenas: mazes.
     - 500 c9 arenas: choice situation.
+
