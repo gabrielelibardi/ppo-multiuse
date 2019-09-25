@@ -24,6 +24,7 @@ It includes:
 RUN python animal/arenas/create_train_set.py --target-dir /path/to/target/directory
 
 to create a train with many different types of arenas. In the train set most of the features are random.
+(note that c8 and c9 are probably different from real c8 and c9 arenas).
 
 It includes:
 
