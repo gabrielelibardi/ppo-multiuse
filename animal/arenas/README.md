@@ -17,7 +17,7 @@ It includes:
     - 10 c6 arenas (special): only randomly colored walls like in the cl animalai example.
     - 10 c7 arenas: solve environment with multiple objects and blackouts.
     - 10 c8 arenas: mazes.
-    - 10 c8 arenas: choice situation.
+    - 10 c9 arenas: choice situation.
 
 # Create a train set
 
@@ -38,4 +38,4 @@ It includes:
     - 500 c6 arenas (special): only randomly colored walls like in the cl animalai example.
     - 500 c7 arenas: solve environment with multiple objects and blackouts.
     - 200 c8 arenas: mazes.
-    - 500 c8 arenas: choice situation.
+    - 500 c9 arenas: choice situation.
