@@ -23,8 +23,7 @@ It includes:
 
 RUN python animal/arenas/create_train_set.py --target-dir /path/to/target/directory
 
-to create a basic test set that a successfully trained agent is expected to complete.
-In the test set most of the features are random.
+to create a train with many different types of arenas. In the train set most of the features are random.
 
 It includes:
 
