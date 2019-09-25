@@ -1,4 +1,3 @@
-
 """ Create sets C1 to C10 of test arenas with known max reward for testing. """
 
 import random
@@ -6,8 +5,7 @@ import numpy as np
 from .edit_arenas import (add_object, write_arena, create_wall)
 from .sample_features import (
     random_size, random_color, random_pos, random_rotation)
-from .edit_arenas import add_ramp_scenario
-
+from .edit_arenas import add_ramp_scenario, add_walled, add_choice
 
 objects_dict = {
     'reward_objects': [
@@ -38,7 +36,8 @@ objects_dict = {
 }
 
 
-def create_c1_arena(target_path, arena_name, max_reward=5, time=250, max_num_good_goals=1, is_train=False):
+def create_c1_arena(target_path, arena_name, max_reward=5, time=250,
+                    max_num_good_goals=1, is_train=False):
     """
     Create .yaml file for C1-type arena.
          - Only goals.
@@ -54,7 +53,8 @@ def create_c1_arena(target_path, arena_name, max_reward=5, time=250, max_num_goo
    """
 
     allowed_objects = objects_dict['reward_objects']
-    size_goal = (np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
+    size_goal = (
+    np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
     position_goal = random_pos() if not is_train else None
     reward = float(max_reward)
     arena = add_object('', 'GoodGoal', size=size_goal, pos=position_goal)
@@ -123,7 +123,8 @@ def create_c1_arena_weird(target_path, arena_name, time=250, is_train=False):
     return 'c1_weird', position_agent, rotation_agent
 
 
-def create_c2_arena(target_path, arena_name, max_reward=5, time=250, max_num_good_goals=1, is_train=False):
+def create_c2_arena(target_path, arena_name, max_reward=5, time=250,
+                    max_num_good_goals=1, is_train=False):
     """
     Create .yaml file for C2-type arena.
          - Only goals.
@@ -140,13 +141,13 @@ def create_c2_arena(target_path, arena_name, max_reward=5, time=250, max_num_goo
 
     allowed_objects = objects_dict['reward_objects']
     reward = float(max_reward)
-    size_goal = (np.clip(random_size('GoodGoal')[0],
-                         1.0, max_reward), 0.0, 0.0) if not is_train else None
+    size_goal = (
+    np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
     position_goal = random_pos() if not is_train else None
     arena = add_object('', 'GoodGoal', size=size_goal, pos=position_goal)
     best_goal = size_goal[0]
 
-    size_goal = random_size('BadGoal') if not is_train else None
+    size_goal = random_size('BadGoal')
     position_goal = random_pos() if not is_train else None
     arena = add_object(arena, 'BadGoal', size=size_goal, pos=position_goal)
     worst_goal = size_goal[0]
@@ -157,7 +158,7 @@ def create_c2_arena(target_path, arena_name, max_reward=5, time=250, max_num_goo
     while reward - best_goal > size_goal[0]:
 
         category = allowed_objects[np.random.randint(0, len(allowed_objects))]
-        size_goal = random_size(category) if not is_train else None
+        size_goal = random_size(category)
         position_goal = random_pos() if not is_train else None
 
         if category in ['GoodGoalMulti', 'GoodGoalMultiBounce']:
@@ -186,7 +187,29 @@ def create_c2_arena(target_path, arena_name, max_reward=5, time=250, max_num_goo
     return 'c2', position_agent, rotation_agent
 
 
-def create_c3_arena(target_path, arena_name, time=250, max_movable=1, max_immovable=1, is_train=False):
+def create_c3_arena_basic(target_path, arena_name, time=250, num_walls=1,
+                          is_train=False):
+    """ _ """
+
+    category = random.choice(
+        ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
+    size_goal = random_size(category) if not is_train else None
+    position_goal = random_pos() if not is_train else None
+    arena = add_object('', category, size=size_goal, pos=position_goal)
+
+    arena = add_walled(arena, num_walls=num_walls)
+    position_agent = random_pos() if not is_train else None
+    rotation_agent = random_rotation() if not is_train else None
+    arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
+
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'c3', position_agent, rotation_agent
+
+
+def create_c3_arena(target_path, arena_name, time=250, max_movable=3,
+                    max_immovable=3, is_train=False):
     """
     Create .yaml file for C3-type arena.
         - One random positive reward ball, random sized
@@ -217,18 +240,20 @@ def create_c3_arena(target_path, arena_name, time=250, max_movable=1, max_immova
         arena = add_object(arena, category, size=size_goal, pos=position_goal)
 
     for _ in range(max_movable):
-        if random.random() > 0.9:
+        if random.random() > 0.1:
             category = random.choice(objects_dict['movable_objects'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_object, pos=pos_object)
+            arena = add_object(arena, category, size=size_object,
+                               pos=pos_object)
 
     for _ in range(max_immovable):
-        if random.random() > 0.9:
+        if random.random() > 0.1:
             category = random.choice(objects_dict['immovable_objects'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_object, pos=pos_object)
+            arena = add_object(arena, category, size=size_object,
+                               pos=pos_object)
 
     position_agent = random_pos() if not is_train else None
     rotation_agent = random_rotation() if not is_train else None
@@ -240,7 +265,9 @@ def create_c3_arena(target_path, arena_name, time=250, max_movable=1, max_immova
     return 'c3', position_agent, rotation_agent
 
 
-def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_orange_zones=1, max_movable=1, max_immovable=1, is_train=False):
+def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2,
+                    max_orange_zones=1, max_movable=1, max_immovable=1,
+                    is_train=False):
     """
     Create .yaml file for C4-type arena.
         - 1 green food (stationary) and some red zones
@@ -266,32 +293,37 @@ def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_oran
     if random.random() > 0.5:
         size_goal = random_size('GoodGoalMulti') if not is_train else None
         position_goal = random_pos() if not is_train else None
-        arena = add_object(arena, 'GoodGoalMulti', size=size_goal, pos=position_goal)
+        arena = add_object(arena, 'GoodGoalMulti', size=size_goal,
+                           pos=position_goal)
 
     for _ in range(num_red_zones):
-        size_object = random_size('DeathZone') if not is_train else None
+        size_object = random_size('DeathZone')
         pos_object = random_pos() if not is_train else None
-        arena = add_object(arena, 'DeathZone', size=size_object, pos=pos_object)
+        arena = add_object(arena, 'DeathZone', size=size_object,
+                           pos=pos_object)
 
     for _ in range(max_orange_zones):
         if random.random() > 0.5:
-            size_object = random_size('HotZone') if not is_train else None
+            size_object = random_size('HotZone')
             pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, 'HotZone', size=size_object, pos=pos_object)
+            arena = add_object(arena, 'HotZone', size=size_object,
+                               pos=pos_object)
 
     for _ in range(max_movable):
         if random.random() > 0.8:
             category = random.choice(objects_dict['movable_objects'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_object, pos=pos_object)
+            arena = add_object(arena, category, size=size_object,
+                               pos=pos_object)
 
     for _ in range(max_immovable):
         if random.random() > 0.8:
             category = random.choice(objects_dict['immovable_objects'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_object, pos=pos_object)
+            arena = add_object(arena, category, size=size_object,
+                               pos=pos_object)
 
     position_agent = random_pos() if not is_train else None
     rotation_agent = random_rotation() if not is_train else None
@@ -303,7 +335,8 @@ def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2, max_oran
     return 'c4', position_agent, rotation_agent
 
 
-def create_c5_arena(target_path, arena_name, time=250, max_movable=1, max_immovable=1, is_train=False):
+def create_c5_arena(target_path, arena_name, time=250, max_movable=1,
+                    max_immovable=1, is_train=False):
     """
     Create .yaml file for C5-type arena.
         - from 1 to 2 platforms accessible by ramps with a goal on top.
@@ -320,7 +353,7 @@ def create_c5_arena(target_path, arena_name, time=250, max_movable=1, max_immova
     arena = add_ramp_scenario(arena)
 
     for _ in range(max_movable):
-        if random.random() > 0.8:
+        if random.random() < 0.8:
             category = random.choice(objects_dict['movable_objects'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
@@ -329,7 +362,7 @@ def create_c5_arena(target_path, arena_name, time=250, max_movable=1, max_immova
                                RGB=color_object, pos=pos_object)
 
     for _ in range(max_immovable):
-        if random.random() > 0.8:
+        if random.random() < 0.8:
             category = random.choice(['Wall', 'Ramp', 'CylinderTunnel'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
@@ -346,7 +379,28 @@ def create_c5_arena(target_path, arena_name, time=250, max_movable=1, max_immova
     return 'c5', position_agent, rotation_agent
 
 
-def create_c6_arena(target_path, arena_name, time=250, max_movable=1, max_immovable=1, is_train=False):
+def create_c6_arena_basic(target_path, arena_name, time=250, num_walls=1,
+                          is_train=False):
+    """ _ """
+
+    category = random.choice(
+        ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
+    size_goal = random_size(category) if not is_train else None
+    position_goal = random_pos() if not is_train else None
+    arena = add_object('', category, size=size_goal, pos=position_goal)
+    arena = add_walled(arena, num_walls=num_walls, random_rgb=True)
+    position_agent = random_pos() if not is_train else None
+    rotation_agent = random_rotation() if not is_train else None
+    arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
+
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'c6', position_agent, rotation_agent
+
+
+def create_c6_arena(target_path, arena_name, time=250, max_movable=3,
+                    max_immovable=3, is_train=False):
     """
     Create .yaml file for C6-type arena.
         - One random positive reward ball, random sized
@@ -363,13 +417,16 @@ def create_c6_arena(target_path, arena_name, time=250, max_movable=1, max_immova
         max_immovable (int): set a limit to number of immovable.
     """
 
-    category = random.choice(['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
+    category = random.choice(
+        ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
     size_goal = random_size(category) if not is_train else None
     position_goal = random_pos() if not is_train else None
     arena = add_object('', category, size=size_goal, pos=position_goal)
 
     if random.random() > 0.5:
-        category = random.choice(['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
+        category = random.choice(
+            ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti',
+             'GoodGoalMultiBounce'])
         size_goal = random_size(category) if not is_train else None
         position_goal = random_pos() if not is_train else None
         arena = add_object(arena, category, size=size_goal, pos=position_goal)
@@ -379,10 +436,11 @@ def create_c6_arena(target_path, arena_name, time=250, max_movable=1, max_immova
             category = random.choice(['BadGoal', 'BadGoalBounce'])
             size_goal = random_size(category) if not is_train else None
             position_goal = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_goal, pos=position_goal)
+            arena = add_object(arena, category, size=size_goal,
+                               pos=position_goal)
 
     for _ in range(max_movable):
-        if random.random() > 0.8:
+        if random.random() < 0.8:
             category = random.choice(objects_dict['movable_objects'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
@@ -390,7 +448,7 @@ def create_c6_arena(target_path, arena_name, time=250, max_movable=1, max_immova
                                RGB=random_color(), pos=pos_object)
 
     for _ in range(max_immovable):
-        if random.random() > 0.8:
+        if random.random() < 0.8:
             category = random.choice(['Wall', 'Ramp', 'CylinderTunnel'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
@@ -407,7 +465,8 @@ def create_c6_arena(target_path, arena_name, time=250, max_movable=1, max_immova
     return 'c6', position_agent, rotation_agent
 
 
-def create_c7_arena(target_path, arena_name, time=250, max_movable=3, max_immovable=3, is_train=False):
+def create_c7_arena(target_path, arena_name, time=250, max_movable=3,
+                    max_immovable=3, is_train=False):
     """
     Create .yaml file for C7-type arena.
         - One random positive reward ball, random sized
@@ -425,15 +484,19 @@ def create_c7_arena(target_path, arena_name, time=250, max_movable=3, max_immova
         max_immovable (int): set a limit to number of immovable.
     """
 
-    blackout_options = [[-20], [-40], [-60], [25, 30, 50, 55, 75], [50, 55, 75, 80, 100, 105, 125]]
-    category = random.choice(['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
+    blackout_options = [[-20], [-40], [-60], [25, 30, 50, 55, 75],
+                        [50, 55, 75, 80, 100, 105, 125]]
+    category = random.choice(
+        ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
 
     size_goal = random_size(category) if not is_train else None
     position_goal = random_pos() if not is_train else None
     arena = add_object('', category, size=size_goal, pos=position_goal)
 
     if random.random() > 0.5:
-        category = random.choice(['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
+        category = random.choice(
+            ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti',
+             'GoodGoalMultiBounce'])
         size_goal = random_size(category) if not is_train else None
         position_goal = random_pos() if not is_train else None
         arena = add_object(arena, category, size=size_goal, pos=position_goal)
@@ -443,38 +506,41 @@ def create_c7_arena(target_path, arena_name, time=250, max_movable=3, max_immova
             category = random.choice(['BadGoal', 'BadGoalBounce'])
             size_goal = random_size(category) if not is_train else None
             position_goal = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_goal, pos=position_goal)
+            arena = add_object(arena, category, size=size_goal,
+                               pos=position_goal)
 
     for _ in range(max_movable):
-        if random.random() > 0.5:
+        if random.random() < 0.8:
             category = random.choice(objects_dict['movable_objects'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_object, pos=pos_object)
+            arena = add_object(arena, category, size=size_object,
+                               pos=pos_object)
 
     for _ in range(max_immovable):
-        if random.random() > 0.5:
+        if random.random() < 0.8:
             category = random.choice(objects_dict['immovable_objects'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_object, pos=pos_object)
+            arena = add_object(arena, category, size=size_object,
+                               pos=pos_object)
 
     position_agent = random_pos() if not is_train else None
     rotation_agent = random_rotation() if not is_train else None
     arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
 
     save_name = '{}/{}'.format(target_path, arena_name)
-    write_arena(save_name, time, arena, blackouts=random.choice(blackout_options))
+    write_arena(save_name, time, arena,
+                blackouts=random.choice(blackout_options))
 
     return 'c7', position_agent, rotation_agent
 
 
-def create_maze(target_path, arena_name, time=250,
-                num_cells=np.random.randint(2, 5),
-                obj=random.choice(['CylinderTunnel','door']),
+def create_maze(target_path, arena_name, time=250, num_cells=3, obj=None,
                 is_train=False):
     """ _ """
 
+    wall_type = random.choice(['Wall', 'WallTransparent'])
     arena = ''
 
     if obj == 'CylinderTunnel':
@@ -499,29 +565,31 @@ def create_maze(target_path, arena_name, time=250,
 
     prev_y = 0
     prev_x = 0
+    z_size = random.choice([0.5, 10])
 
     for y in walls_loc_y:
         for x in walls_loc_x:
 
             size_1, pos_1, size_2, pos_2 = create_wall(
-                (prev_x, y), (x, y), obj='door', gap=gap)
+                (prev_x, y), (x, y), z_size, obj='door', gap=gap)
 
-            arena = add_object(arena, 'Wall', size=size_1, pos=pos_1)
-            arena = add_object(arena, 'Wall', size=size_2, pos=pos_2)
-
-            if obj != 'door':
-                size, pos = create_wall((prev_x, y), (x, y), obj=obj, gap=gap)
-                arena = add_object(arena, obj, size=size, pos=pos)
-
-            size_1, pos_1, size_2, pos_2 = create_wall(
-                (x, prev_y), (x, y), obj='door', gap=gap)
-            arena = add_object(arena, 'Wall', size=size_1, pos=pos_1)
-            arena = add_object(arena, 'Wall', size=size_1, pos=pos_1)
+            arena = add_object(arena, wall_type, size=size_1, pos=pos_1, rot=0)
+            arena = add_object(arena, wall_type, size=size_2, pos=pos_2, rot=0)
 
             if obj != 'door':
                 size, pos = create_wall(
-                    (x, prev_y), (x, y), obj=obj, gap=gap)
-                arena = add_object(arena, obj, size=size, pos=pos)
+                    (prev_x, y), (x, y), z_size, obj=obj, gap=gap)
+                arena = add_object(arena, obj, size=size, pos=pos, rot=0)
+
+            size_1, pos_1, size_2, pos_2 = create_wall(
+                (x, prev_y), (x, y), z_size, obj='door', gap=gap)
+            arena = add_object(arena, wall_type, size=size_1, pos=pos_1, rot=0)
+            arena = add_object(arena, wall_type, size=size_2, pos=pos_2, rot=0)
+
+            if obj != 'door':
+                size, pos = create_wall(
+                    (x, prev_y), (x, y), z_size, obj=obj, gap=gap)
+                arena = add_object(arena, obj, size=size, pos=pos, rot=90)
             prev_x = x
 
         prev_x = 0
@@ -529,14 +597,38 @@ def create_maze(target_path, arena_name, time=250,
 
     size_goal = random_size('GoodGoal') if not is_train else None
     position_goal = random_pos() if not is_train else None
-    arena = add_object('', 'GoodGoal', size=size_goal, pos=position_goal)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
 
     position_agent = random_pos() if not is_train else None
     rotation_agent = random_rotation() if not is_train else None
-    arena = add_object(arena, "Agent", pos=position_agent,
-                       rot=rotation_agent)
+    arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
 
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
     return 'maze', position_agent, rotation_agent
+
+
+def create_arena_choice(target_path, arena_name, time=250, is_train=False):
+
+    arena = add_choice('')
+
+    size_goal = random_size('GoodGoal') if not is_train else None
+    position_goal = random_pos() if not is_train else None
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size_goal = random_size('GoodGoal') if not is_train else None
+    position_goal = random_pos() if not is_train else None
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    allowed_objects = objects_dict['reward_objects']
+    for _ in range(np.random.randint(1, 5)):
+        category = allowed_objects[np.random.randint(0, len(allowed_objects))]
+        size_goal = random_size(category) if not is_train else None
+        position_goal = random_pos() if not is_train else None
+        arena = add_object(arena, category, size=size_goal, pos=position_goal)
+
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'choice', (20, 0, 20), 0
