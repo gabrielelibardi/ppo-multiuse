@@ -92,7 +92,7 @@ if __name__ == '__main__':
                     obj=random.choice(['CylinderTunnel', 'door', 'Cardbox1']))
 
     # choice
-    for i in range(1, 501):
+    for i in range(1, 11):
         create_arena_choice(arguments.target_dir, 'c9_{}'.format(str(i).zfill(4)),
                     time=random.choice([250, 500, 1000]),
                     is_train=True)
