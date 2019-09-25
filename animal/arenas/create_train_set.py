@@ -31,20 +31,19 @@ if __name__ == '__main__':
         os.mkdir(arguments.target_dir)
 
     # c1
-    for i in range(1, 501):
+    for i in range(1, 421):
             create_c1_arena(arguments.target_dir, 'c1_{}'.format(
-                str(i).zfill(4)), max_reward=float(np.random.randint(5, 8)),
+                str(i).zfill(4)), max_reward=float(np.random.randint(5, 8)), time=random.choice([250, 500])
                             is_train=True)
 
     # c1_weird
-    for i in range(501, 701):
-        create_c1_arena_weird(arguments.target_dir, 'c1_{}'.format(
-            str(i).zfill(4)), is_train=True)
+    for i in range(421, 501): #approx 5/30
+        create_c1_arena_weird(arguments.target_dir, 'c1_{}'.format(str(i).zfill(4)), is_train=True)
 
     # c2
     for i in range(1, 501):
             create_c2_arena(arguments.target_dir, 'c2_{}'.format(
-                str(i).zfill(4)), max_reward=5, is_train=True,
+                str(i).zfill(4)), max_reward=5,  time=random.choice([250, 500]) is_train=True,
                             max_num_good_goals=np.random.randint(1, 2))
 
     # c3
@@ -89,7 +88,7 @@ if __name__ == '__main__':
     # mazes
     for i in range(1, 201):
         create_maze(arguments.target_dir, 'c8_{}'.format(str(i).zfill(4)),
-                    time=random.choice([250, 500, 1000]),
+                    time=random.choice([500,1000]),
                     num_cells=np.random.randint(2, 5),
                     obj=random.choice(['CylinderTunnel', 'door', 'Cardbox1']),
                     is_train=True)
@@ -97,5 +96,5 @@ if __name__ == '__main__':
     # choice
     for i in range(1, 501):
         create_arena_choice(arguments.target_dir, 'c9_{}'.format(str(i).zfill(4)),
-                    time=random.choice([250, 500, 1000]),
+                    time=random.choice([500, 1000]),
                     is_train=True)

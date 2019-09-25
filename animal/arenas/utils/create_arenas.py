@@ -53,8 +53,7 @@ def create_c1_arena(target_path, arena_name, max_reward=5, time=250,
    """
 
     allowed_objects = objects_dict['reward_objects']
-    size_goal = (
-    np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
+    size_goal = (np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
     position_goal = random_pos() if not is_train else None
     reward = float(max_reward)
     arena = add_object('', 'GoodGoal', size=size_goal, pos=position_goal)
