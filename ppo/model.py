@@ -4,6 +4,7 @@ import os
 import math
 import torch.nn as nn
 import torch.nn.functional as F
+import gym
 
 from ppo.distributions import Bernoulli, Categorical, DiagGaussian
 from ppo.utils import init
@@ -15,11 +16,16 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space, base, base_kwargs=None):
+    def __init__(self, input_space, action_space, base, base_kwargs=None):
         super(Policy, self).__init__()
         if base_kwargs is None:
             base_kwargs = {}
 
+        if isinstance(input_space,gym.spaces.Tuple):
+            obs_shape = input_space[0].shape
+            base_kwargs['state_shape'] = input_space[1].shape
+        else:
+            obs_shape = input_space.shape
 
         self.base = base(obs_shape[0], **base_kwargs)
 
@@ -225,21 +231,21 @@ class MLPBase(NNBase):
 
 
 class StateCNNBase(NNBase):
-    def __init__(self, num_channels, recurrent=False, hidden_size=256, image_size=84, fullstate_size=0):
+    def __init__(self, num_channels,  state_shape, recurrent=False, hidden_size=256, image_size=84):
         super(StateCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
 
         #self.main = FixupCNN(image_size,num_channels,hidden_size)
         self.main = ImpalaCNN(image_size,num_channels,hidden_size)
 
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), nn.init.calculate_gain('relu'))
-
+        fullstate_size = np.prod(state_shape) 
         #self.state_mlp = nn.Sequential(
         #    init_(nn.Linear(fullstate_size, hidden_size)),nn.ReLU(),
         #    init_(nn.Linear(hidden_size, hidden_size)),nn.ReLU(),
         #)
 
         #mixer_size = hidden_size + hidden_size  
-        mixer_size = hidden_size + fullstate_size  
+        mixer_size = hidden_size + fullstate_size
         self.state_mixer = nn.Sequential(
             init_(nn.Linear(mixer_size, hidden_size)),nn.ReLU(),
             init_(nn.Linear(hidden_size, hidden_size)),nn.ReLU(),

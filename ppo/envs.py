@@ -14,7 +14,7 @@ from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from baselines.common.vec_env.shmem_vec_env import ShmemVecEnv
 from baselines.common.vec_env.vec_normalize import  VecNormalize as VecNormalize_
 
-def make_vec_envs(make,num_processes,log_dir,device,num_frame_stack,state_size,state_stack,spaces=None):
+def make_vec_envs(make,num_processes,log_dir,device,num_frame_stack,state_shape,num_state_stack,spaces=None):
 
     envs = [make(i)  for i in range(num_processes)    ]
 
@@ -30,35 +30,13 @@ def make_vec_envs(make,num_processes,log_dir,device,num_frame_stack,state_size,s
     if num_frame_stack > 0:
         envs = VecPyTorchFrameStack(envs, num_frame_stack, device)
 
-    if state_size > 0:
-        envs = VecPyTorchStateStack(envs,state_size,state_stack)
+    if state_shape:
+        #tupled obs
+        envs = VecPyTorchState(envs,state_shape)
+        if num_state_stack>0:
+            envs = VecPyTorchStateStack(envs,num_state_stack)
     
     return envs
-
-class VecPyTorchStateStack(VecEnvWrapper):
-    def __init__(self, envs, state_size, state_stack):
-        super().__init__(envs)
-        self.prev_states = np.zeros([envs.num_envs, state_stack, state_size], dtype=np.float32)
-        self.state_stack = state_stack
-        self.state_size = state_size
-
-    def reset(self):
-        obses = self.venv.reset()  #TODO> really, I should also return vector obs here because they are available
-        self.prev_states.fill(0)
-        #self.prev_states[:, -1, :] = states  #as (obses,states) above
-        states = torch.from_numpy(self.prev_states.copy()).float().to(self.device)
-        return (obses,states)
-
-    def step_wait(self):
-        obses, rews, dones, infos = self.venv.step_wait()
-        self.prev_states[:, :-1] = self.prev_states[:, 1:] #shift
-        for i, done in enumerate(dones):
-            if done:
-                self.prev_states[i].fill(0.0)
-            else:
-                self.prev_states[i, -1, :] = infos[i]['states'] 
-        states = torch.from_numpy(self.prev_states.copy()).float().to(self.device)
-        return (obses,states), rews, dones, infos
 
 
 class VecPyTorch(VecEnvWrapper):
@@ -87,32 +65,38 @@ class VecPyTorch(VecEnvWrapper):
         return obs, reward, done, info
 
 
-class VecNormalize(VecNormalize_):
-    def __init__(self, *args, **kwargs):
-        super(VecNormalize, self).__init__(*args, **kwargs)
-        self.training = True
+class VecPyTorchState(VecEnvWrapper):
+#   Convert obs to tuple (obs,states) and making all available to device as torch arrays
+    def __init__(self, venv, state_shape):
+        self.venv = venv
+        self._state_shape = state_shape
+        observation_space = gym.spaces.Tuple( 
+                (venv.observation_space, 
+                 gym.spaces.Box(low=-np.inf, high=np.inf, shape= state_shape, dtype=np.float32)) 
+            )
+        VecEnvWrapper.__init__(self, venv, observation_space=observation_space)
 
-    def _obfilt(self, obs, update=True):
-        if self.ob_rms:
-            if self.training and update:
-                self.ob_rms.update(obs)
-            obs = np.clip((obs - self.ob_rms.mean) /
-                          np.sqrt(self.ob_rms.var + self.epsilon),
-                          -self.clipob, self.clipob)
-            return obs
-        else:
-            return obs
+    def reset(self):
+        obses = self.venv.reset()  #TODO> really, I should also return vector obs here because they are available
+        states = torch.zeros((self.venv.num_envs,) + self._state_shape).to(self.device)
+        return (obses,states)
 
-    def train(self):
-        self.training = True
-
-    def eval(self):
-        self.training = False
+    def step_wait(self):
+        obses, rews, dones, infos = self.venv.step_wait()
+        states = np.zeros((self.venv.num_envs,) + self._state_shape,dtype=np.float32)
+        for i, done in enumerate(dones):
+            if done:
+                states[i] = 0
+            else:
+                states[i] = infos[i]['states'] 
+        states = torch.from_numpy(states.copy()).float().to(self.device) 
+        return (obses,states), rews, dones, infos
 
 
 # Derived from
 # https://github.com/openai/baselines/blob/master/baselines/common/vec_env/vec_frame_stack.py
 class VecPyTorchFrameStack(VecEnvWrapper):
+# Takes obs image and stack them
     def __init__(self, venv, nstack, device=None):
         self.venv = venv
         self.nstack = nstack
@@ -125,8 +109,7 @@ class VecPyTorchFrameStack(VecEnvWrapper):
 
         if device is None:
             device = torch.device('cpu')
-        self.stacked_obs = torch.zeros((venv.num_envs, ) +
-                                       low.shape).to(device)
+        self.stacked_obs = torch.zeros((venv.num_envs, ) + low.shape).to(device)
 
         observation_space = gym.spaces.Box(
             low=low, high=high, dtype=venv.observation_space.dtype)
@@ -154,6 +137,44 @@ class VecPyTorchFrameStack(VecEnvWrapper):
     def close(self):
         self.venv.close()
 
+
+
+class VecPyTorchStateStack(VecEnvWrapper):
+#Take tupled obs=(vis,state) and stack states
+    def __init__(self, venv, nstack, device=None):
+        self.venv = venv
+        self.nstack = nstack
+
+        wos = venv.observation_space[1]  # wrapped state space
+        self.shape_dim0 = wos.shape[0]
+        low = np.repeat(wos.low, self.nstack, axis=0)
+        high = np.repeat(wos.high, self.nstack, axis=0)
+        self.stacked = torch.zeros((venv.num_envs, ) + low.shape).to(self.device)
+
+        observation_space = gym.spaces.Tuple( 
+                (venv.observation_space[0],
+                 gym.spaces.Box(low=low, high=high, dtype=np.float32)) 
+            )
+
+        VecEnvWrapper.__init__(self, venv, observation_space=observation_space)
+
+    def step_wait(self):
+        (obs,states), rews, news, infos = self.venv.step_wait()
+        self.stacked[:, :-self.shape_dim0] =  self.stacked[:, self.shape_dim0:]
+        for (i, new) in enumerate(news):
+            if new:
+                self.stacked[i] = 0
+        self.stacked[:, -self.shape_dim0:] = states
+        return (obs,self.stacked), rews, news, infos
+
+    def reset(self):
+        obs,states = self.venv.reset()
+        if torch.backends.cudnn.deterministic:
+            self.stacked = torch.zeros(self.stacked.shape)
+        else:
+            self.stacked.zero_()
+        self.stacked[:, -self.shape_dim0:] = states
+        return (obs,self.stacked)
 
 
 class FrameSkipEnv(gym.Wrapper):
@@ -213,3 +234,26 @@ class TransposeImage(TransposeObs):
 
     def observation(self, ob):
        return ob.transpose(self.op[0], self.op[1], self.op[2])
+
+class VecNormalize(VecNormalize_):
+    def __init__(self, *args, **kwargs):
+        super(VecNormalize, self).__init__(*args, **kwargs)
+        self.training = True
+
+    def _obfilt(self, obs, update=True):
+        if self.ob_rms:
+            if self.training and update:
+                self.ob_rms.update(obs)
+            obs = np.clip((obs - self.ob_rms.mean) /
+                          np.sqrt(self.ob_rms.var + self.epsilon),
+                          -self.clipob, self.clipob)
+            return obs
+        else:
+            return obs
+
+    def train(self):
+        self.training = True
+
+    def eval(self):
+        self.training = False
+

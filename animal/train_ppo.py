@@ -41,14 +41,13 @@ def main():
     #spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
     #               gym.spaces.Discrete(9) )
     if args.reduced_actions: #TODO: hugly hack
-        state_size = 13
+        state_shape = (13,)
     else:
-        state_size = 15 
-    envs = make_vec_envs(env_make, args.num_processes, args.log_dir, device, args.frame_stack, state_size, args.state_stack)
+        state_shape = (15,) 
+    envs = make_vec_envs(env_make, args.num_processes, args.log_dir, device, args.frame_stack, state_shape, args.state_stack)
     
-    base_kwargs={'recurrent': args.recurrent_policy}
-    if args.state: base_kwargs['fullstate_size'] = envs.state_size*envs.state_stack
-    actor_critic = Policy(envs.observation_space.shape,envs.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs)
+    actor_critic = Policy(envs.observation_space,envs.action_space,base=CNN[args.cnn],
+                            base_kwargs={'recurrent': args.recurrent_policy})
 
     if args.restart_model:
         actor_critic.load_state_dict(torch.load(args.restart_model, map_location=device))
