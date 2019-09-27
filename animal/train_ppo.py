@@ -22,6 +22,8 @@ from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase
 from ppo.storage import RolloutStorage
 from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model
 from animal import make_animal_env
+from vision_module import ImpalaCNNVision
+from wrappers import VecVisionState 
 
 CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase,'State':StateCNNBase}
 
@@ -44,8 +46,14 @@ def main():
         state_shape = (13,)
     else:
         state_shape = (15,) 
+
     envs = make_vec_envs(env_make, args.num_processes, args.log_dir, device, args.frame_stack, state_shape, args.state_stack)
-    
+
+    if args.vision_module:
+        vision_module, _ = ImpalaCNNVision.load(args.vision_module,device=device)
+        vision_module.to(device)
+        envs = VecVisionState(envs, vision_module)
+
     actor_critic = Policy(envs.observation_space,envs.action_space,base=CNN[args.cnn],
                             base_kwargs={'recurrent': args.recurrent_policy})
 
@@ -142,6 +150,8 @@ def get_args():
         '--recurrent-policy',action='store_true',default=False,help='use a recurrent policy')
     parser.add_argument(
         '--restart-model',default='',help='Restart training using the model given (Gianni)')  
+    parser.add_argument(
+        '--vision-module',default='',help='File to use to load the vision module ') 
     parser.add_argument(
         '--behavior',action='append',default=None,help='directory that contains expert policies for high-level actions')
     parser.add_argument(

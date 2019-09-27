@@ -56,19 +56,14 @@ class NNBase(nn.Module):
         return filename
 
     @classmethod
-    def load(cls, filename, use_device=torch.device('cpu')):
+    def load(cls, filename, device=torch.device('cpu')):
         with tarfile.open(filename, "r") as tar:
             net_parameters = json.loads(
                 tar.extractfile("net_params.json").read().decode("utf-8"))
             path = tempfile.mkdtemp()
             tar.extract("state.torch", path=path)
             net = cls(**net_parameters)
-            net.load_state_dict(
-                torch.load(
-                    path + "/state.torch",
-                    map_location=use_device,
-                )
-            )
+            net.load_state_dict( torch.load(path + "/state.torch", map_location=device) )
         return net, net_parameters
 
 
@@ -82,7 +77,7 @@ class ImpalaCNNVision(NNBase):
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
         self.linear = init_(nn.Linear(hidden_size, 3))
 
-    def forward(self, inputs, rnn_hxs):
+    def forward(self, inputs, rnn_hxs=None):
         x = self.main(inputs / 255.0)
         if self.is_recurrent:
             x, rnn_hxs = self.gru(x, rnn_hxs)

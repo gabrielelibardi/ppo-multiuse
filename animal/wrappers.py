@@ -1,6 +1,7 @@
 import os
 import sys
 import gym
+import torch
 import glob
 from os.path import join
 import random
@@ -9,6 +10,7 @@ from gym import error, spaces
 from baselines.bench import load_results
 from baselines import bench
 from gym.spaces.box import Box
+from baselines.common.vec_env import VecEnvWrapper
 import animalai
 from animalai.envs.gym.environment import AnimalAIEnv
 import time
@@ -99,3 +101,33 @@ class FilterActionEnv(gym.ActionWrapper):
 
     def action(self, act):
         return self.actions[act]
+
+
+class VecVisionState(VecEnvWrapper):
+    def __init__(self, venv, visnet):
+        wos = venv.observation_space[1]  # wrapped state space
+        low = np.concatenate((wos.low,   np.full((visnet.output_size,), -np.inf,dtype=np.float32)) )
+        high = np.concatenate((wos.high, np.full((visnet.output_size,),  np.inf,dtype=np.float32)) )
+        observation_space = gym.spaces.Tuple( 
+                (venv.observation_space[0],
+                 gym.spaces.Box(low=low, high=high, dtype=np.float32)) 
+            )
+
+        VecEnvWrapper.__init__(self, venv, observation_space=observation_space)
+
+        self.visnet = visnet
+
+    def step_wait(self):
+        (viz,states), rews, news, infos = self.venv.step_wait()
+        with torch.no_grad():
+            _,_,h = self.visnet(viz[:,-self.visnet.num_inputs:,:,:])  #match network viz take the last obs
+        states = torch.cat((states,h),dim=1)
+        return (viz,states), rews, news, infos
+
+    def reset(self):
+        (viz,states) = self.venv.reset()
+        with torch.no_grad():
+            _,_,h = self.visnet(viz[:,-self.visnet.num_inputs:,:,:])  #match network viz take the last obs
+        states = torch.cat((states,h),dim=1)
+        return (viz,states)
+    
