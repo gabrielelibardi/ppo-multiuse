@@ -66,18 +66,19 @@ class Agent(object):
         envs = VecPyTorch(envs, device)
         envs = VecPyTorchFrameStack(envs, frame_stack, device)
         if reduced_actions: #TODO: hugly hack
-            state_size = 13
+            state_shape = (13,)
         else:
-            state_size = 15
-        if state_stack > 0:
-            envs = VecPyTorchStateStack(envs,state_size,state_stack)
+            state_shape = (15,)
+
+        if state_stack>0:
+            envs = VecPyTorchState(envs,state_shape)
+            envs = VecPyTorchStateStack(envs,state_stack)
         self.envs = envs
         self.flattener = self.envs.unwrapped.envs[0].flattener
         # Load the configuration and model using *** ABSOLUTE PATHS ***
         self.model_path = '/aaio/data/animal.state_dict'
         base_kwargs={'recurrent': True}
-        if state_stack > 0: base_kwargs['fullstate_size'] = envs.state_size*envs.state_stack
-        self.policy = Policy(self.envs.observation_space.shape,self.envs.action_space,base=CNN,base_kwargs=base_kwargs)
+        self.policy = Policy(self.envs.observation_space,self.envs.action_space,base=CNN,base_kwargs=base_kwargs)
         self.policy.load_state_dict(torch.load(self.model_path,map_location=device))
         self.policy.to(device)
         self.recurrent_hidden_states = torch.zeros(1, self.policy.recurrent_hidden_state_size).to(device)
