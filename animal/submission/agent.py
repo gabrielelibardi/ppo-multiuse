@@ -41,6 +41,7 @@ state_stack = 4
 #CNN=FixupCNNBase
 CNN=StateCNNBase
 reduced_actions = True
+vision_module_file = '/aaio/data/animal.state_dict'
 
 def make_env():
     env = FakeAnimalEnv()
@@ -73,6 +74,12 @@ class Agent(object):
         if state_stack>0:
             envs = VecPyTorchState(envs,state_shape)
             envs = VecPyTorchStateStack(envs,state_stack)
+
+        if vision_module_file:
+            vision_module, _ = ImpalaCNNVision.load(vision_module_file,device=device)
+            vision_module.to(device)
+            envs = VecVisionState(envs, vision_module)
+
         self.envs = envs
         self.flattener = self.envs.unwrapped.envs[0].flattener
         # Load the configuration and model using *** ABSOLUTE PATHS ***
