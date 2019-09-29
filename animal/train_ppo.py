@@ -42,10 +42,11 @@ def main():
             reduced_actions=args.reduced_actions, seed=args.seed, state=args.state)
     #spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
     #               gym.spaces.Discrete(9) )
-    if args.reduced_actions: #TODO: hugly hack
-        state_shape = (13,)
+    if args.cnn == 'State':
+         #TODO: hugly hack
+        state_shape = (13,) if args.reduced_actions else (15,)  
     else:
-        state_shape = (15,) 
+        state_shape = None
 
     envs = make_vec_envs(env_make, args.num_processes, args.log_dir, device, args.frame_stack, state_shape, args.state_stack)
 
