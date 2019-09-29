@@ -7,8 +7,10 @@ from ppo.envs import  VecPyTorch, VecPyTorchFrameStack, FrameSkipEnv, TransposeI
 from ppo.wrappers import RetroEnv,Stateful,FilterActionEnv
 from animalai.envs.gym.environment import ActionFlattener
 from PIL import Image
-from ppo.envs import VecPyTorchFrameStack, TransposeImage, VecPyTorch
+from ppo.envs import VecPyTorchFrameStack, TransposeImage, VecPyTorch, VecPyTorchState
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
+from ppo.vision_model import ImpalaCNNVision 
+from ppo.wrappers import VecVisionState
 import numpy as np
 from gym.spaces import Box
 import gym
@@ -37,19 +39,19 @@ class FakeAnimalEnv(gym.Env):
 
 frame_skip = 2
 frame_stack = 2
-state_stack = 4
+state_stack = 16
 #CNN=FixupCNNBase
 CNN=StateCNNBase
 reduced_actions = True
-vision_module_file = '/aaio/data/animal.state_dict'
+vision_module_file = '/aaio/data/model_249.ckpt'
 
 def make_env():
     env = FakeAnimalEnv()
     env = RetroEnv(env)
     if reduced_actions:
        env = FilterActionEnv(env)
-    env = Stateful(env)
-
+    if state_stack:
+       env = Stateful(env)
     if frame_skip > 0:
         env = FrameSkipEnv(env, skip=frame_skip)
     env = TransposeImage(env, op=[2, 0, 1])

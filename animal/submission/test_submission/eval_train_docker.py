@@ -76,7 +76,7 @@ def main():
     for count,a in enumerate(arenas):
         arena_config_in = ArenaConfig(a)
         max_reward = analyze_arena(arena_config_in)
-        if max_reward<0
+        if max_reward<0:
             print("Warning: Arena {} max_reward cannot be computed".format(a))
         env.reset(arenas_configurations=arena_config_in)
         cumulated_reward = 0
@@ -101,9 +101,10 @@ def main():
         total_reward += cumulated_reward
         performance = cumulated_reward/max_reward
         total_perf += performance
-        print('Episode {} completed, reward {}:{}  performance {}:{}'.format(a, cumulated_reward, cumulated_reward/count, performance,perfomance/count))
+        print('Episode {} completed, reward {}:{}  performance {}:{}'.format(a, cumulated_reward, 
+            cumulated_reward/(count+1), performance, performance/(count+1)))
 
-    print('SUCCESS {} {}'.format(total_reward/count,total_perf/count))
+    print('SUCCESS {} {}'.format(total_reward/count,total_perf/(count+1)))
 
 
 if __name__ == '__main__':
