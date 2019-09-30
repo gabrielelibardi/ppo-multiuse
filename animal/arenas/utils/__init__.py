@@ -22,5 +22,6 @@ from .create_arenas import (
     create_c6_arena,
     create_c7_arena,
     create_maze,
+    create_mix_maze,
     create_arena_choice,
 )
