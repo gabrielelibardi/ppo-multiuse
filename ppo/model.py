@@ -234,18 +234,18 @@ class StateCNNBase(NNBase):
     def __init__(self, num_channels,  state_shape, recurrent=False, hidden_size=256, image_size=84):
         super(StateCNNBase, self).__init__(recurrent, hidden_size, hidden_size)
 
-        #self.main = FixupCNN(image_size,num_channels,hidden_size)
-        self.main = ImpalaCNN(image_size,num_channels,hidden_size)
+        self.main = FixupCNN(image_size,num_channels,hidden_size)
+        #self.main = ImpalaCNN(image_size,num_channels,hidden_size)
 
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), nn.init.calculate_gain('relu'))
         fullstate_size = np.prod(state_shape) 
-        self.state_mlp = nn.Sequential(
-            init_(nn.Linear(fullstate_size, hidden_size)),nn.ReLU(),
-            init_(nn.Linear(hidden_size, hidden_size)),nn.ReLU(),
-        )
+        #self.state_mlp = nn.Sequential(
+        #    init_(nn.Linear(fullstate_size, hidden_size)),nn.ReLU(),
+        #    init_(nn.Linear(hidden_size, hidden_size)),nn.ReLU(),
+        #)
 
-        mixer_size = hidden_size + hidden_size  
-        #mixer_size = hidden_size + fullstate_size
+        #mixer_size = hidden_size + hidden_size  
+        mixer_size = hidden_size + fullstate_size
         self.state_mixer = nn.Sequential(
             init_(nn.Linear(mixer_size, hidden_size)),nn.ReLU(),
             init_(nn.Linear(hidden_size, hidden_size)),nn.ReLU(),
@@ -261,8 +261,8 @@ class StateCNNBase(NNBase):
         states = inputs[1]
         cnn_out = self.main(obs / 255.0)
         flat_states = states.view(states.shape[0], -1)
-        states_out = self.state_mlp(flat_states)
-        #states_out = flat_states
+        #states_out = self.state_mlp(flat_states)
+        states_out = flat_states
         concatenated = torch.cat([cnn_out, states_out], dim=-1)
         x = self.state_mixer(concatenated)
 
