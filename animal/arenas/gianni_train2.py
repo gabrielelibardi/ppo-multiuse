@@ -70,6 +70,7 @@ np.random.seed(1)
 def obj_1(repeats = 1):
 # If I have only one object in the arena it has to be food (Hp)
 # So I only include positive rewards here which can terminate the episode earlier
+# Positive rewards have always a given random size
     for r in range(repeats):
         for i,a in enumerate(pos_reward_objects):
             arena = ''
@@ -79,6 +80,7 @@ def obj_1(repeats = 1):
 
 def obj_2(repeats = 1):
 # If I have two objects in the arena it has to be food and anything else, including food again
+# Positive rewards have always a given random size
     for r in range(repeats):
         for i,a in enumerate(pos_reward_objects):
             for i2,a2 in enumerate(all_objects):
@@ -91,6 +93,7 @@ def obj_2(repeats = 1):
 def obj_3(repeats = 1):
 # If I have three objects in the arena it has to be one food,anything else and non_reward objects
 # Because I am placing it randomly having two barrier objects helps in making the arena harder to navigate
+# Positive rewards have always a given random size
     for r in range(repeats):
         for i,a in enumerate(pos_reward_objects):
             for i2,a2 in enumerate(all_objects):
