@@ -55,19 +55,20 @@ maker = make_animal_env(log_dir = None, inference_mode=args.realtime, frame_skip
                         arenas_dir=args.arenas_dir, info_keywords=(),reduced_actions=args.reduced_actions,
                         seed=1, state=args.state)
 
-if args.reduced_actions: #TODO: hugly hack
-    state_size = 13
+if args.cnn == 'State':
+    #TODO: hugly hack
+    state_shape = (13,) if args.reduced_actions else (15,)  
 else:
-    state_size = 15 
+    state_shape = None
 
 env = make_vec_envs(maker, 1, None, device=device, num_frame_stack=args.frame_stack, 
-                        state_size=state_size, state_stack=args.state_stack)
+                        state_shape=state_shape, num_state_stack=args.state_stack)
 
 # Get a render function
 #render_func = get_render_func(env)
 base_kwargs={'recurrent': args.recurrent_policy}
 if args.state: base_kwargs['fullstate_size'] = env.state_size*env.state_stack
-actor_critic = Policy(env.observation_space.shape,env.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs)
+actor_critic = Policy(env.observation_space,env.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs)
 
 if args.load_model:
     actor_critic.load_state_dict(torch.load(args.load_model,map_location=device))
