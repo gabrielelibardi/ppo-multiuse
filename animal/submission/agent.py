@@ -39,11 +39,12 @@ class FakeAnimalEnv(gym.Env):
 
 frame_skip = 2
 frame_stack = 2
-state_stack = 16
-#CNN=FixupCNNBase
-CNN=StateCNNBase
+state_stack = 2
+CNN=FixupCNNBase
+#CNN=StateCNNBase
 reduced_actions = True
-vision_module_file = '/aaio/data/model_249.ckpt'
+vision_module_file = None 
+#vision_module_file = '/aaio/data/model_249.ckpt'
 
 def make_env():
     env = FakeAnimalEnv()
@@ -68,14 +69,12 @@ class Agent(object):
         envs = DummyVecEnv([make_env])
         envs = VecPyTorch(envs, device)
         envs = VecPyTorchFrameStack(envs, frame_stack, device)
-        if reduced_actions: #TODO: hugly hack
-            state_shape = (13,)
-        else:
-            state_shape = (15,)
-
-        if state_stack>0:
+        if CNN==StateCNNBase:
+            state_shape = (13,) if reduced_actions else (15,)
             envs = VecPyTorchState(envs,state_shape)
             envs = VecPyTorchStateStack(envs,state_stack)
+        else:
+            state_shape = None
 
         if vision_module_file:
             vision_module, _ = ImpalaCNNVision.load(vision_module_file,device=device)
