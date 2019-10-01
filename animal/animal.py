@@ -34,7 +34,8 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
             if reduced_actions:
                 env = FilterActionEnv(env)
             env = LabAnimal(env,arenas_dir)
-            #env = RewardShaping(env)
+
+            env = RewardShaping(env)
             
             if state:
                 env = Stateful(env)
@@ -120,13 +121,10 @@ class RewardShaping(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        if reward < 0 and done: #dead for end of time or hit a killing obj
-            reward += -2
-        if reward > 0 and done: #prize for finishing well
-            reward += 2
-            #ratio = self.env_reward/self.max_reward
-            #ratio = ratio if ratio < 1 else 0.99  #avoid division by zero  
-            #reward += min(0.5/(1-ratio),5)  
+        #if reward < 0 and done: #dead for end of time or hit a killing obj
+        #    reward += -2
+        if reward > 0 and self.env_reward>self.max_reward-1 and done: #prize for finishing well
+            reward += 5
         return obs, reward, done, info
 
     def reset(self, **kwargs):
