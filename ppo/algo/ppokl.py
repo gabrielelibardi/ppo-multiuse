@@ -85,9 +85,10 @@ class PPOKL():
                 kl_div = 0 * torch.as_tensor(loss)
                 if self.actor_behaviors is not None:
                     for behavior in self.actor_behaviors:
-                        _, _, _, _, dist_b= behavior.evaluate_actions(
+                        with torch.no_grad():
+                            _, _, _, _, dist_b= behavior.evaluate_actions(
                                         obs_batch, recurrent_hidden_states_batch, masks_batch, actions_batch)
-                        high_level_action_scaling = torch.exp( - 2 * dist_b.entropy() ).detach()  # just a way to scale. Look for better ways
+                            high_level_action_scaling = torch.exp( - 2 * dist_b.entropy() ).detach()  # just a way to scale. Look for better ways
                         kl_div += (high_level_action_scaling * kl_divergence(dist_b, dist_a)).mean()
                     loss += kl_div * self.entropy_coef / len(self.actor_behaviors)
                 else:
