@@ -113,13 +113,15 @@ def c2_preferences(repeats = 1):
         arena = ''
         arena = add_object(arena, random.choice(pos_reward_objects), size=random_size_reward())
         arena = add_object(arena, random.choice(pos_reward_objects), size=random_size_reward())
-        size = random_size_reward() if a2 in reward_objects else None
-        arena = add_object(arena, random.choice(all_objects), size=size) 
+        a = random.choice(all_objects)
+        size = random_size_reward() if a in reward_objects else None
+        arena = add_object(arena, a, size=size) 
         write_arena('c2_r{}'.format(r),[random.choice(time_limits)], arena)
 
 
 
 if __name__ == "__main__":    
-    obj_1(10)
-    obj_2(10)
-    obj_3(10)
+    #obj_1(1)
+    #obj_2(1)
+    #obj_3(1)
+    c2_preferences(1000)
