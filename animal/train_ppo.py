@@ -66,7 +66,7 @@ def main():
     if args.behavior: 
         actor_behaviors = []
         for a in args.behavior:
-            actor = Policy(envs.observation_space.shape, envs.action_space, base=CNN[args.cnn],
+            actor = Policy(envs.observation_space, envs.action_space, base=CNN[args.cnn],
                             base_kwargs={'recurrent': args.recurrent_policy})
             actor.load_state_dict(torch.load(a,map_location=device))
             actor.to(device)
