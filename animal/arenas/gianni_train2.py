@@ -97,14 +97,27 @@ def obj_3(repeats = 1):
     for r in range(repeats):
         for i,a in enumerate(pos_reward_objects):
             for i2,a2 in enumerate(all_objects):
-                for i3,a3 in enumerate(barrier_objects):
+                for i3,a3 in enumerate(all_objects):
                     arena = ''
                     arena = add_object(arena,a,size=random_size_reward())
                     size = random_size_reward() if a2 in reward_objects else None
                     arena = add_object(arena,a2,size=size)
                     arena = add_object(arena,a3)
-                    write_arena('a3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),[random.choice([500,1000])], arena)
+                    write_arena('a3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),[random.choice(time_limits)], arena)
  
+
+def c2_preferences(repeats = 1):
+# This still contains just 3 objects but drawn from a different distribution (not all equal)
+# as second object is always a position reward
+    for r in range(repeats):
+        arena = ''
+        arena = add_object(arena, random.choice(pos_reward_objects), size=random_size_reward())
+        arena = add_object(arena, random.choice(pos_reward_objects), size=random_size_reward())
+        size = random_size_reward() if a2 in reward_objects else None
+        arena = add_object(arena, random.choice(all_objects), size=size) 
+        write_arena('c2_r{}'.format(r),[random.choice(time_limits)], arena)
+
+
 
 if __name__ == "__main__":    
     obj_1(10)
