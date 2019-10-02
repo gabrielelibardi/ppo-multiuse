@@ -36,7 +36,7 @@ reward_objects = pos_reward_objects+neg_reward_objects
 
 time_limits = [250,500,1000]
 
-def add_object(s, object_name, pos=None, size=None, RGB=None):
+def add_object(s, object_name, pos=None, size=None, RGB=None, set_reward_size = True):
     s += "    - !Item \n      name: {} \n".format(object_name)
 
     if RGB is None:
@@ -46,6 +46,9 @@ def add_object(s, object_name, pos=None, size=None, RGB=None):
             RGB=(153,153,153) 
         elif object_name is 'Wall':
             RGB=(153,153,153) 
+
+    if size is None and set_reward_size and object_name in reward_objects:
+        size = random_size_reward()
 
     if pos is not None:
         s+= "      positions: \n      - !Vector3 {{x: {}, y: {}, z: {}}}\n".format(pos[0],pos[1],pos[2])
@@ -74,7 +77,7 @@ def obj_1(repeats = 1):
     for r in range(repeats):
         for i,a in enumerate(pos_reward_objects):
             arena = ''
-            arena = add_object(arena,a,size=random_size_reward())
+            arena = add_object(arena,a)
             write_arena('a1_i{}_r{}'.format(i,r),[random.choice(time_limits)], arena)
 
 
@@ -85,9 +88,8 @@ def obj_2(repeats = 1):
         for i,a in enumerate(pos_reward_objects):
             for i2,a2 in enumerate(all_objects):
                 arena = ''
-                arena = add_object(arena,a,size=random_size_reward())
-                size = random_size_reward() if a2 in reward_objects else None
-                arena = add_object(arena,a2,size=size)
+                arena = add_object(arena,a)
+                arena = add_object(arena,a2)
                 write_arena('a2_i{}_i2{}_r{}'.format(i,i2,r),[random.choice(time_limits)], arena)
 
 def obj_3(repeats = 1):
@@ -99,9 +101,8 @@ def obj_3(repeats = 1):
             for i2,a2 in enumerate(all_objects):
                 for i3,a3 in enumerate(all_objects):
                     arena = ''
-                    arena = add_object(arena,a,size=random_size_reward())
-                    size = random_size_reward() if a2 in reward_objects else None
-                    arena = add_object(arena,a2,size=size)
+                    arena = add_object(arena,a)
+                    arena = add_object(arena,a2)
                     arena = add_object(arena,a3)
                     write_arena('a3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),[random.choice(time_limits)], arena)
  
@@ -112,17 +113,15 @@ def c2_preferences(repeats = 1):
     for r in range(repeats):
         arena = ''
         #I need at least one green to create a potential preferencial situation
-        arena = add_object(arena, random.choice(['GoodGoal','GoodGoalBounce']), size=random_size_reward())
-        arena = add_object(arena, random.choice(pos_reward_objects), size=random_size_reward())
-        a = random.choice(all_objects)
-        size = random_size_reward() if a in reward_objects else None
-        arena = add_object(arena, a, size=size) 
+        arena = add_object(arena, random.choice(['GoodGoal','GoodGoalBounce']) )
+        arena = add_object(arena, random.choice(pos_reward_objects) )
+        arena = add_object(arena, random.choice(all_objects)) 
         write_arena('c2_r{}'.format(r),[random.choice(time_limits)], arena)
 
 
 
 if __name__ == "__main__":    
-    #obj_1(1)
-    #obj_2(1)
-    #obj_3(1)
+    obj_1(10)
+    obj_2(2)
+    obj_3(1)
     c2_preferences(1000)
