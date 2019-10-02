@@ -111,7 +111,8 @@ def c2_preferences(repeats = 1):
 # as second object is always a position reward
     for r in range(repeats):
         arena = ''
-        arena = add_object(arena, random.choice(pos_reward_objects), size=random_size_reward())
+        #I need at least one green to create a potential preferencial situation
+        arena = add_object(arena, random.choice(['GoodGoal','GoodGoalBounce']), size=random_size_reward())
         arena = add_object(arena, random.choice(pos_reward_objects), size=random_size_reward())
         a = random.choice(all_objects)
         size = random_size_reward() if a in reward_objects else None
