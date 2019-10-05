@@ -149,7 +149,7 @@ def need_move(arena):
     return arena
 
 
-def create_wall(A, B, z_size, obj='CylinderTunnel', gap=2):
+def create_wall(A, B,z_size = 5, obj='CylinderTunnel', gap=2):
     # A is the statrting point, B is  the endpoint
     # dor can be empty, cylinder, ramp, box
 
@@ -158,16 +158,18 @@ def create_wall(A, B, z_size, obj='CylinderTunnel', gap=2):
 
     if Bx == Ax:
         if Ay != 0 and Ay != 40:
-            Ay += 0.5
+            Ay = Ay + 0.5
         if By != 0 and By != 40:
-            By -= 0.5
+            By = By - 0.5
 
         x_size = 1
         y_size = round((By - Ay), 2)
 
         y_pos = round(Ay + (By - Ay) / 2, 2)
         x_pos = Bx
+        z_pos = 0
 
+        # print('x_pos',x_pos,'y_pos',y_pos,'x_size',x_size,'y_size',y_size)
         if obj == 'door':
             y_size_1 = (y_size - gap) / 2
             y_size_2 = (y_size - gap) / 2
@@ -175,33 +177,36 @@ def create_wall(A, B, z_size, obj='CylinderTunnel', gap=2):
             y_pos_1 = y_pos - gap / 2 - (y_size - gap) / 4
             y_pos_2 = y_pos + gap / 2 + (y_size - gap) / 4
 
-            return ((x_size, z_size, y_size_1), (x_pos, 0.0, y_pos_1),
-                    (x_size, z_size, y_size_2), (x_pos, 0.0, y_pos_2))
+            return (
+            (x_size, z_size, y_size_1), (x_pos, z_pos, y_pos_1), (x_size, z_size, y_size_2), (x_pos, z_pos, y_pos_2))
 
         if obj == 'CylinderTunnel':
-            return (gap, gap, gap), (x_pos, 0.0, y_pos)
+            return ((1, gap, gap), (x_pos, 0.5, y_pos))
         if obj == 'Cardbox2':
             gap_box = gap - 0.2
-            return (gap_box, gap_box, gap_box), (x_pos, 0.0, y_pos)
+            return ((gap_box, gap_box, gap_box), (x_pos + 1.5, 0.5, y_pos))
         if obj == 'Cardbox1':
             gap_box = gap - 0.2
-            return (gap_box, gap_box, gap_box), (x_pos, 0.0, y_pos)
+            return ((gap_box, gap_box, gap_box), (x_pos + 1.5, 0.5, y_pos))
         if obj == 'Ramp':
-            return (gap, 2, 3), (x_pos, 0.0, y_pos)
+            return ((gap, 2, 3), (x_pos, 0.5, y_pos))
 
     if By == Ay:
 
+
         if Ax != 0 and Ax != 40:
-            Ax += 0.5
+            Ax = Ax + 0.5
         if Bx != 0 and Bx != 40:
-            Bx -= 0.5
+            Bx = Bx - 0.5
 
         y_size = 1
         x_size = round((Bx - Ax), 2)
 
         x_pos = round(Ax + (Bx - Ax) / 2, 2)
         y_pos = By
+        z_pos = 0
 
+        #print('x_pos', x_pos, 'y_pos', y_pos, 'x_size', x_size, 'y_size', y_size)
         if obj == 'door':
             x_size_1 = (x_size - gap) / 2
             x_size_2 = (x_size - gap) / 2
@@ -209,18 +214,18 @@ def create_wall(A, B, z_size, obj='CylinderTunnel', gap=2):
             x_pos_1 = x_pos - gap / 2 - (x_size - gap) / 4
             x_pos_2 = x_pos + gap / 2 + (x_size - gap) / 4
 
-            return ((x_size_1, z_size, y_size), (x_pos_1, 0.0, y_pos),
-                    (x_size_2, z_size, y_size), (x_pos_2, 0.0, y_pos))
+            return (
+            (x_size_1, z_size, y_size), (x_pos_1, z_pos, y_pos), (x_size_2, z_size, y_size), (x_pos_2, z_pos, y_pos))
 
         if obj == 'CylinderTunnel':
-            return (gap, gap, gap), (x_pos, 0.0, y_pos)
+            return ((gap, gap, 1), (x_pos, 0.5, y_pos))
         if obj == 'Cardbox2':
             gap_box = gap - 0.2
-            return (gap_box, gap_box, gap_box), (x_pos, 0.0, y_pos)
+            return ((gap_box, gap_box, gap_box), (x_pos, 1.5, y_pos + 0.5))
         if obj == 'Cardbox1':
             gap_box = gap - 0.2
-            return (gap_box, gap_box, gap_box), (x_pos, 0.0, y_pos)
+            return ((gap_box, gap_box, gap_box), (x_pos, 1.5, y_pos + 0.5))
         if obj == 'Ramp':
-            return (gap, 2, 3), (x_pos, 0.0, y_pos)
+            return ((gap, 2, 3), (x_pos, 0.5, y_pos))
 
-    return (x_size, z_size, y_size), (x_pos, 0.0, y_pos)
+    return ((x_size, z_size, y_size), (x_pos, z_pos, y_pos))
