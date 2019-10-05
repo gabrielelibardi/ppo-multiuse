@@ -64,26 +64,49 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
 def analyze_arena(arena):
     tot_reward = 0
     max_good = 0
-    max_bad = -10
+    goods = []
+    goodmultis = []
     for i in arena.arenas[0].items:
         if i.name in ['GoodGoal','GoodGoalBounce']:
             if len(i.sizes)==0: #arena max cannot be computed
                 return -1
             max_good = max(i.sizes[0].x,max_good)
-        if i.name in ['BadGoal','BadGoalBounce']:
-            if len(i.sizes)==0: #arena max cannot be computed
-                return -1
-            max_bad = max(i.sizes[0].x,max_bad)        
+            goods.append(i.sizes[0].x)
         if i.name in ['GoodGoalMulti','GoodGoalMultiBounce']:
             if len(i.sizes)==0: #arena max cannot be computed
                 return -1
-            tot_reward += i.sizes[0].x  
+            tot_reward += i.sizes[0].x
+            goodmultis.append(i.sizes[0].x)  
 
     tot_reward += max_good
-    if tot_reward == 0:
-        tot_reward = max_bad  #optimal is to die
+    goods.sort()
+    goodmultis.sort()
     return tot_reward
 
+def random_size_reward():
+    #according to docs it's 0.5-5
+    s = random.randint(5, 50)/10
+    return [s,s,s]
+
+def set_reward_arena(arena):
+    tot_reward = 0
+    max_good = 0
+    goods = []
+    goodmultis = []
+    for i in arena.arenas[0].items:
+        if i.name in ['GoodGoal','GoodGoalBounce']:
+            i.sizes=random_size_reward()
+            max_good = max(i.sizes[0].x,max_good)
+            goods.append(i.sizes[0].x)
+        if i.name in ['GoodGoalMulti','GoodGoalMultiBounce']:
+            i.sizes=random_size_reward()
+            tot_reward += i.sizes[0].x
+            goodmultis.append(i.sizes[0].x)  
+
+    tot_reward += max_good
+    goods.sort()
+    goodmultis.sort()
+    return tot_reward
 
 class LabAnimal(gym.Wrapper):
     def __init__(self, env, arenas_dir):
@@ -111,7 +134,8 @@ class LabAnimal(gym.Wrapper):
         self.steps = 0
         self.env_reward = 0
         self._arena_file, arena = random.choice(self.env_list)
-        self.max_reward = analyze_arena(arena)
+#        self.max_reward = analyze_arena(arena)
+        self.max_reward = set_reward_arena(arena)
         self.max_time = arena.arenas[0].t
         return self.env.reset(arenas_configurations=arena,**kwargs)
         

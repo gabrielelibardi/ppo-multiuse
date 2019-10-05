@@ -36,7 +36,7 @@ reward_objects = pos_reward_objects+neg_reward_objects
 
 time_limits = [250,500,1000]
 
-def add_object(s, object_name, pos=None, size=None, RGB=None, set_reward_size = True):
+def add_object(s, object_name, pos=None, size=None, RGB=None, set_reward_size = False):
     s += "    - !Item \n      name: {} \n".format(object_name)
 
     if RGB is None:
@@ -90,7 +90,7 @@ def obj_2(repeats = 1):
                 arena = ''
                 arena = add_object(arena,a)
                 arena = add_object(arena,a2)
-                write_arena('a2_i{}_i2{}_r{}'.format(i,i2,r),[random.choice(time_limits)], arena)
+                write_arena('a2_i{}_i2{}_r{}'.format(i,i2,r),time_limits, arena)
 
 def obj_3(repeats = 1):
 # If I have three objects in the arena it has to be one food,anything else and non_reward objects
@@ -104,24 +104,54 @@ def obj_3(repeats = 1):
                     arena = add_object(arena,a)
                     arena = add_object(arena,a2)
                     arena = add_object(arena,a3)
-                    write_arena('a3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),[random.choice(time_limits)], arena)
+                    write_arena('a3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),time_limits, arena)
  
 
 def c2_preferences(repeats = 1):
-# This still contains just 3 objects but drawn from a different distribution (not all equal)
-# as second object is always a position reward
+# If I have three objects in the arena it has to be one food,anything else and non_reward objects
+# Because I am placing it randomly having two barrier objects helps in making the arena harder to navigate
+# Positive rewards have always a given random size
     for r in range(repeats):
-        arena = ''
-        #I need at least one green to create a potential preferencial situation
-        arena = add_object(arena, random.choice(['GoodGoal','GoodGoalBounce']) )
-        arena = add_object(arena, random.choice(pos_reward_objects) )
-        arena = add_object(arena, random.choice(all_objects)) 
-        write_arena('c2_r{}'.format(r),[random.choice(time_limits)], arena)
+        for i,a in enumerate(['GoodGoal','GoodGoalBounce']):
+            for i2,a2 in enumerate(pos_reward_objects):
+                for i3,a3 in enumerate(all_objects):
+                    arena = ''
+                    arena = add_object(arena,a)
+                    arena = add_object(arena,a2)
+                    arena = add_object(arena,a3)
+                    write_arena('c2_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),time_limits, arena)
+
+def c3_obstacles(repeats = 1):
+# If I have three objects in the arena it has to be one food,anything else and non_reward objects
+# Because I am placing it randomly having two barrier objects helps in making the arena harder to navigate
+# Positive rewards have always a given random size
+    for r in range(repeats):
+        for i,a in enumerate(pos_reward_objects):
+            for i2,a2 in enumerate(immovable_objects):
+                for i3,a3 in enumerate(all_objects):
+                    arena = ''
+                    arena = add_object(arena,a)
+                    arena = add_object(arena,a2)
+                    arena = add_object(arena,a3)
+                    write_arena('c3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),time_limits, arena)
+
+
+# def c2_preferences(repeats = 1):
+# # This still contains just 3 objects but drawn from a different distribution (not all equal)
+# # as second object is always a position reward
+#     for r in range(repeats):
+#         arena = ''
+#         #I need at least one green to create a potential preferencial situation
+#         arena = add_object(arena, random.choice(['GoodGoal','GoodGoalBounce']) )
+#         arena = add_object(arena, random.choice(pos_reward_objects) )
+#         arena = add_object(arena, random.choice(all_objects)) 
+#         write_arena('c2_r{}'.format(r),[random.choice(time_limits)], arena)
 
 
 
 if __name__ == "__main__":    
-    obj_1(10)
-    obj_2(2)
-    obj_3(1)
-    c2_preferences(1000)
+    obj_1()
+    obj_2()
+    obj_3()
+    c2_preferences()
+    c3_obstacles()
