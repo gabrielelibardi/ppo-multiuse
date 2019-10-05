@@ -95,11 +95,13 @@ def set_reward_arena(arena):
     goodmultis = []
     for i in arena.arenas[0].items:
         if i.name in ['GoodGoal','GoodGoalBounce']:
-            i.sizes=random_size_reward()
+            if len(i.sizes)==0: 
+                i.sizes=random_size_reward()
             max_good = max(i.sizes[0].x,max_good)
             goods.append(i.sizes[0].x)
         if i.name in ['GoodGoalMulti','GoodGoalMultiBounce']:
-            i.sizes=random_size_reward()
+            if len(i.sizes)==0: 
+                i.sizes=random_size_reward()
             tot_reward += i.sizes[0].x
             goodmultis.append(i.sizes[0].x)  
 
