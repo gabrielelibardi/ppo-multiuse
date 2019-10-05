@@ -86,7 +86,9 @@ def analyze_arena(arena):
 def random_size_reward():
     #according to docs it's 0.5-5
     s = random.randint(5, 50)/10
-    return [s,s,s]
+    return (s,s,s)
+
+from animalai.envs.arena_config import Vector3
 
 def set_reward_arena(arena):
     tot_reward = 0
@@ -95,13 +97,15 @@ def set_reward_arena(arena):
     goodmultis = []
     for i in arena.arenas[0].items:
         if i.name in ['GoodGoal','GoodGoalBounce']:
-            if len(i.sizes)==0: 
-                i.sizes=random_size_reward()
+            if len(i.sizes)==0:
+                x,y,z = random_size_reward() 
+                i.sizes[0]=Vector3(x,y,z)
             max_good = max(i.sizes[0].x,max_good)
             goods.append(i.sizes[0].x)
         if i.name in ['GoodGoalMulti','GoodGoalMultiBounce']:
             if len(i.sizes)==0: 
-                i.sizes=random_size_reward()
+                x,y,z = random_size_reward() 
+                i.sizes[0]=Vector3(x,y,z)
             tot_reward += i.sizes[0].x
             goodmultis.append(i.sizes[0].x)  
 
