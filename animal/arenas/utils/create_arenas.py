@@ -140,8 +140,7 @@ def create_c2_arena(target_path, arena_name, max_reward=5, time=250,
 
     allowed_objects = objects_dict['reward_objects']
     reward = float(max_reward)
-    size_goal = (
-    np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
+    size_goal = (np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
     position_goal = random_pos() if not is_train else None
     arena = add_object('', 'GoodGoal', size=size_goal, pos=position_goal)
     best_goal = size_goal[0]
@@ -192,7 +191,7 @@ def create_c3_arena_basic(target_path, arena_name, time=250, num_walls=1,
 
     category = random.choice(
         ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
-    size_goal = random_size(category) if not is_train else None
+    size_goal = random_size(category)
     position_goal = random_pos() if not is_train else None
     arena = add_object('', category, size=size_goal, pos=position_goal)
 
@@ -228,13 +227,13 @@ def create_c3_arena(target_path, arena_name, time=250, max_movable=3,
     category = random.choice(
         ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
 
-    size_goal = random_size(category) if not is_train else None
+    size_goal = random_size(category)
     position_goal = random_pos() if not is_train else None
     arena = add_object('', category, size=size_goal, pos=position_goal)
 
     if random.random() > 0.5:
         category = random.choice(['BadGoal', 'BadGoalBounce'])
-        size_goal = random_size(category) if not is_train else None
+        size_goal = random_size(category)
         position_goal = random_pos() if not is_train else None
         arena = add_object(arena, category, size=size_goal, pos=position_goal)
 
@@ -285,12 +284,12 @@ def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2,
         max_immovable (int): set a limit to number of immovable.
     """
 
-    size_goal = random_size('GoodGoal') if not is_train else None
+    size_goal = random_size('GoodGoal')
     position_goal = random_pos() if not is_train else None
     arena = add_object('', 'GoodGoal', size=size_goal, pos=position_goal)
 
     if random.random() > 0.5:
-        size_goal = random_size('GoodGoalMulti') if not is_train else None
+        size_goal = random_size('GoodGoalMulti')
         position_goal = random_pos() if not is_train else None
         arena = add_object(arena, 'GoodGoalMulti', size=size_goal,
                            pos=position_goal)
@@ -384,7 +383,7 @@ def create_c6_arena_basic(target_path, arena_name, time=250, num_walls=1,
 
     category = random.choice(
         ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
-    size_goal = random_size(category) if not is_train else None
+    size_goal = random_size(category)
     position_goal = random_pos() if not is_train else None
     arena = add_object('', category, size=size_goal, pos=position_goal)
     arena = add_walled(arena, num_walls=num_walls, random_rgb=True)
@@ -418,7 +417,7 @@ def create_c6_arena(target_path, arena_name, time=250, max_movable=3,
 
     category = random.choice(
         ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
-    size_goal = random_size(category) if not is_train else None
+    size_goal = random_size(category)
     position_goal = random_pos() if not is_train else None
     arena = add_object('', category, size=size_goal, pos=position_goal)
 
@@ -426,14 +425,14 @@ def create_c6_arena(target_path, arena_name, time=250, max_movable=3,
         category = random.choice(
             ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti',
              'GoodGoalMultiBounce'])
-        size_goal = random_size(category) if not is_train else None
+        size_goal = random_size(category)
         position_goal = random_pos() if not is_train else None
         arena = add_object(arena, category, size=size_goal, pos=position_goal)
 
     for _ in range(2):
         if random.random() > 0.5:
             category = random.choice(['BadGoal', 'BadGoalBounce'])
-            size_goal = random_size(category) if not is_train else None
+            size_goal = random_size(category)
             position_goal = random_pos() if not is_train else None
             arena = add_object(arena, category, size=size_goal,
                                pos=position_goal)
@@ -488,7 +487,7 @@ def create_c7_arena(target_path, arena_name, time=250, max_movable=3,
     category = random.choice(
         ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
 
-    size_goal = random_size(category) if not is_train else None
+    size_goal = random_size(category)
     position_goal = random_pos() if not is_train else None
     arena = add_object('', category, size=size_goal, pos=position_goal)
 
@@ -496,14 +495,14 @@ def create_c7_arena(target_path, arena_name, time=250, max_movable=3,
         category = random.choice(
             ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti',
              'GoodGoalMultiBounce'])
-        size_goal = random_size(category) if not is_train else None
+        size_goal = random_size(category)
         position_goal = random_pos() if not is_train else None
         arena = add_object(arena, category, size=size_goal, pos=position_goal)
 
     for _ in range(2):
         if random.random() > 0.5:
             category = random.choice(['BadGoal', 'BadGoalBounce'])
-            size_goal = random_size(category) if not is_train else None
+            size_goal = random_size(category)
             position_goal = random_pos() if not is_train else None
             arena = add_object(arena, category, size=size_goal,
                                pos=position_goal)
@@ -593,7 +592,7 @@ def create_maze(target_path, arena_name, time=250, num_cells=3, obj=None,
         prev_x = 0
         prev_y = y
 
-    size_goal = random_size('GoodGoal') if not is_train else None
+    size_goal = random_size('GoodGoal')
     position_goal = random_pos() if not is_train else None
     arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
 
@@ -735,14 +734,14 @@ def create_mix_maze(target_path, arena_name, time=250, num_cells=3, max_movable=
         category = random.choice(
             ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti',
              'GoodGoalMultiBounce'])
-        size_goal = random_size(category) if not is_train else None
+        size_goal = random_size(category)
         position_goal = random_pos() if not is_train else None
         arena = add_object(arena, category, size=size_goal, pos=position_goal)
 
     for _ in range(2):
         if random.random() > 0.5:
             category = random.choice(['BadGoal', 'BadGoalBounce'])
-            size_goal = random_size(category) if not is_train else None
+            size_goal = random_size(category)
             position_goal = random_pos() if not is_train else None
             arena = add_object(arena, category, size=size_goal,
                                pos=position_goal)
@@ -777,7 +776,7 @@ def create_mix_maze(target_path, arena_name, time=250, num_cells=3, max_movable=
                                pos=pos_object)
 
 
-    size_goal = random_size('GoodGoal') if not is_train else None
+    size_goal = random_size('GoodGoal')
     position_goal = random_pos() if not is_train else None
     arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
 
@@ -795,18 +794,18 @@ def create_arena_choice(target_path, arena_name, time=250, is_train=False):
 
     arena = add_choice('')
 
-    size_goal = random_size('GoodGoal') if not is_train else None
+    size_goal = random_size('GoodGoal')
     position_goal = random_pos() if not is_train else None
     arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
 
-    size_goal = random_size('GoodGoal') if not is_train else None
+    size_goal = random_size('GoodGoal')
     position_goal = random_pos() if not is_train else None
     arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
 
     allowed_objects = objects_dict['reward_objects']
     for _ in range(np.random.randint(1, 5)):
         category = allowed_objects[np.random.randint(0, len(allowed_objects))]
-        size_goal = random_size(category) if not is_train else None
+        size_goal = random_size(category)
         position_goal = random_pos() if not is_train else None
         arena = add_object(arena, category, size=size_goal, pos=position_goal)
 
