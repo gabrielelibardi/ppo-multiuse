@@ -151,14 +151,16 @@ class RewardShaping(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        #if reward < 0 and done: #dead for end of time or hit a killing obj
-        #    reward += -2
         if reward>-0.005 and reward<0:#remove time negative reward
-             reward = 0
+            reward = 0
         if done: #give time penalty at the end
-             reward -= self.steps/self.max_time
+            reward -= self.steps/self.max_time
+        if reward>0 and done and self.steps<50: #explore first
+            reward = 0
+        if reward>0 and not done:#brown ball, go for it first
+            reward+=3
         if reward > 0 and self.env_reward>self.max_reward-1 and done: #prize for finishing well
-            reward += 5
+            reward += 10
         return obs, reward, done, info
 
     def reset(self, **kwargs):
