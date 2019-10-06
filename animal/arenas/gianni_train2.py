@@ -107,6 +107,23 @@ def obj_3(repeats = 1):
                     write_arena('a3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),time_limits, arena)
  
 
+def obj_4(repeats = 1):
+# If I have three objects in the arena it has to be one food,anything else and non_reward objects
+# Because I am placing it randomly having two barrier objects helps in making the arena harder to navigate
+# Positive rewards have always a given random size
+    for r in range(repeats):
+        for i,a in enumerate(pos_reward_objects):
+            for i2,a2 in enumerate(immovable_objects):
+                for i3,a3 in enumerate(all_objects):
+                    for i4,a4 in enumerate(all_objects):
+                        arena = ''
+                        arena = add_object(arena,a)
+                        arena = add_object(arena,a2)
+                        arena = add_object(arena,a3)
+                        arena = add_object(arena,a4)
+                        write_arena('a3_i{}_i2{}_i3{}_i4{}_r{}'.format(i,i2,i3,i4,r),time_limits, arena)
+ 
+
 def c2_preferences(repeats = 1):
 # If I have three objects in the arena it has to be one food,anything else and non_reward objects
 # Because I am placing it randomly having two barrier objects helps in making the arena harder to navigate
@@ -114,7 +131,7 @@ def c2_preferences(repeats = 1):
     for r in range(repeats):
         for i,a in enumerate(['GoodGoal','GoodGoalBounce']):
             for i2,a2 in enumerate(pos_reward_objects):
-                for i3,a3 in enumerate(all_objects):
+                for i3,a3 in enumerate(pos_reward_objects):
                     arena = ''
                     arena = add_object(arena,a)
                     arena = add_object(arena,a2)
@@ -136,6 +153,57 @@ def c3_obstacles(repeats = 1):
                     write_arena('c3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),time_limits, arena)
 
 
+def c3_see_throught(repeats = 1):
+# If I have three objects in the arena it has to be one food,anything else and non_reward objects
+# Because I am placing it randomly having two barrier objects helps in making the arena harder to navigate
+# Positive rewards have always a given random size
+    st_objects = ['WallTransparent','CylinderTunnelTransparent','DeathZone']
+    for r in range(repeats):
+        for i,a in enumerate(pos_reward_objects):
+            for i2,a2 in enumerate(st_objects):
+                for i3,a3 in enumerate(st_objects):
+                    arena = ''
+                    arena = add_object(arena,a)
+                    arena = add_object(arena,a2)
+                    arena = add_object(arena,a3)
+                    write_arena('c3st_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),time_limits, arena)
+
+
+def messy_arenas(narenas):
+    for a in range(narenas):
+        arena = ''    
+        #immovable
+        num_immovable = np.random.randint(1,3)
+        nums = np.random.binomial(num_immovable, [0.5,0.2,0.1,0.1,0.1] )
+        for i,n in enumerate(nums):
+            for _ in range(n):
+                arena = add_object(arena,immovable_objects[i])
+        #movable
+        num_movable = np.random.randint(0,2)
+        nums = np.random.binomial(num_movable, [0.2,0.2,0.2,0.2,0.2] )
+        for i,n in enumerate(nums):
+            for _ in range(n):
+                arena = add_object(arena,movable_objects[i])
+
+        #Zones
+        if num_immovable+num_movable<=2:  #avoid to many objects
+            num_zones = np.random.randint(0,2)
+            nums = np.random.binomial(num_zones, [0.5,0.5] )
+            for i,n in enumerate(nums):
+                for _ in range(n):
+                    arena = add_object(arena,zone_objects[i])
+
+        #Rewards
+        num_rewards = np.random.randint(2,8)
+        nums = np.random.binomial(num_rewards, [0.01,0.05,0.2,0.1,0.2,0.1] )
+        if  nums[[0,1,4,5]].sum()==0: 
+            nums[0]=1
+        for i,n in enumerate(nums):
+            for _ in range(n):
+                arena = add_object(arena,reward_objects[i])    
+            
+        write_arena('m{}'.format(a),[random.choice(time_limits)], arena)
+
 # def c2_preferences(repeats = 1):
 # # This still contains just 3 objects but drawn from a different distribution (not all equal)
 # # as second object is always a position reward
@@ -149,9 +217,11 @@ def c3_obstacles(repeats = 1):
 
 
 
+
 if __name__ == "__main__":    
-    obj_1()
     obj_2()
-    obj_3()
+    #obj_3()
     c2_preferences()
     c3_obstacles()
+    c3_see_throught()
+    messy_arenas(1000)
