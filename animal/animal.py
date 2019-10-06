@@ -155,7 +155,7 @@ class RewardShaping(gym.Wrapper):
             reward = 0
         if done: #give time penalty at the end
             reward -= self.steps/self.max_time
-        if reward>0 and done and self.steps<50: #explore first
+        if reward>0 and done and self.steps<60: #explore first
             reward = 0
         if reward>0 and not done:#brown ball, go for it first
             reward+=3
