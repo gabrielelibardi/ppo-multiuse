@@ -10,7 +10,7 @@ def add_object(s, object_name, pos=None, size=None, RGB=None, rot=None):
     if RGB is None:
         if object_name is 'Ramp':
             RGB = (255, 0, 255)
-        elif object_name is 'Tunnel':
+        elif object_name is 'CylinderTunnel':
             RGB = (153, 153, 153)
         elif object_name is 'Wall':
             RGB = (153, 153, 153)
