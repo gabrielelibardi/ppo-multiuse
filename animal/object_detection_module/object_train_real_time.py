@@ -210,6 +210,9 @@ if __name__ == "__main__":
         '--recurrent-policy', action='store_true', default=False,
         help='use a recurrent policy')
     parser.add_argument(
+        '--recurrent-module', action='store_true', default=False,
+        help='use a recurrent policy')
+    parser.add_argument(
         '--frame-skip', type=int, default=0,
         help='Number of frame to skip for each action')
     parser.add_argument(
