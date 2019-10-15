@@ -46,6 +46,9 @@ def create_label(arena):
 def compute_error(label, prediction):
     """ Compute batch error as number of objects wrongly classified. """
 
+    label = label.view(-1, 10)
+    prediction = prediction.view(-1, 10)
+
     error = (label == prediction)
     error = torch.sum(error, dim=0)
     error = torch.mean(error, dim=0)
@@ -60,9 +63,12 @@ class Loss:
 
         self.loss = nn.BCEWithLogitsLoss(reduce=False, reduction=None)
 
-    def compute(self, logits, prediction):
+    def compute(self, label, prediction):
 
-        loss = nn.BCEWithLogitsLoss(logits, prediction)
+        label = label.view(-1, 10)
+        prediction = prediction.view(-1, 10)
+
+        loss = nn.BCEWithLogitsLoss(prediction, label)
         loss = torch.sum(loss, dim=0)
         loss = torch.mean(loss, dim=0)
 

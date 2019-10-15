@@ -63,7 +63,7 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
             images, label = data
 
             images = images.to(device)
-            label = label.view(-1, 10).to(device)
+            label = label.to(device)
 
             optimizer.zero_grad()
             pred_label, hx, _ = model(
@@ -104,7 +104,7 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
             images, label = data
 
             images = images.to(device)
-            label = label.view(-1, 10).to(device)
+            label = label.to(device)
 
             optimizer.zero_grad()
             pred_label, hx, _ = model(
