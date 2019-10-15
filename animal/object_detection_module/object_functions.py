@@ -50,7 +50,7 @@ def compute_error(label, prediction):
     prediction = prediction.view(-1, 10)
 
     error = (label == prediction)
-    error = torch.sum(error, dim=0)
+    error = torch.sum(error, dim=0).double()
     error = torch.mean(error, dim=0)
 
     return error
@@ -68,8 +68,8 @@ class Loss:
         label = label.view(-1, 10)
         prediction = prediction.view(-1, 10)
 
-        loss = nn.BCEWithLogitsLoss(prediction, label)
-        loss = torch.sum(loss, dim=0)
+        loss = self.loss(prediction, label)
+        loss = torch.sum(loss, dim=0).double()
         loss = torch.mean(loss, dim=0)
 
         return loss

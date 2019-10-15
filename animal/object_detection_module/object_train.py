@@ -7,7 +7,7 @@ from object_dataset import DatasetObjects, DatasetObjectRecurrent
 from object_functions import Loss, compute_error
 
 
-def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_size=32):
+def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_size=4):
 
     # Define logger
     writer = SummaryWriter(log_dir, flush_secs=5)
@@ -36,7 +36,7 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
     dataloader_test = DataLoader(dataset_test, **dataloader_parameters)
 
     device = torch.device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5, patience=10)
     model.to(device)
     lowest_test_loss = float('inf')
@@ -118,9 +118,6 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
             avg_loss = epoch_loss / (idx + 1)
             epoch_error += error.item()
             avg_error = epoch_error / (idx + 1)
-
-            loss.backward()
-            optimizer.step()
 
         if avg_loss < lowest_test_loss:
             lowest_test_loss = avg_loss
