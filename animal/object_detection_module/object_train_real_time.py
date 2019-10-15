@@ -20,7 +20,7 @@ def get_batch(env, actor_critic, device_agent, batch_size, sequence_size):
     masks = torch.zeros(1, 1).to(device_agent)
 
     images = np.zeros([batch_size, sequence_size, 3, 84, 84])
-    labels = np.zeros([batch_size, sequence_size, 10])
+    labels = np.zeros([batch_size, sequence_size, 1])
 
     for episode_num in range(batch_size):
 
