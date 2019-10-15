@@ -96,7 +96,6 @@ class LabAnimalCollect(gym.Wrapper):
         obs, reward, done, info = self.env.step(action)
         self._env_steps += 1
         info['arena'] = self._arena_file
-        info['arena_type'] = self._type
         info['label'] = self._label
 
         return obs, reward, done, info
