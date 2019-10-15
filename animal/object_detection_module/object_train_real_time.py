@@ -121,7 +121,7 @@ def object_module_train(args, model, batch_size=4, sequence_size=50):
                 env, actor_critic, device_agent, batch_size, sequence_size)
 
             images = torch.FloatTensor(images).to(device_module)
-            label = torch.LongTensor(label).to(device_module)
+            labels = torch.LongTensor(labels).to(device_module)
             recurrent_hidden_states = torch.zeros(
                 1, batch_size, model.recurrent_hidden_state_size).to(
                 device_module)
@@ -131,8 +131,8 @@ def object_module_train(args, model, batch_size=4, sequence_size=50):
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
 
-            loss = criterion.compute(label, pred_label)
-            error = compute_error(label, pred_label)
+            loss = criterion.compute(labels, pred_label)
+            error = compute_error(labels, pred_label)
 
             epoch_loss += loss.item()
             avg_loss = epoch_loss / (idx + 1)
@@ -163,7 +163,7 @@ def object_module_train(args, model, batch_size=4, sequence_size=50):
                 env, actor_critic, device_agent, batch_size, sequence_size)
 
             images = torch.FloatTensor(images).to(device_module)
-            label = torch.LongTensor(label).to(device_module)
+            labels = torch.LongTensor(labels).to(device_module)
             recurrent_hidden_states = torch.zeros(
                 1, batch_size, model.recurrent_hidden_state_size).to(
                 device_module)
@@ -173,8 +173,8 @@ def object_module_train(args, model, batch_size=4, sequence_size=50):
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
 
-            loss = criterion.compute(label, pred_label)
-            error = compute_error(label, pred_label)
+            loss = criterion.compute(labels, pred_label)
+            error = compute_error(labels, pred_label)
 
             epoch_loss += loss.item()
             avg_loss = epoch_loss / (idx + 1)
