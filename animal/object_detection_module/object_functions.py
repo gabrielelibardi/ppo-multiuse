@@ -19,7 +19,7 @@ def compute_error(label, logits):
     label = label.view(-1, 1)
     logits = logits.view(-1, 16)
     prediction = torch.argmax(logits, dim=1)
-    error = torch.sum((label.squeeze(1) != prediction), dim=0) / label.shape[0]
+    error = torch.sum((label.squeeze(1) != prediction), dim=0).double / label.shape[0]
 
     return error
 
