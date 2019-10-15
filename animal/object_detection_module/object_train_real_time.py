@@ -120,8 +120,8 @@ def object_module_train(args, model, batch_size=4, sequence_size=50):
             images, labels = get_batch(
                 env, actor_critic, device_agent, batch_size, sequence_size)
 
-            images = images.to(device_module)
-            label = label.to(device_module)
+            images = torch.FloatTensor(images).to(device_module)
+            label = torch.LongTensor(label).to(device_module)
             recurrent_hidden_states = torch.zeros(
                 1, batch_size, model.recurrent_hidden_state_size).to(
                 device_module)
@@ -162,8 +162,8 @@ def object_module_train(args, model, batch_size=4, sequence_size=50):
             images, labels = get_batch(
                 env, actor_critic, device_agent, batch_size, sequence_size)
 
-            images = images.to(device_module)
-            label = label.to(device_module)
+            images = torch.FloatTensor(images).to(device_module)
+            label = torch.LongTensor(label).to(device_module)
             recurrent_hidden_states = torch.zeros(
                 1, batch_size, model.recurrent_hidden_state_size).to(
                 device_module)
