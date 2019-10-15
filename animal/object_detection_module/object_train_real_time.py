@@ -27,7 +27,7 @@ def get_batch(env, actor_critic, device_agent, batch_size, sequence_size):
         obs = env.reset()
         step = 0
         episode_obs = np.zeros([sequence_size, 3, 84, 84])
-        episode_labels = np.zeros([sequence_size, 10])
+        episode_labels = np.zeros([sequence_size, 1])
 
         while step < sequence_size + 10:
 
