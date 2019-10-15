@@ -239,7 +239,7 @@ if __name__ == "__main__":
 
     net_parameters = {
         'num_inputs': 3,
-        'recurrent': args.recurrent,
+        'recurrent': args.recurrent_module,
         'hidden_size': 256,
         'image_size': 84
     }
