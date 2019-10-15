@@ -15,10 +15,10 @@ CNN = {'CNN': CNNBase, 'Impala': ImpalaCNNBase, 'Fixup': FixupCNNBase,
        'State': StateCNNBase}
 
 
-def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000,
-                 frames_episode=50):
+def collect_data(target_dir, args, num_samples=1000, frames_episode=50):
+
     maker = make_animal_env(
-        list_arenas, list_params, inference_mode=args.realtime,
+        inference_mode=args.realtime,
         frame_skip=args.frame_skip, reduced_actions=args.reduced_actions,
         state=args.state)
 
@@ -40,7 +40,7 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000,
     masks = torch.zeros(1, 1).to(device)
 
     obs_rollouts = np.zeros([num_samples, 3, 84, 84])
-    labels_rollouts = np.zeros([num_samples, 10])
+    labels_rollouts = np.zeros([num_samples, 1])
 
     t = tqdm.tqdm(range((num_samples // frames_episode) - 1))
     for episode_num in t:
@@ -48,7 +48,7 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000,
         obs = env.reset()
         step = 0
         episode_obs = np.zeros([frames_episode, 3, 84, 84])
-        episode_labels = np.zeros([frames_episode, 10])
+        episode_labels = np.zeros([frames_episode, 1])
 
         while step < frames_episode + 10:
 
@@ -86,22 +86,8 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000,
 
 
 if __name__ == "__main__":
-    import random
+
     import argparse
-    from animal.arenas.utils import (
-        create_c1_arena,
-        create_c2_arena,
-        create_c3_arena,
-        create_c3_arena_basic,
-        create_c4_arena,
-        create_c5_arena,
-        create_c6_arena,
-        create_c6_arena_basic,
-        create_c7_arena,
-        create_maze,
-        create_mix_maze,
-        create_arena_choice,
-    )
 
     parser = argparse.ArgumentParser(description='RL')
     parser.add_argument(
@@ -142,49 +128,12 @@ if __name__ == "__main__":
     args.state = args.cnn == 'State'
     device = torch.device(args.device)
 
-    list_arenas = [
-        create_c1_arena,
-        create_c2_arena,
-        create_c3_arena,
-        create_c3_arena_basic,
-        create_c4_arena,
-        create_c5_arena,
-        create_c6_arena,
-        create_c6_arena_basic,
-        create_c7_arena,
-        create_maze,
-        create_mix_maze,
-        create_arena_choice,
-    ]
-
-    list_params = [
-        {"max_reward": 5, "time": 250},
-        {"max_reward": 5, "time": 250},
-        {"time": 250},
-        {"time": 250, "num_walls": np.random.randint(5, 15)},
-        {"time": 250, "num_red_zones": 8, "max_orange_zones": 3},
-        {"time": 250},
-        {"time": 250},
-        {"time": 250, "num_walls": np.random.randint(5, 15)},
-        {"time": 250},
-        {"time": 250, "num_cells": np.random.randint(2, 5),
-         "obj": random.choice(['CylinderTunnel', 'door', 'Cardbox1'])},
-        {"time": 250, "num_cells": np.random.randint(2, 7),
-         "max_movable": np.random.randint(2, 7),
-         "max_immovable": np.random.randint(2, 7),
-         "num_red_zones": np.random.randint(0, 3),
-         "max_orange_zones": np.random.randint(0, 3)},
-        {"time": 250},
-    ]
-
     collect_data(
         args.target_dir + "train_position_data",
         args, num_samples=5000,
-        list_arenas=list_arenas,
-        list_params=list_params)
+    )
 
     collect_data(
         args.target_dir + "test_position_data",
         args, num_samples=1000,
-        list_arenas=list_arenas,
-        list_params=list_params)
+    )

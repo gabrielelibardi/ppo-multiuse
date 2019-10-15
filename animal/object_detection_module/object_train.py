@@ -7,7 +7,7 @@ from object_dataset import DatasetObjects, DatasetObjectRecurrent
 from object_functions import Loss, compute_error
 
 
-def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_size=4):
+def object_module_train(model, epochs, log_dir, train_data, test_data, device, batch_size=4):
 
     # Define logger
     writer = SummaryWriter(log_dir, flush_secs=5)
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
     model = ImpalaCNNObject(**net_parameters)
 
-    vision_train(
+    object_module_train(
         model, 5000, args.log_dir,
         train_data=args.data_dir + "/train_object_data.npz",
         test_data=args.data_dir + "/test_object_data.npz",

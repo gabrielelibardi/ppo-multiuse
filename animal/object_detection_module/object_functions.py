@@ -5,53 +5,21 @@ import torch
 import torch.nn as nn
 import random
 import animalai
-import numpy as np
 from ppo.envs import TransposeImage
 from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import AnimalAIEnv
 from animal.animal import RetroEnv, FrameSkipEnv
 from animal.wrappers import RetroEnv, Stateful, FilterActionEnv
+from animal.object_detection_module.object_arenas import create_object_arena
 
 
-def create_label(arena):
-    """ Multi-target binary label for objects."""
-    label = np.zeros(10)
-
-    for i in arena.arenas[0].items:
-
-        if i.name == 'Wall':
-            label[0] = 1
-        elif i.name == 'WallTransparent':
-            label[1] = 1
-        elif i.name == 'Ramp':
-            label[2] = 1
-        elif i.name == 'CylinderTunnel':
-            label[3] = 1
-        elif i.name == 'CylinderTunnelTransparent':
-            label[4] = 1
-        elif i.name == 'Cardbox1':
-            label[5] = 1
-        elif i.name == 'Cardbox2':
-            label[6] = 1
-        elif i.name == 'UObject':
-            label[7] = 1
-        elif i.name == 'LObject':
-            label[8] = 1
-        elif i.name == 'LObject2':
-            label[9] = 1
-
-    return label
-
-
-def compute_error(label, prediction):
+def compute_error(label, logits):
     """ Compute batch error as number of objects wrongly classified. """
 
-    label = label.view(-1, 10)
-    prediction = prediction.view(-1, 10)
-
-    error = (label == prediction)
-    error = torch.sum(error, dim=0).double()
-    error = torch.mean(error, dim=0)
+    label = label.view(-1, 1)
+    logits = logits.view(-1, 16)
+    prediction = torch.argmax(logits, dim=1)
+    error = torch.sum((label == prediction), dim=0) / label.shape[0]
 
     return error
 
@@ -61,21 +29,18 @@ class Loss:
 
     def __init__(self):
 
-        self.loss = nn.BCEWithLogitsLoss(reduce=False, reduction=None)
+        self.loss = nn.CrossEntropyLoss()
 
     def compute(self, label, prediction):
 
-        label = label.view(-1, 10)
-        prediction = prediction.view(-1, 10)
-
+        label = label.view(-1, 1)
+        prediction = prediction.view(-1, 16)
         loss = self.loss(prediction, label)
-        loss = torch.sum(loss, dim=0).double()
-        loss = torch.mean(loss, dim=0)
 
         return loss
 
 
-def make_animal_env(list_arenas, list_params, inference_mode, frame_skip, reduced_actions, state):
+def make_animal_env(inference_mode, frame_skip, reduced_actions, state):
 
     base_port = random.randint(0, 100)
     def make_env(rank):
@@ -93,7 +58,7 @@ def make_animal_env(list_arenas, list_params, inference_mode, frame_skip, reduce
                 resolution=None)
 
             env = RetroEnv(env)
-            env = LabAnimalCollect(env, list_arenas, list_params)
+            env = LabAnimalCollect(env)
 
             if reduced_actions:
                 env = FilterActionEnv(env)
@@ -118,15 +83,11 @@ def make_animal_env(list_arenas, list_params, inference_mode, frame_skip, reduce
 
 
 class LabAnimalCollect(gym.Wrapper):
-    def __init__(self, env, list_arenas, list_params):
+    def __init__(self, env):
 
         gym.Wrapper.__init__(self, env)
-        self._num_arenas = len(list_arenas)
-        assert self._num_arenas == len(list_params)
-        self.list_arenas = list_arenas
-        self.list_params = list_params
         self._arena_file = ''
-        self._type = None
+        self._object = None
         self._env_steps = None
         self._label = None
 
@@ -143,16 +104,13 @@ class LabAnimalCollect(gym.Wrapper):
     def reset(self, **kwargs):
         # Create new arena
         name = str(uuid.uuid4())
-        index = random.choice(range(self._num_arenas))
-        arena_func = self.list_arenas[index]
-        params = self.list_params[index]
-        arena_type, _, _ = arena_func("/tmp/", name, **params)
+        object, label = create_object_arena("/tmp/", name)
         self._arena_file, arena = ("/tmo/{}.yaml".format(name), ArenaConfig(
             "/tmp/{}.yaml".format(name)))
         os.remove("/tmp/{}.yaml".format(name))
 
-        self._type = arena_type
+        self._object = object
         self._env_steps = 0
-        self._label = create_label(arena)
+        self._label = label
 
         return self.env.reset(arenas_configurations=arena, **kwargs)
