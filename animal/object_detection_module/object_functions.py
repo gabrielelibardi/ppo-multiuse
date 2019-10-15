@@ -35,7 +35,7 @@ class Loss:
 
         label = label.view(-1, 1)
         prediction = prediction.view(-1, 16)
-        loss = self.loss(prediction, label)
+        loss = self.loss(prediction, label.squeeze(1))
 
         return loss
 
