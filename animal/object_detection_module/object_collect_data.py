@@ -80,8 +80,8 @@ def collect_data(target_dir, args, num_samples=1000, frames_episode=50):
         labels_rollouts[idx:idx + frames_episode, :] = episode_labels
 
     np.savez(target_dir,
-             observations=np.array(obs_rollouts),
-             labels=np.array(labels_rollouts),
+             observations=np.array(obs_rollouts).astype(np.uint8),
+             labels=np.array(labels_rollouts).astype(np.uint8),
              frames_per_episode=frames_episode)
 
 
@@ -130,10 +130,10 @@ if __name__ == "__main__":
 
     collect_data(
         args.target_dir + "train_object_data",
-        args, num_samples=5000,
+        args, num_samples=250000,
     )
 
     collect_data(
         args.target_dir + "test_object_data",
-        args, num_samples=1000,
+        args, num_samples=50000,
     )
