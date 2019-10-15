@@ -70,7 +70,7 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
 
-            loss = criterion(label, pred_label)
+            loss = criterion.compute(label, pred_label)
             error = compute_error(label, pred_label)
 
             epoch_loss += loss.item()
@@ -111,7 +111,7 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
 
-            loss = criterion(label, pred_label)
+            loss = criterion.compute(label, pred_label)
             error = compute_error(label, pred_label)
 
             epoch_loss += loss.item()

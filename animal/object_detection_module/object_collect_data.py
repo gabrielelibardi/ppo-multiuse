@@ -179,12 +179,12 @@ if __name__ == "__main__":
 
     collect_data(
         args.target_dir + "train_position_data",
-        args, num_samples=150000,
+        args, num_samples=5000,
         list_arenas=list_arenas,
         list_params=list_params)
 
     collect_data(
         args.target_dir + "test_position_data",
-        args, num_samples=50000,
+        args, num_samples=1000,
         list_arenas=list_arenas,
         list_params=list_params)
