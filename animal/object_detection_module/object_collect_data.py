@@ -40,7 +40,7 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000,
     masks = torch.zeros(1, 1).to(device)
 
     obs_rollouts = np.zeros([num_samples, 3, 84, 84])
-    labels_rollouts = np.zeros([num_samples, 3])
+    labels_rollouts = np.zeros([num_samples, 10])
 
     t = tqdm.tqdm(range((num_samples // frames_episode) - 1))
     for episode_num in t:
