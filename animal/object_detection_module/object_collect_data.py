@@ -129,11 +129,11 @@ if __name__ == "__main__":
     device = torch.device(args.device)
 
     collect_data(
-        args.target_dir + "train_position_data",
+        args.target_dir + "train_object_data",
         args, num_samples=5000,
     )
 
     collect_data(
-        args.target_dir + "test_position_data",
+        args.target_dir + "test_object_data",
         args, num_samples=1000,
     )

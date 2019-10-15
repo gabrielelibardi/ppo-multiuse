@@ -20,6 +20,7 @@ def object_module_train(model, epochs, log_dir, train_data, test_data, device, b
         dataset_train = DatasetObjectRecurrent(train_data)
         dataset_test = DatasetObjectRecurrent(test_data)
     else:
+        batch_size = 32
         dataset_train = DatasetObjects(train_data)
         dataset_test = DatasetObjects(test_data)
 
