@@ -33,7 +33,7 @@ class DatasetObjects(Dataset):
         obs = self.observations[idx, :, :, :]
         labels = self.labels[idx, :]
 
-        return torch.FloatTensor(obs), torch.FloatTensor(labels)
+        return torch.FloatTensor(obs), torch.LongTensor(labels)
 
 
 class DatasetObjectRecurrent(Dataset):
@@ -63,4 +63,4 @@ class DatasetObjectRecurrent(Dataset):
         labels = self.labels[
               self.frames_per_episode * idx:self.frames_per_episode * idx +
               self.frames_per_episode, :]
-        return torch.FloatTensor(obs), torch.FloatTensor(labels)
+        return torch.FloatTensor(obs), torch.LongTensor(labels)
