@@ -23,7 +23,7 @@ def collect_data(target_dir, args, num_samples=1000, frames_episode=50):
         state=args.state)
 
     env = make_vec_envs(
-        make=maker, num_processes=1, device=device, log_dir=None,
+        make=maker, num_processes=args.num_processes, device=device, log_dir=None,
         num_frame_stack=args.frame_stack, state_shape=None, num_state_stack=0)
 
     actor_critic = Policy(
@@ -36,48 +36,69 @@ def collect_data(target_dir, args, num_samples=1000, frames_episode=50):
             torch.load(args.load_model, map_location=device))
     actor_critic.to(device)
     recurrent_hidden_states = torch.zeros(
-        1, actor_critic.recurrent_hidden_state_size).to(device)
+        args.num_processes, actor_critic.recurrent_hidden_state_size).to(device)
     masks = torch.zeros(1, 1).to(device)
 
     obs_rollouts = np.zeros([num_samples, 3, 84, 84])
     labels_rollouts = np.zeros([num_samples, 1])
 
-    t = tqdm.tqdm(range((num_samples // frames_episode) - 1))
-    for episode_num in t:
+    global_step = 0
+    steps = [0 for _ in range(args.num_processes)]
+
+    while global_step < (num_samples // frames_episode) - 1:
+
+        print(global_step * frames_episode)
 
         obs = env.reset()
-        step = 0
-        episode_obs = np.zeros([frames_episode, 3, 84, 84])
-        episode_labels = np.zeros([frames_episode, 1])
+        episode_obs = np.zeros([args.num_processes, frames_episode, 3, 84, 84])
+        episode_labels = np.zeros([args.num_processes, frames_episode, 1])
 
-        while step < frames_episode + 10:
+        with torch.no_grad():
+            _, actions, _, _, _ = actor_critic.act(
+                obs, recurrent_hidden_states, masks,
+                deterministic=args.det)
 
-            with torch.no_grad():
-                _, action, _, _, _ = actor_critic.act(
-                    obs, recurrent_hidden_states, masks,
-                    deterministic=args.det)
+        # wait for things to fall down
+        for num_process, step in enumerate(steps):
+            if step < 10:
+                actions[num_process] = 0
 
-            if step < 10:  # wait for things to fall down
-                action = torch.zeros_like(action)
+        # Observation reward and next obs
+        obs, _, dones, infos = env.step(actions)
 
-            # Observation reward and next obs
-            obs, reward, done, info = env.step(action)
+        # after 10 steps start saving obs
+        for num_process, step in enumerate(steps):
+            if (frames_episode - 1) > step >= 10:
 
-            if done:
-                step = 0
+                episode_obs[
+                num_process, step - 10, :, :, :
+                ] = obs[num_process].cpu().numpy()[0:3, :, :]
 
-            if step >= 10:
-                episode_obs[step - 10, :, :, :] = obs[0].cpu().numpy()[0:3, :,
-                                                  :]
-                episode_labels[step - 10, :] = info[0]['label']
+                episode_labels[num_process, step - 10, :] = infos[
+                    num_process]['label']
 
-            masks.fill_(0.0 if done else 1.0)
+        # if done and max step not reached
+        for num_process, done in enumerate(dones):
+            if done and steps[num_process] < (frames_episode - 1):
+                steps[num_process] = 0
 
-            step += 1
+        # if max step reached
+        for num_process, done in enumerate(dones):
+            if steps[num_process] == (frames_episode - 1):
+                idx = global_step * frames_episode
+                obs_rollouts[idx:idx + frames_episode,
+                :, :, :] = episode_obs[num_process, :, :, :]
+                labels_rollouts[idx:idx + frames_episode,
+                :] = episode_labels[num_process, :, :]
+                steps[num_process] = 0
+                global_step += 1
 
-        idx = episode_num * frames_episode + step - 10
-        obs_rollouts[idx:idx + frames_episode, :, :, :] = episode_obs
-        labels_rollouts[idx:idx + frames_episode, :] = episode_labels
+        masks = torch.FloatTensor(
+            [[0.0] if done_ else [1.0] for done_ in dones]).to(device)
+
+        for i in range(len(steps)):
+            steps[i] += 1
+
 
     np.savez(target_dir,
              observations=np.array(obs_rollouts).astype(np.uint8),
@@ -122,6 +143,8 @@ if __name__ == "__main__":
     parser.add_argument(
         '--realtime', action='store_true', default=False,
         help='If to plot in realtime. ')
+    parser.add_argument(
+        '--num-processes',type=int,default=25,help='how many training CPU processes to use (default: 16)')
 
     args = parser.parse_args()
     args.det = not args.non_det
