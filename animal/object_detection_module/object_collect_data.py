@@ -1,8 +1,3 @@
-"""
-Collects pairs (obs, position) from random arenas and saves them in
-a .npy file.
-"""
-
 import torch
 import numpy as np
 from datetime import datetime
@@ -15,7 +10,7 @@ CNN = {'CNN': CNNBase, 'Impala': ImpalaCNNBase, 'Fixup': FixupCNNBase,
        'State': StateCNNBase}
 
 
-def collect_data(target_dir, args, num_samples=1000, frames_episode=5):
+def collect_data(target_dir, args, num_samples=1000, frames_episode=5, verbose=False):
 
     maker = make_animal_env(
         inference_mode=args.realtime,
@@ -112,7 +107,8 @@ def collect_data(target_dir, args, num_samples=1000, frames_episode=5):
         for i in range(len(steps)):
             steps[i] += 1
 
-        print(count)
+        if verbose:
+            print(count, end='\r')
 
     np.savez(target_dir,
              observations=np.array(obs_rollouts).astype(np.uint8),
