@@ -8,6 +8,7 @@ import animalai
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from torch.distributions import MultivariateNormal
 from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import AnimalAIEnv
 from ppo.envs import TransposeImage

@@ -7,42 +7,31 @@ import tqdm
 import torch
 import random
 import numpy as np
-from datetime import datetime
 from ppo.envs import make_vec_envs
-from animal.vision_module.vision_functions import make_animal_env
-from ppo.model import (Policy, CNNBase, FixupCNNBase, ImpalaCNNBase,
-                       StateCNNBase)
+from ppo.model import Policy, FixupCNNBase
+from vision_functions import make_animal_env
 
-CNN = {'CNN': CNNBase, 'Impala': ImpalaCNNBase, 'Fixup': FixupCNNBase,
-       'State': StateCNNBase}
 
 def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000, frames_episode=20):
 
     args.det = not args.non_det
     device = torch.device(args.device)
 
-    maker = make_animal_env(
-        inference_mode=args.realtime,
-        frame_skip=args.frame_skip, reduced_actions=args.reduced_actions,
-        state=args.state)
+    maker = make_animal_env(list_arenas, list_params)
 
     env = make_vec_envs(
-        make=maker, num_processes=args.num_processes, device=device,
-        log_dir=None,
-        num_frame_stack=args.frame_stack, state_shape=None, num_state_stack=0)
+        make=maker, seed=0, num_processes=1, gamma=None,
+        device=device, log_dir=None, allow_early_resets=True,
+        num_frame_stack=1)
 
     actor_critic = Policy(
         env.observation_space.shape, env.action_space,
-        base=CNN[args.cnn],
+        base=FixupCNNBase,
         base_kwargs={'recurrent': args.recurrent_policy})
 
-    if args.load_model:
-        actor_critic.load_state_dict(
-            torch.load(args.load_model, map_location=device))
     actor_critic.to(device)
     recurrent_hidden_states = torch.zeros(
-        args.num_processes, actor_critic.recurrent_hidden_state_size).to(
-        device)
+        1, actor_critic.recurrent_hidden_state_size).to(device)
     masks = torch.zeros(1, 1).to(device)
 
     obs_rollouts = np.zeros([num_samples, 3, 84, 84])

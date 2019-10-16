@@ -31,18 +31,18 @@ object_model= ImpalaCNNObject.load(ckpt_path)
 
  - prediction of detected object in one hot encoding. Where:
 
-        -   GoodGoal: 0
-        -   BadGoal: 1
-        -   GoodGoalMulti: 2
-        -   Wall: 3
-        -   Ramp: 4
-        -   CylinderTunnel: 5
-        -   WallTransparent: 6
-        -   CylinderTunnelTransparent: 7
-        -   Cardbox1: 8
-        -   Cardbox2: 9
-        -   UObject: 10
-        -   LObject: 11
-        -   LObject2: 12
-        -   DeathZone: 13
-        -   HotZone: 14
+        -   GoodGoal corresponds to position 0
+        -   BadGoal corresponds to position 1
+        -   GoodGoalMulti corresponds to position 2
+        -   Wall corresponds to position 3
+        -   Ramp corresponds to position 4
+        -   CylinderTunnel corresponds to position 5
+        -   WallTransparent corresponds to position 6
+        -   CylinderTunnelTransparent corresponds to position 7
+        -   Cardbox1 corresponds to position 8
+        -   Cardbox2 corresponds to position 9
+        -   UObject corresponds to position 10
+        -   LObject corresponds to position 11
+        -   LObject2 corresponds to position 12
+        -   DeathZone corresponds to position 13
+        -   HotZone corresponds to position 14

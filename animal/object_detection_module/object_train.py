@@ -17,10 +17,11 @@ def object_module_train(model, epochs, log_dir, train_data, test_data, device, b
 
     # Get data
     if model.is_recurrent:
+        batch_size = 4
         dataset_train = DatasetObjectRecurrent(train_data)
         dataset_test = DatasetObjectRecurrent(test_data)
     else:
-        batch_size = 32
+        batch_size = 128
         dataset_train = DatasetObjects(train_data)
         dataset_test = DatasetObjects(test_data)
 
@@ -37,7 +38,7 @@ def object_module_train(model, epochs, log_dir, train_data, test_data, device, b
     dataloader_test = DataLoader(dataset_test, **dataloader_parameters)
 
     device = torch.device(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.5, patience=10)
     model.to(device)
     lowest_test_loss = float('inf')
