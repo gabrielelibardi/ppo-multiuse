@@ -15,7 +15,7 @@ CNN = {'CNN': CNNBase, 'Impala': ImpalaCNNBase, 'Fixup': FixupCNNBase,
        'State': StateCNNBase}
 
 
-def collect_data(target_dir, args, num_samples=1000, frames_episode=25):
+def collect_data(target_dir, args, num_samples=1000, frames_episode=5):
 
     maker = make_animal_env(
         inference_mode=args.realtime,
@@ -50,6 +50,7 @@ def collect_data(target_dir, args, num_samples=1000, frames_episode=25):
         [args.num_processes, frames_episode, 1], dtype=np.uint8)
 
     global_step = 0
+    count = [0 for _ in range(15)]
     steps = [0 for _ in range(args.num_processes)]
     obs = env.reset()
     print()
@@ -97,15 +98,21 @@ def collect_data(target_dir, args, num_samples=1000, frames_episode=25):
                 :, :, :] = episode_obs[num_process, :, :, :, :].astype(np.uint8)
                 labels_rollouts[idx:idx + frames_episode,
                 :] = episode_labels[num_process, :, :].astype(np.uint8)
+                count[infos[num_process]['label']] += frames_episode
 
                 steps[num_process] = 0
                 global_step += 1
+
+                if global_step >= (num_samples // frames_episode):
+                    break
 
         masks = torch.FloatTensor(
             [[0.0] if done_ else [1.0] for done_ in dones]).to(device)
 
         for i in range(len(steps)):
             steps[i] += 1
+
+        print(count)
 
     np.savez(target_dir,
              observations=np.array(obs_rollouts).astype(np.uint8),
