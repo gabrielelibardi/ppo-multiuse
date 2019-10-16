@@ -1,6 +1,5 @@
 import random
 from animal.arenas.utils.edit_arenas import add_object, write_arena
-from animal.arenas.utils.edit_arenas import add_object, write_arena
 
 objects = [
     'GoodGoal',
@@ -16,7 +15,6 @@ objects = [
     'UObject',
     'LObject',
     'LObject2',
-    'zone_objects',
     'DeathZone',
     'HotZone'
 ]
@@ -31,16 +29,16 @@ labels = {
     'WallTransparent': 6,
     'CylinderTunnelTransparent': 7,
     'Cardbox1': 8,
-    'Cardbox2': 0,
+    'Cardbox2': 9,
     'UObject': 10,
     'LObject': 11,
     'LObject2': 12,
-    'zone_objects': 13,
-    'DeathZone': 14,
-    'HotZone': 15,
+    'DeathZone': 13,
+    'HotZone': 14,
 }
 
-def create_object_arena(target_path, arena_name, num_objects=4, time=250):
+
+def create_object_arena(target_path, arena_name, num_objects=7, time=250):
     """ Empty arena with ´num_objects´ objects of the same type"""
 
     arena = ''
@@ -50,6 +48,6 @@ def create_object_arena(target_path, arena_name, num_objects=4, time=250):
         arena = add_object(arena, object)
 
     save_name = '{}/{}'.format(target_path, arena_name)
-    write_arena(save_name, time, arena)
+    write_arena(save_name, time, arena, blackouts=None)
 
     return object, labels[object]

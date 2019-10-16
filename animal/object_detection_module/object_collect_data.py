@@ -3,9 +3,9 @@ Collects pairs (obs, position) from random arenas and saves them in
 a .npy file.
 """
 
-import tqdm
 import torch
 import numpy as np
+from datetime import datetime
 from ppo.envs import make_vec_envs
 from ppo.model import (Policy, CNNBase, FixupCNNBase, ImpalaCNNBase,
                        StateCNNBase)
@@ -15,7 +15,7 @@ CNN = {'CNN': CNNBase, 'Impala': ImpalaCNNBase, 'Fixup': FixupCNNBase,
        'State': StateCNNBase}
 
 
-def collect_data(target_dir, args, num_samples=1000, frames_episode=50):
+def collect_data(target_dir, args, num_samples=1000, frames_episode=25):
 
     maker = make_animal_env(
         inference_mode=args.realtime,
@@ -39,26 +39,38 @@ def collect_data(target_dir, args, num_samples=1000, frames_episode=50):
         args.num_processes, actor_critic.recurrent_hidden_state_size).to(device)
     masks = torch.zeros(1, 1).to(device)
 
-    obs_rollouts = np.zeros([num_samples, 3, 84, 84])
-    labels_rollouts = np.zeros([num_samples, 1])
+    # Final storage
+    obs_rollouts = np.zeros([num_samples, 3, 84, 84], dtype=np.uint8)
+    labels_rollouts = np.zeros([num_samples, 1], dtype=np.uint8)
+
+    # Temporary storage
+    episode_obs = np.zeros(
+        [args.num_processes, frames_episode, 3, 84, 84], dtype=np.uint8)
+    episode_labels = np.zeros(
+        [args.num_processes, frames_episode, 1], dtype=np.uint8)
 
     global_step = 0
     steps = [0 for _ in range(args.num_processes)]
+    obs = env.reset()
+    print()
+    start = datetime.now()
 
-    while global_step < (num_samples // frames_episode) - 1:
+    while global_step < (num_samples // frames_episode):
 
-        print(global_step * frames_episode)
+        print(steps)
 
-        obs = env.reset()
-        episode_obs = np.zeros([args.num_processes, frames_episode, 3, 84, 84])
-        episode_labels = np.zeros([args.num_processes, frames_episode, 1])
+        end = datetime.now()
+        delta = end - start
+        print("collected {}/{} data points in {} h {} mins and {} secs.".format(
+            global_step * frames_episode, num_samples, delta.seconds // 3600,
+            ((delta.seconds // 60) % 60), delta.seconds % 60), end='\r')
 
         with torch.no_grad():
             _, actions, _, _, _ = actor_critic.act(
                 obs, recurrent_hidden_states, masks,
                 deterministic=args.det)
 
-        # wait for things to fall down
+        # first wait for things to fall down
         for num_process, step in enumerate(steps):
             if step < 10:
                 actions[num_process] = 0
@@ -68,28 +80,26 @@ def collect_data(target_dir, args, num_samples=1000, frames_episode=50):
 
         # after 10 steps start saving obs
         for num_process, step in enumerate(steps):
-            if (frames_episode - 1) > step >= 10:
-
-                episode_obs[
-                num_process, step - 10, :, :, :
-                ] = obs[num_process].cpu().numpy()[0:3, :, :]
-
+            if step >= 10:
+                episode_obs[num_process, step - 10, :, :, :
+                ] = obs[num_process].cpu().numpy()[-3:, :, :].astype(np.uint8)
                 episode_labels[num_process, step - 10, :] = infos[
                     num_process]['label']
 
-        # if done and max step not reached
+        # if done and max step not reached -> ignore data
         for num_process, done in enumerate(dones):
-            if done and steps[num_process] < (frames_episode - 1):
+            if done and steps[num_process] < (frames_episode - 1 + 10):
                 steps[num_process] = 0
 
-        # if max step reached
-        for num_process, done in enumerate(dones):
-            if steps[num_process] == (frames_episode - 1):
+        # if max step reached -> copy to final storage
+        for num_process, step in enumerate(steps):
+            if step == (frames_episode - 1 + 10):
                 idx = global_step * frames_episode
                 obs_rollouts[idx:idx + frames_episode,
-                :, :, :] = episode_obs[num_process, :, :, :]
+                :, :, :] = episode_obs[num_process, :, :, :, :].astype(np.uint8)
                 labels_rollouts[idx:idx + frames_episode,
-                :] = episode_labels[num_process, :, :]
+                :] = episode_labels[num_process, :, :].astype(np.uint8)
+
                 steps[num_process] = 0
                 global_step += 1
 
@@ -98,7 +108,6 @@ def collect_data(target_dir, args, num_samples=1000, frames_episode=50):
 
         for i in range(len(steps)):
             steps[i] += 1
-
 
     np.savez(target_dir,
              observations=np.array(obs_rollouts).astype(np.uint8),
@@ -144,7 +153,8 @@ if __name__ == "__main__":
         '--realtime', action='store_true', default=False,
         help='If to plot in realtime. ')
     parser.add_argument(
-        '--num-processes',type=int,default=25,help='how many training CPU processes to use (default: 16)')
+        '--num-processes',type=int, default=1,
+        help='how many training CPU processes to use (default: 16)')
 
     args = parser.parse_args()
     args.det = not args.non_det
@@ -153,10 +163,10 @@ if __name__ == "__main__":
 
     collect_data(
         args.target_dir + "train_object_data",
-        args, num_samples=250000,
+        args, num_samples=1000,
     )
 
     collect_data(
         args.target_dir + "test_object_data",
-        args, num_samples=50000,
+        args, num_samples=1000,
     )
