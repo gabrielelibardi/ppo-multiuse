@@ -30,28 +30,6 @@ class DatasetObjects(Dataset):
     def __getitem__(self, idx):
         obs = self.observations[idx, :, :, :]
         labels = self.labels[idx, :]
-
-        labels_to_object = {
-            0: 'GoodGoal',
-            1: 'BadGoal',
-            2: 'GoodGoalMulti',
-            3: 'Wall',
-            4: 'Ramp',
-            5: 'CylinderTunnel',
-            6: 'WallTransparent',
-            7: 'CylinderTunnelTransparent',
-            8: 'Cardbox1',
-            9: 'Cardbox2',
-            10: 'UObject',
-            11: 'LObject',
-            12: 'LObject2',
-            13: 'DeathZone',
-            14: 'HotZone',
-            15: 'lol'
-        }
-
-        print("{}: {}".format(labels_to_object[labels[0]], len(np.unique(obs))))
-
         return torch.FloatTensor(obs), torch.LongTensor(labels)
 
 
