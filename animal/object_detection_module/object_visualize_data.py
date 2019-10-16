@@ -55,8 +55,6 @@ def log_plots(log_dir, train_data, test_data, samples=100):
             obs = obs[0, :, :, :].permute(1, 2, 0).numpy()
             label = label[0].numpy()
 
-            print("{}: {}".format(labels_to_object[label[0]], len(np.unique(obs))))
-
             fig = plt.figure()
             ax1 = plt.axes()
             plt.tick_params(

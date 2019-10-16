@@ -57,8 +57,6 @@ def collect_data(target_dir, args, num_samples=1000, frames_episode=25):
 
     while global_step < (num_samples // frames_episode):
 
-        print(steps)
-
         end = datetime.now()
         delta = end - start
         print("collected {}/{} data points in {} h {} mins and {} secs.".format(
@@ -153,7 +151,7 @@ if __name__ == "__main__":
         '--realtime', action='store_true', default=False,
         help='If to plot in realtime. ')
     parser.add_argument(
-        '--num-processes',type=int, default=1,
+        '--num-processes',type=int, default=16,
         help='how many training CPU processes to use (default: 16)')
 
     args = parser.parse_args()
