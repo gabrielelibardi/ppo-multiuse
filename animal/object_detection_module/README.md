@@ -46,3 +46,6 @@ object_model= ImpalaCNNObject.load(ckpt_path)
         -   LObject2 corresponds to position 12
         -   DeathZone corresponds to position 13
         -   HotZone corresponds to position 14
+
+ - hidden state if trained with recurrence (not the case)
+ - deep features before the class prediction (output of the cnn).
