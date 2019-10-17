@@ -70,6 +70,7 @@ class LabAnimalCollect(gym.Wrapper):
         self._env_steps = None
         self._agent_pos = None
         self._agent_rot = None
+        self._agent_norm_vel = None
 
     def step(self, action):
         action = int(action)
@@ -80,11 +81,11 @@ class LabAnimalCollect(gym.Wrapper):
         info['arena_type'] = self._type
 
         action_ = self.flattener.lookup_action(action)
-        self._agent_pos, _, self._agent_rot = get_new_position(
+        self._agent_pos, self._agent_rot, self._agent_norm_vel = get_new_position(
             action_, info['vector_obs'], self._agent_pos, self._agent_rot)
 
         info['agent_position'] = self._agent_pos
-        info['agent_rotation'] = self._agent_rot
+        info['agent_rotation'] = self._agent_norm_vel
 
         return obs, reward, done, info
 
@@ -104,6 +105,7 @@ class LabAnimalCollect(gym.Wrapper):
         self._env_steps = 0
         self._agent_pos = agent_pos
         self._agent_rot = agent_rot
+        self._agent_norm_vel = (0, 0 , 0)
 
         return self.env.reset(arenas_configurations=arena, **kwargs)
 
