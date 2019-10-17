@@ -197,6 +197,9 @@ def rot_loss(rot1, rot2):
 
 def plot_sample(obs, pos, rot, rot_2):
 
+    rot = 10 * rot
+    rot_2 = 10 * rot_2
+
     fig = plt.figure()
     gs = gridspec.GridSpec(1, 2)
     gs.update(wspace=0.1, hspace=0.1, left=0.1, right=0.9, bottom=0.1, top=0.9)
