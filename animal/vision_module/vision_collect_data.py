@@ -252,10 +252,10 @@ if __name__ == '__main__':
 
     collect_data(
         args.target_dir + 'train_position_data',
-        args, list_arenas, list_params, num_samples=1000,
+        args, list_arenas, list_params, num_samples=500000,
     )
 
     collect_data(
         args.target_dir + 'test_position_data',
-        args, list_arenas, list_params, num_samples=1000,
+        args, list_arenas, list_params, num_samples=100000,
     )

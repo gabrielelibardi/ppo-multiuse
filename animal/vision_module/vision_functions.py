@@ -183,11 +183,14 @@ def pos_loss(pos1, pos2):
 
 def rot_loss(rot1, rot2):
 
+    rot1 = torch.clamp(rot1, -1, 1)
+    rot2 = torch.clamp(rot2, -1, 1)
+
     unnormalized_loss = ((rot1[:, 0] - rot2[:, 0]) ** 2 +
                          (rot1[:, 1] - rot2[:, 1]) ** 2 +
                          (rot1[:, 2] - rot2[:, 2]) ** 2)
 
-    loss = unnormalized_loss
+    loss = unnormalized_loss / 2 ** 2 * 3
 
     return loss.unsqueeze(-1), torch.sqrt(torch.mean(unnormalized_loss))
 
