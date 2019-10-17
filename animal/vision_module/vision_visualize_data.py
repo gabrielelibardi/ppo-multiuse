@@ -37,8 +37,8 @@ def log_plots(log_dir, train_data, test_data, samples=100):
             obs, pos, rot = data
 
             obs = obs[0, :, :, :].permute(1, 2, 0).numpy()
-            pos = pos.numpy()
-            rot = rot.numpy()
+            pos = pos.numpy().squeeze()
+            rot = rot.numpy().squeeze()
 
             fig = plot_sample(obs, pos, rot)
 
