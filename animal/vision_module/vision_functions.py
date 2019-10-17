@@ -192,9 +192,6 @@ def rot_loss(rot1, rot2):
 
 def plot_sample(obs, pos, rot):
 
-    obs = obs[0, :, :, :].permute(1, 2, 0).cpu().detach().numpy()
-    pos = torch.clamp(pos[0, :], 0, 40).cpu().detach().numpy()
-
     fig = plt.figure()
     gs = gridspec.GridSpec(1, 2)
     gs.update(wspace=0.1, hspace=0.1, left=0.1, right=0.9, bottom=0.1, top=0.9)
