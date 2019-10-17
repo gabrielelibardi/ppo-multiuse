@@ -208,12 +208,13 @@ def plot_sample(obs, pos, rot, rot_2):
     plt.ylim(0, 40)
     plt.xlim(0, 40)
 
+    ax1.scatter(pos[0], pos[2], color='g')
+    ax1.scatter(pos[0], pos[2], color='r')
     ax1.arrow(x=pos[0], y=pos[2], dx=rot[0], dy=rot[2], head_width=0.05, color='r')
     ax1.arrow(x=pos[0], y=pos[2], dx=rot_2[0], dy=rot_2[2], head_width=0.05, color='g')
 
     plt.legend(['real', 'pred'])
 
-    ax1.scatter(pos[0], pos[2], color='r')
     ax2 = plt.subplot(gs[0, 1])
     plt.tick_params(
         axis='both',
@@ -243,10 +244,11 @@ def plot_prediction(obs, real_pos, real_rot, pred_pos, pred_rot):
     plt.xlim(0, 40)
     ax1.scatter(real_pos[0], real_pos[2], color='r')
     ax1.scatter(pred_pos[0], pred_pos[2], color='b')
-    plt.legend(['real', 'pred'])
-
     ax1.arrow(x=real_pos[0], y=real_pos[2], dx=real_rot[0], dy=real_rot[2], head_width=0.05, color='r')
     ax1.arrow(x=pred_pos[0], y=pred_pos[2], dx=pred_rot[0], dy=pred_rot[2], head_width=0.05, color='b')
+    plt.legend(['real', 'pred'])
+
+
 
     ax2 = plt.subplot(gs[0, 1])
     plt.tick_params(
