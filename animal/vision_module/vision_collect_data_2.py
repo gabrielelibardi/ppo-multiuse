@@ -77,8 +77,8 @@ def collect_data(target_dir, args, arenas, params, num_samples=1000, frames_epis
             if step >= 10:
                 episode_obs[num_process, step - 10, :, :, :
                 ] = obs[num_process].cpu().numpy()[-3:, :, :].astype(np.uint8)
-                episode_pos[idx, :] = infos[num_process]['agent_position']
-                episode_rot[idx, :] = infos[num_process]['agent_rotation']
+                episode_pos[num_process, step - 10, :] = infos[num_process]['agent_position']
+                episode_rot[num_process, step - 10, :] = infos[num_process]['agent_rotation']
 
         # if done and max step not reached -> ignore data
         for num_process, done in enumerate(dones):

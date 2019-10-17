@@ -105,7 +105,7 @@ class LabAnimalCollect(gym.Wrapper):
         self._env_steps = 0
         self._agent_pos = agent_pos
         self._agent_rot = agent_rot
-        self._agent_norm_vel = (0, 0 , 0)
+        self._agent_norm_vel = (0, 0, 0)
 
         return self.env.reset(arenas_configurations=arena, **kwargs)
 
