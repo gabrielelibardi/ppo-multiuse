@@ -36,14 +36,14 @@ def collect_data(target_dir, args, arenas, params, num_samples=1000, frames_epis
 
     # Final storage
     obs_rollouts = np.zeros([num_samples, 3, 84, 84], dtype=np.uint8)
-    pos_rollouts = np.zeros([num_samples, 3], dtype=np.uint8)
-    rot_rollouts = np.zeros([num_samples, 3], dtype=np.uint8)
+    pos_rollouts = np.zeros([num_samples, 3], dtype=np.float32)
+    rot_rollouts = np.zeros([num_samples, 3], dtype=np.float32)
 
     # Temporary storage
     episode_obs = np.zeros(
         [args.num_processes, frames_episode, 3, 84, 84], dtype=np.uint8)
-    episode_pos = np.zeros([args.num_processes, frames_episode, 3], dtype=np.uint8)
-    episode_rot = np.zeros([args.num_processes, frames_episode, 3], dtype=np.uint8)
+    episode_pos = np.zeros([args.num_processes, frames_episode, 3], dtype=np.float32)
+    episode_rot = np.zeros([args.num_processes, frames_episode, 3], dtype=np.float32)
 
     global_step = 0
     steps = [0 for _ in range(args.num_processes)]
@@ -91,8 +91,8 @@ def collect_data(target_dir, args, arenas, params, num_samples=1000, frames_epis
                 idx = global_step * frames_episode
                 obs_rollouts[idx:idx + frames_episode,
                 :, :, :] = episode_obs[num_process, :, :, :, :].astype(np.uint8)
-                pos_rollouts[idx:idx + frames_episode] = episode_pos[num_process, :, :].astype(np.uint8)
-                rot_rollouts[idx:idx + frames_episode] = episode_rot[num_process, :, :].astype(np.uint8)
+                pos_rollouts[idx:idx + frames_episode] = episode_pos[num_process, :, :].astype(np.float32)
+                rot_rollouts[idx:idx + frames_episode] = episode_rot[num_process, :, :].astype(np.float32)
 
                 steps[num_process] = 0
                 global_step += 1
@@ -108,8 +108,8 @@ def collect_data(target_dir, args, arenas, params, num_samples=1000, frames_epis
 
     np.savez(target_dir,
              observations=np.array(obs_rollouts).astype(np.uint8),
-             positions=pos_rollouts.astype(np.uint8),
-             rotations=rot_rollouts.astype(np.uint8),
+             positions=pos_rollouts.astype(np.float32),
+             rotations=rot_rollouts.astype(np.float32),
              frames_per_episode=frames_episode)
 
 
@@ -198,7 +198,6 @@ if __name__ == '__main__':
         create_c5_arena,
         create_c6_arena,
         create_c6_arena_basic,
-        create_c7_arena,
         create_maze,
         create_arena_choice,
         create_arena_cross,
@@ -229,7 +228,6 @@ if __name__ == '__main__':
         {'is_train': False, 'time': 1000},              # create_c6_arena
         {'is_train': False, 'time': 1000,               # create_c6_arena_basic
          'num_walls': np.random.randint(5, 15)},
-        {'is_train': False, 'time': 1000},              # create_c7_arena
         {'is_train': False, 'time': 1000,               # create_maze
          'obj': random.choice(['CylinderTunnel',
                                'door', 'Cardbox1'])},
