@@ -116,6 +116,22 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000, f
 if __name__ == "__main__":
 
     import argparse
+    from animal.arenas.utils import (
+        create_c1_arena,
+        create_c1_arena_weird,
+        create_c2_arena,
+        create_c3_arena,
+        create_c3_arena_basic,
+        create_c4_arena,
+        create_c5_arena,
+        create_c6_arena,
+        create_c6_arena_basic,
+        create_c7_arena,
+        create_maze,
+        create_mix_maze,
+        create_arena_choice,
+    )
+
 
     parser = argparse.ArgumentParser(description='RL')
     parser.add_argument(
@@ -160,11 +176,11 @@ if __name__ == "__main__":
     device = torch.device(args.device)
 
     collect_data(
-        args.target_dir + "train_object_data",
+        args.target_dir + "train_position_data",
         args, num_samples=1000,
     )
 
     collect_data(
-        args.target_dir + "test_object_data",
+        args.target_dir + "test_position_data",
         args, num_samples=1000,
     )
