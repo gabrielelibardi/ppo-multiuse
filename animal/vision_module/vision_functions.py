@@ -234,6 +234,8 @@ def plot_prediction(obs, real_pos, real_rot, pred_pos, pred_rot):
     obs = obs[0, :, :, :].permute(1, 2, 0).cpu().detach().numpy()
     real_pos = torch.clamp(real_pos[0, :], 0, 40).cpu().detach().numpy()
     pred_pos = torch.clamp(pred_pos[0, :], 0, 40).cpu().detach().numpy()
+    real_rot = torch.clamp(real_rot[0, :], 0, 1).cpu().detach().numpy()
+    pred_rot = torch.clamp(real_rot[0, :], 0, 1).cpu().detach().numpy()
 
     fig = plt.figure()
     gs = gridspec.GridSpec(1, 2)
