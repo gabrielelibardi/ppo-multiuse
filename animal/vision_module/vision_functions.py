@@ -200,6 +200,8 @@ def plot_sample(obs, pos, rot):
     plt.ylim(0, 40)
     plt.xlim(0, 40)
     ax1.scatter(pos[0], pos[2], color='r')
+
+    ax1.arrow(x=pos[0], y=pos[2], dx=rot[0], dy=rot[1])
     plt.legend(['real', 'pred'])
 
     ax2 = plt.subplot(gs[0, 1])
