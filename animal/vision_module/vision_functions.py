@@ -210,10 +210,10 @@ def plot_sample(obs, pos, rot, rot_2):
 
     ax1.scatter(pos[0], pos[2], color='g')
     ax1.scatter(pos[0], pos[2], color='r')
-    ax1.arrow(x=pos[0], y=pos[2], dx=rot[0], dy=rot[2], head_width=0.05, color='r')
-    ax1.arrow(x=pos[0], y=pos[2], dx=rot_2[0], dy=rot_2[2], head_width=0.05, color='g')
+    ax1.arrow(x=pos[0], y=pos[2], dx=rot[0], dy=rot[2], head_width=0.05, color='g')
+    ax1.arrow(x=pos[0], y=pos[2], dx=rot_2[0], dy=rot_2[2], head_width=0.05, color='r')
 
-    plt.legend(['real', 'pred'])
+    plt.legend(['velocity', 'direction'])
 
     ax2 = plt.subplot(gs[0, 1])
     plt.tick_params(
