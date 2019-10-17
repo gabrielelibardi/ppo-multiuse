@@ -2,6 +2,7 @@
 import os
 import gym
 import uuid
+import math
 import torch
 import random
 import animalai
@@ -85,7 +86,12 @@ class LabAnimalCollect(gym.Wrapper):
             action_, info['vector_obs'], self._agent_pos, self._agent_rot)
 
         info['agent_position'] = self._agent_pos
-        info['agent_rotation'] = self._agent_norm_vel
+
+        if True:
+            info['agent_rotation'] = self._agent_norm_vel
+        else:
+            info['agent_rotation'] = (
+                math.sin(self._agent_rot), 0, math.cos(self._agent_rot))
 
         return obs, reward, done, info
 
@@ -201,7 +207,7 @@ def plot_sample(obs, pos, rot):
     plt.xlim(0, 40)
     ax1.scatter(pos[0], pos[2], color='r')
 
-    ax1.arrow(x=pos[0], y=pos[2], dx=rot[0], dy=rot[1])
+    ax1.arrow(x=pos[0], y=pos[2], dx=rot[0], dy=rot[2], head_width=0.05)
     plt.legend(['real', 'pred'])
 
     ax2 = plt.subplot(gs[0, 1])
