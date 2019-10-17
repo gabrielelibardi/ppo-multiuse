@@ -1,21 +1,22 @@
+
 import os
 import gym
 import uuid
-import math
 import torch
 import random
 import animalai
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from torch.distributions import MultivariateNormal
+from ppo.envs import TransposeImage
 from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import AnimalAIEnv
-from ppo.envs import TransposeImage
-from animal.animal import RetroEnv
+from animal.animal import RetroEnv, FrameSkipEnv
+from animal.wrappers import RetroEnv, Stateful, FilterActionEnv
 
 
-def make_animal_env(list_arenas, list_params):
+def make_animal_env(list_arenas, list_params, inference_mode, frame_skip, reduced_actions, state):
+
     base_port = random.randint(0, 100)
     def make_env(rank):
         def _thunk():
@@ -28,16 +29,26 @@ def make_animal_env(list_arenas, list_params):
                 retro=False, worker_id=base_port + rank,
                 docker_training=False,
                 seed=0, n_arenas=1, arenas_configurations=None,
-                greyscale=False, inference=False,
+                greyscale=False, inference=inference_mode,
                 resolution=None)
 
             env = RetroEnv(env)
             env = LabAnimalCollect(env, list_arenas, list_params)
 
+            if reduced_actions:
+                env = FilterActionEnv(env)
+
+            if state:
+                env = Stateful(env)
+
+            if frame_skip > 0:
+                env = FrameSkipEnv(env, skip=frame_skip)
+                print("Frame skip: ", frame_skip, flush=True)
+
             # If the input has shape (W,H,3), wrap for PyTorch convolutions
             obs_shape = env.observation_space.shape
             if len(obs_shape) == 3 and obs_shape[2] in [1, 3]:
-               env = TransposeImage(env, op=[2, 0, 1])
+                env = TransposeImage(env, op=[2, 0, 1])
 
             return env
 
@@ -59,6 +70,7 @@ class LabAnimalCollect(gym.Wrapper):
         self._env_steps = None
         self._agent_pos = None
         self._agent_rot = None
+        self._agent_norm_vel = None
 
     def step(self, action):
         action = int(action)
@@ -69,7 +81,7 @@ class LabAnimalCollect(gym.Wrapper):
         info['arena_type'] = self._type
 
         action_ = self.flattener.lookup_action(action)
-        self._agent_pos, self._agent_rot = get_new_position(
+        self._agent_pos, _, self._agent_rot = get_new_position(
             action_, info['vector_obs'], self._agent_pos, self._agent_rot)
 
         info['agent_position'] = self._agent_pos
@@ -99,6 +111,9 @@ class LabAnimalCollect(gym.Wrapper):
 
 def get_new_position(action, speed, current_pos, current_rot):
     """ Calculates next agent position and rotation """
+
+    mag = np.sqrt(speed.dot(speed))
+    norm_speed = speed / mag if mag > 0 else speed
 
     mov_act = action[0]
     rotation_act = action[1]
@@ -135,7 +150,7 @@ def get_new_position(action, speed, current_pos, current_rot):
 
     current_pos += (step * speed * direction)
 
-    return current_pos, current_rot
+    return current_pos, current_rot, norm_speed
 
 
 def loss_func(real_pos, real_rot, pred_pos, pred_rot):
@@ -151,20 +166,27 @@ def pos_loss(pos1, pos2):
     pos1 = torch.clamp(pos1, 0, 40)
     pos2 = torch.clamp(pos2, 0, 40)
 
-    unnormalized_loss = (pos1[:, 0] - pos2[:, 0]) ** 2 + (pos1[:, 1] - pos2[:, 1]) ** 2
-    loss = unnormalized_loss / 40 ** 2 * 2
+    unnormalized_loss = ((pos1[:, 0] - pos2[:, 0]) ** 2 +
+                        (pos1[:, 1] - pos2[:, 1]) ** 2 +
+                        (pos1[:, 2] - pos2[:, 2]) ** 2)
+
+    loss = unnormalized_loss / 40 ** 2 * 3
 
     return loss.unsqueeze(-1), torch.sqrt(torch.mean(unnormalized_loss))
 
 
 def rot_loss(rot1, rot2):
 
-    aaa = abs(rot1 - rot2)
-    bbb = torch.min(rot1, rot2) + 360
-    unnormalized_loss = torch.min(aaa, abs(bbb - torch.max(rot1, rot2)))
-    loss = unnormalized_loss / 180.
+    rot1 = torch.clamp(rot1, 0, 10)
+    rot2 = torch.clamp(rot2, 0, 10)
 
-    return loss, torch.mean(unnormalized_loss)
+    unnormalized_loss = ((rot1[:, 0] - rot2[:, 0]) ** 2 +
+                         (rot1[:, 1] - rot2[:, 1]) ** 2 +
+                         (rot1[:, 2] - rot2[:, 2]) ** 2)
+
+    loss = unnormalized_loss / 10 ** 2 * 3
+
+    return loss.unsqueeze(-1), torch.sqrt(torch.mean(unnormalized_loss))
 
 
 def plot_prediction(obs, real_pos, real_rot, pred_pos, pred_rot):

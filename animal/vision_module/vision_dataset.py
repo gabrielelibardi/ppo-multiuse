@@ -32,7 +32,7 @@ class DatasetVision(Dataset):
 
     def __getitem__(self, idx):
         obs = self.observations[idx, :, :, :]
-        pos = self.positions[idx, 0:3:2]
+        pos = self.positions[idx, :]
         rot = self.rotations[idx, :]
 
         return (torch.FloatTensor(obs), torch.FloatTensor(pos),
