@@ -131,7 +131,7 @@ class DatasetVisionRecurrent(Dataset):
               self.frames_per_episode, :, :, :]
         pos = self.positions[
               self.frames_per_episode * idx:self.frames_per_episode * idx +
-              self.frames_per_episode, 0:3:2]
+              self.frames_per_episode, :]
         rot = self.rotations[
               self.frames_per_episode * idx:self.frames_per_episode * idx +
               self.frames_per_episode, :]

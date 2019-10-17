@@ -190,6 +190,35 @@ def rot_loss(rot1, rot2):
     return loss.unsqueeze(-1), torch.sqrt(torch.mean(unnormalized_loss))
 
 
+def plot_sample(obs, pos, rot):
+
+    obs = obs[0, :, :, :].permute(1, 2, 0).cpu().detach().numpy()
+    pos = torch.clamp(pos[0, :], 0, 40).cpu().detach().numpy()
+
+    fig = plt.figure()
+    gs = gridspec.GridSpec(1, 2)
+    gs.update(wspace=0.1, hspace=0.1, left=0.1, right=0.9, bottom=0.1, top=0.9)
+
+    ax1 = plt.subplot(gs[0, 0])
+    plt.ylim(0, 40)
+    plt.xlim(0, 40)
+    ax1.scatter(pos[0], pos[1], color='r')
+    plt.legend(['real', 'pred'])
+
+    ax2 = plt.subplot(gs[0, 1])
+    plt.tick_params(
+        axis='both',
+        which='both',
+        bottom=False,
+        top=False,
+        left=False,
+        labelbottom=False,
+        labelleft=False)
+    ax2.imshow(obs / 255.)
+
+    return fig
+
+
 def plot_prediction(obs, real_pos, real_rot, pred_pos, pred_rot):
 
     obs = obs[0, :, :, :].permute(1, 2, 0).cpu().detach().numpy()
