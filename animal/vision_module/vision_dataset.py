@@ -20,6 +20,7 @@ class DatasetVision(Dataset):
         self.observations = data['observations']
         self.positions = data['positions']
         self.rotations = data['rotations']
+        self.norm_vel = data['norm_vel']
         self.frames_per_episode = data['frames_per_episode']
 
         self.num_samples = self.observations.shape[0]
@@ -34,9 +35,10 @@ class DatasetVision(Dataset):
         obs = self.observations[idx, :, :, :]
         pos = self.positions[idx, :]
         rot = self.rotations[idx, :]
+        norm_vel = self.norm_vel[idx, :]
 
         return (torch.FloatTensor(obs), torch.FloatTensor(pos),
-                torch.FloatTensor(rot))
+                torch.FloatTensor(rot), torch.FloatTensor(norm_vel))
 
 
 class DatasetVisionPaper(Dataset):
@@ -118,6 +120,7 @@ class DatasetVisionRecurrent(Dataset):
         self.observations = data['observations']
         self.positions = data['positions']
         self.rotations = data['rotations']
+        self.norm_vel = data['norm_vel']
         self.frames_per_episode = data['frames_per_episode']
         self.num_samples = (self.observations.shape[0] // self.frames_per_episode) - 1
 
@@ -135,5 +138,9 @@ class DatasetVisionRecurrent(Dataset):
         rot = self.rotations[
               self.frames_per_episode * idx:self.frames_per_episode * idx +
               self.frames_per_episode, :]
-        return (torch.FloatTensor(obs),
-                torch.FloatTensor(pos), torch.FloatTensor(rot))
+        norm_vel = self.norm_vel[
+              self.frames_per_episode * idx:self.frames_per_episode * idx +
+                                            self.frames_per_episode, :]
+
+        return (torch.FloatTensor(obs), torch.FloatTensor(pos),
+                torch.FloatTensor(rot), torch.FloatTensor(norm_vel))

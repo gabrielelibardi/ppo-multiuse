@@ -86,12 +86,11 @@ class LabAnimalCollect(gym.Wrapper):
             action_, info['vector_obs'], self._agent_pos, self._agent_rot)
 
         info['agent_position'] = self._agent_pos
-
-        if True:
-            info['agent_rotation'] = self._agent_norm_vel
-        else:
-            info['agent_rotation'] = (
-                math.sin(self._agent_rot), 0, math.cos(self._agent_rot))
+        info['agent_norm_vel'] = self._agent_norm_vel
+        info['agent_rotation'] = (
+            math.cos(
+                math.radians(self._agent_rot)), 0,
+            math.sin(math.radians(self._agent_rot)))
 
         return obs, reward, done, info
 
@@ -184,19 +183,19 @@ def pos_loss(pos1, pos2):
 
 def rot_loss(rot1, rot2):
 
-    rot1 = torch.clamp(rot1, 0, 10)
-    rot2 = torch.clamp(rot2, 0, 10)
+    rot1 = torch.clamp(rot1, 0, 1)
+    rot2 = torch.clamp(rot2, 0, 1)
 
     unnormalized_loss = ((rot1[:, 0] - rot2[:, 0]) ** 2 +
                          (rot1[:, 1] - rot2[:, 1]) ** 2 +
                          (rot1[:, 2] - rot2[:, 2]) ** 2)
 
-    loss = unnormalized_loss / 10 ** 2 * 3
+    loss = unnormalized_loss / 1 ** 2 * 3
 
     return loss.unsqueeze(-1), torch.sqrt(torch.mean(unnormalized_loss))
 
 
-def plot_sample(obs, pos, rot):
+def plot_sample(obs, pos, rot, rot_2):
 
     fig = plt.figure()
     gs = gridspec.GridSpec(1, 2)
@@ -207,8 +206,8 @@ def plot_sample(obs, pos, rot):
     plt.xlim(0, 40)
     ax1.scatter(pos[0], pos[2], color='r')
 
-    ax1.arrow(x=pos[0], y=pos[2], dx=rot[0], dy=rot[2], head_width=0.05)
-    plt.legend(['real', 'pred'])
+    ax1.arrow(x=pos[0], y=pos[2], dx=rot[0], dy=rot[2], head_width=0.05, color='r')
+    ax1.arrow(x=pos[0], y=pos[2], dx=rot_2[0], dy=rot_2[2], head_width=0.05, color='g')
 
     ax2 = plt.subplot(gs[0, 1])
     plt.tick_params(
@@ -237,9 +236,12 @@ def plot_prediction(obs, real_pos, real_rot, pred_pos, pred_rot):
     ax1 = plt.subplot(gs[0, 0])
     plt.ylim(0, 40)
     plt.xlim(0, 40)
-    ax1.scatter(real_pos[0], real_pos[1], color='r')
-    ax1.scatter(pred_pos[0], pred_pos[1], color='b')
+    ax1.scatter(real_pos[0], real_pos[2], color='r')
+    ax1.scatter(pred_pos[0], pred_pos[2], color='b')
     plt.legend(['real', 'pred'])
+
+    ax1.arrow(x=real_pos[0], y=real_pos[2], dx=real_rot[0], dy=real_rot[2], head_width=0.05, color='r')
+    ax1.arrow(x=pred_pos[0], y=pred_pos[2], dx=pred_rot[0], dy=pred_rot[2], head_width=0.05, color='b')
 
     ax2 = plt.subplot(gs[0, 1])
     plt.tick_params(

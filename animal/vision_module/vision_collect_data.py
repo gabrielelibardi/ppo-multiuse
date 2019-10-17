@@ -38,12 +38,14 @@ def collect_data(target_dir, args, arenas, params, num_samples=1000, frames_epis
     obs_rollouts = np.zeros([num_samples, 3, 84, 84], dtype=np.uint8)
     pos_rollouts = np.zeros([num_samples, 3], dtype=np.float32)
     rot_rollouts = np.zeros([num_samples, 3], dtype=np.float32)
+    norm_vel_rollouts = np.zeros([num_samples, 3], dtype=np.float32)
 
     # Temporary storage
     episode_obs = np.zeros(
         [args.num_processes, frames_episode, 3, 84, 84], dtype=np.uint8)
     episode_pos = np.zeros([args.num_processes, frames_episode, 3], dtype=np.float32)
     episode_rot = np.zeros([args.num_processes, frames_episode, 3], dtype=np.float32)
+    episode_norm_vel = np.zeros([num_samples, 3], dtype=np.float32)
 
     global_step = 0
     steps = [0 for _ in range(args.num_processes)]
@@ -79,6 +81,7 @@ def collect_data(target_dir, args, arenas, params, num_samples=1000, frames_epis
                 ] = obs[num_process].cpu().numpy()[-3:, :, :].astype(np.uint8)
                 episode_pos[num_process, step - 10, :] = infos[num_process]['agent_position']
                 episode_rot[num_process, step - 10, :] = infos[num_process]['agent_rotation']
+                episode_norm_vel[num_process, step - 10, :] = infos[num_process]['agent_norm_vel']
 
         # if done and max step not reached -> ignore data
         for num_process, done in enumerate(dones):
@@ -89,10 +92,10 @@ def collect_data(target_dir, args, arenas, params, num_samples=1000, frames_epis
         for num_process, step in enumerate(steps):
             if step == (frames_episode - 1 + 10):
                 idx = global_step * frames_episode
-                obs_rollouts[idx:idx + frames_episode,
-                :, :, :] = episode_obs[num_process, :, :, :, :].astype(np.uint8)
+                obs_rollouts[idx:idx + frames_episode, :, :, :] = episode_obs[num_process, :, :, :, :].astype(np.uint8)
                 pos_rollouts[idx:idx + frames_episode] = episode_pos[num_process, :, :].astype(np.float32)
                 rot_rollouts[idx:idx + frames_episode] = episode_rot[num_process, :, :].astype(np.float32)
+                norm_vel_rollouts[idx:idx + frames_episode] = episode_norm_vel[num_process, :, :].astype(np.float32)
 
                 steps[num_process] = 0
                 global_step += 1
@@ -110,6 +113,7 @@ def collect_data(target_dir, args, arenas, params, num_samples=1000, frames_epis
              observations=np.array(obs_rollouts).astype(np.uint8),
              positions=pos_rollouts.astype(np.float32),
              rotations=rot_rollouts.astype(np.float32),
+             norm_vel=norm_vel_rollouts.astype(np.float32),
              frames_per_episode=frames_episode)
 
 
