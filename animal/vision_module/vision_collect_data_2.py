@@ -237,7 +237,6 @@ if __name__ == '__main__':
         {'is_train':True, 'time': 1000},              # create_arena_cross
         {'is_train':True, 'time': 1000},              # create_arena_push1
         {'is_train':True, 'time': 1000},              # create_arena_push2
-        {'is_train':True, 'time': 1000},              # create_arena_cross,
         {'is_train':True, 'time': 1000},              # create_arena_tunnel1
         {'is_train': True, 'time': 1000},             # create_arena_tunnel2
         {'is_train': True, 'time': 1000},             # create_arena_ramp1
