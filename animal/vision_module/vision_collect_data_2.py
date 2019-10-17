@@ -214,36 +214,36 @@ if __name__ == '__main__':
     ]
 
     list_params = [
-        {'is_train':True, 'time': 1000,
+        {'is_train': False, 'time': 1000,
          'max_reward': float(
              np.random.randint(5, 10))},              # create_c1_arena
-        {'is_train':True, 'time': 1000,
+        {'is_train': False, 'time': 1000,
          'max_reward': float(
              np.random.randint(5, 10))},              # create_c2_arena
-        {'is_train':True, 'time': 1000},              # create_c3_arena
-        {'is_train':True, 'time': 1000,
+        {'is_train': False, 'time': 1000},              # create_c3_arena
+        {'is_train': False, 'time': 1000,
          'num_walls': np.random.randint(5, 15)},      # create_c3_arena_basic
-        {'is_train':True, 'time': 1000,
+        {'is_train': False, 'time': 1000,
          'num_red_zones': 8, 'max_orange_zones': 3},  # create_c4_arena
-        {'is_train':True, 'time': 1000},              # create_c5_arena
-        {'is_train':True, 'time': 1000},              # create_c6_arena
-        {'is_train':True, 'time': 1000,               # create_c6_arena_basic
+        {'is_train': False, 'time': 1000},              # create_c5_arena
+        {'is_train': False, 'time': 1000},              # create_c6_arena
+        {'is_train': False, 'time': 1000,               # create_c6_arena_basic
          'num_walls': np.random.randint(5, 15)},
-        {'is_train':True, 'time': 1000},              # create_c7_arena
-        {'is_train':True, 'time': 1000,               # create_maze
+        {'is_train': False, 'time': 1000},              # create_c7_arena
+        {'is_train': False, 'time': 1000,               # create_maze
          'obj': random.choice(['CylinderTunnel',
                                'door', 'Cardbox1'])},
-        {'is_train':True, 'time': 1000},              # create_arena_choice
-        {'is_train':True, 'time': 1000},              # create_arena_cross
-        {'is_train':True, 'time': 1000},              # create_arena_push1
-        {'is_train':True, 'time': 1000},              # create_arena_push2
-        {'is_train':True, 'time': 1000},              # create_arena_tunnel1
-        {'is_train': True, 'time': 1000},             # create_arena_tunnel2
-        {'is_train': True, 'time': 1000},             # create_arena_ramp1
-        {'is_train': True, 'time': 1000},             # create_arena_ramp2
-        {'is_train': True, 'time': 1000},             # create_arena_ramp3
-        {'is_train': True, 'time': 1000},             # create_arena_narrow_spaces_1
-        {'is_train': True, 'time': 1000},             # create_arena_narrow_spaces_2
+        {'is_train': False, 'time': 1000},              # create_arena_choice
+        {'is_train': False, 'time': 1000},              # create_arena_cross
+        {'is_train': False, 'time': 1000},              # create_arena_push1
+        {'is_train': False, 'time': 1000},              # create_arena_push2
+        {'is_train': False, 'time': 1000},              # create_arena_tunnel1
+        {'is_train': False, 'time': 1000},             # create_arena_tunnel2
+        {'is_train': False, 'time': 1000},             # create_arena_ramp1
+        {'is_train': False, 'time': 1000},             # create_arena_ramp2
+        {'is_train': False, 'time': 1000},             # create_arena_ramp3
+        {'is_train': False, 'time': 1000},             # create_arena_narrow_spaces_1
+        {'is_train': False, 'time': 1000},             # create_arena_narrow_spaces_2
     ]
 
     assert len(list_arenas) == len(list_params)

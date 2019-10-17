@@ -70,7 +70,6 @@ class LabAnimalCollect(gym.Wrapper):
         self._env_steps = None
         self._agent_pos = None
         self._agent_rot = None
-        self._agent_norm_vel = None
 
     def step(self, action):
         action = int(action)
