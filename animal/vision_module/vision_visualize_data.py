@@ -34,13 +34,13 @@ def log_plots(log_dir, train_data, test_data, samples=100):
             if idx == samples:
                 break
 
-            obs, pos, rot = data
+            obs, pos, rot, rot2 = data
 
             obs = obs[0, :, :, :].permute(1, 2, 0).numpy()
             pos = pos.numpy().squeeze()
             rot = rot.numpy().squeeze()
 
-            fig = plot_sample(obs, pos, rot)
+            fig = plot_sample(obs, pos, rot, rot2)
 
             writer.add_figure(
                 'plots/{}'.format(idx), fig, idx)
