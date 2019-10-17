@@ -45,7 +45,7 @@ def collect_data(target_dir, args, arenas, params, num_samples=1000, frames_epis
         [args.num_processes, frames_episode, 3, 84, 84], dtype=np.uint8)
     episode_pos = np.zeros([args.num_processes, frames_episode, 3], dtype=np.float32)
     episode_rot = np.zeros([args.num_processes, frames_episode, 3], dtype=np.float32)
-    episode_norm_vel = np.zeros([num_samples, 3], dtype=np.float32)
+    episode_norm_vel = np.zeros([num_samples, frames_episode, 3], dtype=np.float32)
 
     global_step = 0
     steps = [0 for _ in range(args.num_processes)]
