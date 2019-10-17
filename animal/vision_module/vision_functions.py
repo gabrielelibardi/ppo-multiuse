@@ -162,7 +162,7 @@ def get_new_position(action, speed, current_pos, current_rot):
 def loss_func(real_pos, real_rot, pred_pos, pred_rot):
 
     pos_term, pos_error = pos_loss(real_pos, pred_pos)
-    rot_term,  rot_error = rot_loss(real_rot, pred_rot.unsqueeze(-1))
+    rot_term,  rot_error = rot_loss(real_rot, pred_rot)
 
     return torch.mean(pos_term + rot_term), pos_error, rot_error
 
@@ -183,14 +183,11 @@ def pos_loss(pos1, pos2):
 
 def rot_loss(rot1, rot2):
 
-    rot1 = torch.clamp(rot1, 0, 1)
-    rot2 = torch.clamp(rot2, 0, 1)
-
     unnormalized_loss = ((rot1[:, 0] - rot2[:, 0]) ** 2 +
                          (rot1[:, 1] - rot2[:, 1]) ** 2 +
                          (rot1[:, 2] - rot2[:, 2]) ** 2)
 
-    loss = unnormalized_loss / 1 ** 2 * 3
+    loss = unnormalized_loss
 
     return loss.unsqueeze(-1), torch.sqrt(torch.mean(unnormalized_loss))
 
@@ -234,8 +231,8 @@ def plot_prediction(obs, real_pos, real_rot, pred_pos, pred_rot):
     obs = obs[0, :, :, :].permute(1, 2, 0).cpu().detach().numpy()
     real_pos = torch.clamp(real_pos[0, :], 0, 40).cpu().detach().numpy()
     pred_pos = torch.clamp(pred_pos[0, :], 0, 40).cpu().detach().numpy()
-    real_rot = torch.clamp(real_rot[0, :], 0, 1).cpu().detach().numpy()
-    pred_rot = torch.clamp(pred_rot[0, :], 0, 1).cpu().detach().numpy()
+    real_rot = real_rot.cpu().detach().numpy()
+    pred_rot = pred_rot.cpu().detach().numpy()
 
     fig = plt.figure()
     gs = gridspec.GridSpec(1, 2)

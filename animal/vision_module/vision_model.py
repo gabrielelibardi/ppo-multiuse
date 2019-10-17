@@ -120,6 +120,7 @@ class ImpalaCNN(nn.Module):
         for depth_out in [16, 32, 32]:
             layers.extend([
                 nn.Conv2d(depth_in, depth_out, 3, padding=1),
+                nn.BatchNorm2d(depth_out),
                 nn.MaxPool2d(3, stride=2, padding=1),
                 ImpalaResidual(depth_out),
                 ImpalaResidual(depth_out),
@@ -164,10 +165,14 @@ class ImpalaResidual(nn.Module):
             nn.init.calculate_gain('relu'))
         self.conv1 = init_(nn.Conv2d(depth, depth, 3, padding=1))
         self.conv2 = init_(nn.Conv2d(depth, depth, 3, padding=1))
+        self.norm1 = nn.BatchNorm2d(depth)
+        self.norm2 = nn.BatchNorm2d(depth)
 
     def forward(self, x):
         out = F.relu(x)
         out = self.conv1(out)
+        out = self.norm1(out)
         out = F.relu(out)
         out = self.conv2(out)
+        out = self.norm2(out)
         return out + x
