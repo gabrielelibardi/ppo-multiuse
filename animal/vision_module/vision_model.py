@@ -83,7 +83,7 @@ class ImpalaCNNVision(NNBase):
         if self.is_recurrent:
             x, rnn_hxs = self.gru(x, rnn_hxs)
 
-        return torch.cat([self.linear_pos(x), self.linear_rot(x)], dim=0), rnn_hxs, x
+        return torch.cat([self.linear_pos(x), self.linear_rot(x)], dim=1), rnn_hxs, x
 
 
 class ImpalaCNNPaper(NNBase):
