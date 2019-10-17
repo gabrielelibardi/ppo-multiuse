@@ -10,10 +10,10 @@ CNN = {'CNN': CNNBase, 'Impala': ImpalaCNNBase, 'Fixup': FixupCNNBase,
        'State': StateCNNBase}
 
 
-def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000, frames_episode=20):
+def collect_data(target_dir, args, arenas, params, num_samples=1000, frames_episode=20):
 
     maker = make_animal_env(
-        list_arenas, list_params, inference_mode=args.realtime,
+        arenas, params, inference_mode=args.realtime,
         frame_skip=args.frame_skip, reduced_actions=args.reduced_actions,
         state=args.state)
 
@@ -55,7 +55,7 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000, f
 
         end = datetime.now()
         delta = end - start
-        print("collected {}/{} data points in {} h {} mins and {} secs.".format(
+        print('collected {}/{} data points in {} h {} mins and {} secs.'.format(
             global_step * frames_episode, num_samples, delta.seconds // 3600,
             ((delta.seconds // 60) % 60), delta.seconds % 60), end='\r')
 
@@ -113,9 +113,11 @@ def collect_data(target_dir, args, list_arenas, list_params, num_samples=1000, f
              frames_per_episode=frames_episode)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 
+    import random
     import argparse
+    import numpy as np
     from animal.arenas.utils import (
         create_c1_arena,
         create_c1_arena_weird,
@@ -128,10 +130,22 @@ if __name__ == "__main__":
         create_c6_arena_basic,
         create_c7_arena,
         create_maze,
-        create_mix_maze,
         create_arena_choice,
-    )
 
+        # skills
+        create_arena_cross,
+        create_arena_push1,
+        create_arena_push2,
+        create_arena_tunnel1,
+        create_arena_tunnel2,
+        create_arena_ramp1,
+        create_arena_ramp2,
+        create_arena_ramp3,
+        create_arena_narrow_spaces_1,
+        create_arena_narrow_spaces_2,
+        create_arena_pref1,
+        create_blackout_test_1
+    )
 
     parser = argparse.ArgumentParser(description='RL')
     parser.add_argument(
@@ -175,12 +189,72 @@ if __name__ == "__main__":
     args.state = args.cnn == 'State'
     device = torch.device(args.device)
 
+    list_arenas = [
+        create_c1_arena,
+        create_c2_arena,
+        create_c3_arena,
+        create_c3_arena_basic,
+        create_c4_arena,
+        create_c5_arena,
+        create_c6_arena,
+        create_c6_arena_basic,
+        create_c7_arena,
+        create_maze,
+        create_arena_choice,
+        create_arena_cross,
+        create_arena_push1,
+        create_arena_push2,
+        create_arena_tunnel1,
+        create_arena_tunnel2,
+        create_arena_ramp1,
+        create_arena_ramp2,
+        create_arena_ramp3,
+        create_arena_narrow_spaces_1,
+        create_arena_narrow_spaces_2,
+    ]
+
+    list_params = [
+        {'is_train':True, 'time': 1000,
+         'max_reward': float(
+             np.random.randint(5, 10))},              # create_c1_arena
+        {'is_train':True, 'time': 1000,
+         'max_reward': float(
+             np.random.randint(5, 10))},              # create_c2_arena
+        {'is_train':True, 'time': 1000},              # create_c3_arena
+        {'is_train':True, 'time': 1000,
+         'num_walls': np.random.randint(5, 15)},      # create_c3_arena_basic
+        {'is_train':True, 'time': 1000,
+         'num_red_zones': 8, 'max_orange_zones': 3},  # create_c4_arena
+        {'is_train':True, 'time': 1000},              # create_c5_arena
+        {'is_train':True, 'time': 1000},              # create_c6_arena
+        {'is_train':True, 'time': 1000,               # create_c6_arena_basic
+         'num_walls': np.random.randint(5, 15)},
+        {'is_train':True, 'time': 1000},              # create_c7_arena
+        {'is_train':True, 'time': 1000,               # create_maze
+         'obj': random.choice(['CylinderTunnel',
+                               'door', 'Cardbox1'])},
+        {'is_train':True, 'time': 1000},              # create_arena_choice
+        {'is_train':True, 'time': 1000},              # create_arena_cross
+        {'is_train':True, 'time': 1000},              # create_arena_push1
+        {'is_train':True, 'time': 1000},              # create_arena_push2
+        {'is_train':True, 'time': 1000},              # create_arena_cross,
+        {'is_train':True, 'time': 1000},              # create_arena_tunnel1
+        {'is_train': True, 'time': 1000},             # create_arena_tunnel2
+        {'is_train': True, 'time': 1000},             # create_arena_ramp1
+        {'is_train': True, 'time': 1000},             # create_arena_ramp2
+        {'is_train': True, 'time': 1000},             # create_arena_ramp3
+        {'is_train': True, 'time': 1000},             # create_arena_narrow_spaces_1
+        {'is_train': True, 'time': 1000},             # create_arena_narrow_spaces_2
+    ]
+
+    assert len(list_arenas) == len(list_params)
+
     collect_data(
-        args.target_dir + "train_position_data",
-        args, num_samples=1000,
+        args.target_dir + 'train_position_data',
+        args, list_arenas, list_params, num_samples=1000,
     )
 
     collect_data(
-        args.target_dir + "test_position_data",
-        args, num_samples=1000,
+        args.target_dir + 'test_position_data',
+        args, list_arenas, list_params, num_samples=1000,
     )

@@ -3,9 +3,11 @@
 import random
 import numpy as np
 from .edit_arenas import (add_object, write_arena, create_wall)
-from .sample_features import (
-    random_size, random_color, random_pos, random_rotation)
-from .edit_arenas import add_ramp_scenario, add_walled, add_choice
+from .sample_features import (random_size, random_pos, random_rotation)
+from .edit_arenas import (add_ramp_scenario, add_walled, add_choice,
+                          cross_test, ramp_test_1, ramp_test_2, ramp_test_3,
+                          tunnel_test_1, tunnel_test_2, push_test_1,
+                          push_test_2, narrow_spaces_1, narrow_spaces_2,preference_test_1, blackout_test_1)
 
 objects_dict = {
     'reward_objects': [
@@ -43,7 +45,6 @@ def create_c1_arena(target_path, arena_name, max_reward=5, time=250,
          - Only goals.
          - Fixed random size for all goals.
          - At least one green ball.
-
     Parameters:
         target_path (str): save dir path.
         arena_name (str): save name arena.
@@ -100,7 +101,6 @@ def create_c1_arena_weird(target_path, arena_name, time=250, is_train=False):
          - Only goals.
          - Fixed random size for all goals.
          - At least one green ball.
-
     Parameters:
         target_path (str): save dir path.
         arena_name (str): save name arena.
@@ -129,7 +129,6 @@ def create_c2_arena(target_path, arena_name, max_reward=5, time=250,
          - Only goals.
          - Different random size for all goals.
          - At least one green and one red ball.
-
     Parameters:
         target_path (str): save dir path.
         arena_name (str): save name arena.
@@ -140,7 +139,8 @@ def create_c2_arena(target_path, arena_name, max_reward=5, time=250,
 
     allowed_objects = objects_dict['reward_objects']
     reward = float(max_reward)
-    size_goal = (np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
+    size_goal = (
+    np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
     position_goal = random_pos() if not is_train else None
     arena = add_object('', 'GoodGoal', size=size_goal, pos=position_goal)
     best_goal = size_goal[0]
@@ -214,7 +214,6 @@ def create_c3_arena(target_path, arena_name, time=250, max_movable=3,
         - With probability 0.5 add red ball, random sized
         - Create a wall maze by randomly spawning between 1 and 10 walls
         - If specified randomly add multiple movable and immovable objects
-
     Parameters:
         target_path (str): save dir path.
         arena_name (str): save name arena.
@@ -273,7 +272,6 @@ def create_c4_arena(target_path, arena_name, time=250, num_red_zones=2,
         - add orange zone with probability 0.5
         - add immobable object with probability 0.1
         - add movable object with probability 0.1
-
     Parameters:
         target_path (str): save dir path.
         arena_name (str): save name arena.
@@ -355,17 +353,14 @@ def create_c5_arena(target_path, arena_name, time=250, max_movable=1,
             category = random.choice(objects_dict['movable_objects'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
-            color_object = random_color()
-            arena = add_object(arena, category, size=size_object,
-                               RGB=color_object, pos=pos_object)
+            arena = add_object(arena, category, size=size_object, pos=pos_object)
 
     for _ in range(max_immovable):
         if random.random() < 0.8:
             category = random.choice(['Wall', 'Ramp', 'CylinderTunnel'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_object,
-                               RGB=random_color(), pos=pos_object)
+            arena = add_object(arena, category, size=size_object, pos=pos_object)
 
     position_agent = random_pos() if not is_train else None
     rotation_agent = random_rotation() if not is_train else None
@@ -406,7 +401,6 @@ def create_c6_arena(target_path, arena_name, time=250, max_movable=3,
         - add up to 2 red balls , with probability 0.5 each
         - Add multiple (1 to 10) walls with random color.
         - If specifiedm add also extra multiple movable and immovable objects (with random color)
-
     Parameters:
         target_path (str): save dir path.
         arena_name (str): save name arena.
@@ -443,7 +437,7 @@ def create_c6_arena(target_path, arena_name, time=250, max_movable=3,
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
             arena = add_object(arena, category, size=size_object,
-                               RGB=random_color(), pos=pos_object)
+                               pos=pos_object)
 
     for _ in range(max_immovable):
         if random.random() < 0.8:
@@ -451,7 +445,7 @@ def create_c6_arena(target_path, arena_name, time=250, max_movable=3,
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
             arena = add_object(arena, category, size=size_object,
-                               RGB=random_color(), pos=pos_object)
+                               pos=pos_object)
 
     position_agent = random_pos() if not is_train else None
     rotation_agent = random_rotation() if not is_train else None
@@ -473,7 +467,6 @@ def create_c7_arena(target_path, arena_name, time=250, max_movable=3,
         - With probability 0.5 add red balls, random sized
         - Add multiple movable and immovable objects
         - random blackouts
-
     Parameters:
         target_path (str): save dir path.
         arena_name (str): save name arena.
@@ -532,6 +525,7 @@ def create_c7_arena(target_path, arena_name, time=250, max_movable=3,
                 blackouts=random.choice(blackout_options))
 
     return 'c7', position_agent, rotation_agent
+
 
 def create_maze(target_path, arena_name, time=250, num_cells=3, obj=None,
                 is_train=False):
@@ -606,190 +600,6 @@ def create_maze(target_path, arena_name, time=250, num_cells=3, obj=None,
     return 'maze', position_agent, rotation_agent
 
 
-def create_mix_maze(target_path, arena_name, time=250, num_cells=3, max_movable=3,
-                    max_immovable=3,num_red_zones=0,max_orange_zones=0, is_train=False, gap=2 ):
-    """ _ """
-
-    wall_type = random.choice(['Wall', 'WallTransparent'])
-    arena = ''
-
-
-    num_cells_x = num_cells
-    num_cells_y = num_cells
-
-    size_cell = 40 / num_cells_x - 1
-
-    side_wall_len_x = int(40 / num_cells_x)
-    side_wall_len_y = int(40 / num_cells_y)
-
-    location_pillars_x = list(range(0, 40, side_wall_len_x))[1:]
-    location_pillars_y = list(range(0, 40, side_wall_len_y))[1:]
-
-    walls_loc_x = location_pillars_x
-    walls_loc_x.append(40)
-
-    walls_loc_y = location_pillars_y
-    walls_loc_y.append(40)
-
-    prev_y = 0
-    prev_x = 0
-    flag_x = None
-    flag_y = None
-    count_flag = 0
-    z_size = random.choice([0.5, 10])
-
-    for idy, y  in enumerate(walls_loc_y):
-        for idx, x  in enumerate(walls_loc_x):
-
-            rand_wall = random.choice([0, 1, 2])
-            if rand_wall == 0:
-
-                obj = random.choice(['Cardbox1', 'Cardbox2', 'CylinderTunnel'])
-                if obj == 'CylinderTunnel':
-                    gap = 3
-                size_1, pos_1, size_2, pos_2 = create_wall((prev_x, y), (x, y), z_size, obj='door', gap=gap)
-                arena = add_object(arena, wall_type, size=size_1, pos=pos_1, rot=0)
-                arena = add_object(arena, wall_type, size=size_2, pos=pos_2, rot=0)
-
-                coin = random.choice([0, 1, 2, 3])
-                if coin == 0:
-                      size, pos = create_wall((prev_x, y), (x, y), z_size, obj=obj, gap=gap)
-                      arena = add_object(arena, obj, size=size, pos=pos, rot=0)
-
-            if rand_wall == 1:
-                size_1, pos_1 = create_wall((prev_x, y), (x, y), z_size, obj=None)
-                arena = add_object(arena, wall_type, size=size_1, pos=pos_1, rot=0)
-            if rand_wall == 2:
-                pass
-
-
-            rand_wall = random.choice([0, 1, 2])
-            if rand_wall == 0:
-
-                obj = random.choice(['Cardbox1', 'Cardbox2','CylinderTunnel'])
-                if obj == 'CylinderTunnel':
-                    gap = 3
-                size_1, pos_1, size_2, pos_2 = create_wall((x, prev_y), (x, y), z_size, obj='door', gap=gap)
-                arena = add_object(arena, wall_type, size=size_1, pos=pos_1, rot=0)
-                arena = add_object(arena, wall_type, size=size_2, pos=pos_2, rot=0)
-
-                coin = random.choice([0, 1, 2, 3])
-                if coin == 0:
-                      size, pos = create_wall((x, prev_y), (x, y), z_size, obj=obj, gap=gap)
-                      arena = add_object(arena, obj, size=size, pos=pos, rot=90)
-
-            if rand_wall == 1:
-                size_1, pos_1 = create_wall((x, prev_y), (x, y), z_size, obj=None)
-                arena = add_object(arena, wall_type, size=size_1, pos=pos_1, rot=0)
-            if rand_wall == 2:
-                pass
-
-
-            box_x = prev_x + (x - prev_x) / 2
-            box_y = prev_y + (y - prev_y) / 2
-            coin  = random.choice([0,1,2,3])
-            if idy != 0 and count_flag < 1:
-                if coin == 0:
-                    pos_box = (box_x, 0, box_y)
-                    siz_box = (size_cell,2,size_cell)
-                    arena = add_object(arena, 'Wall', size=siz_box, pos=pos_box, rot=0)
-
-                    # add ramps
-                    rmp_y_sz = 4
-                    ramp1_pos = (box_x,0, prev_y + 0.5 - rmp_y_sz/2)
-                    ramp1_dim = (gap, 2, rmp_y_sz)
-                    arena = add_object(arena, 'Ramp', size=ramp1_dim, pos=ramp1_pos, rot=180)
-
-                    # second floor where ? [0,-1],[1,1],[0,1]
-                    #rel_loc = random.choice([[1, 1], [0, 1]])
-                    rel_loc = [1,0]
-                    flag_x = idx + rel_loc[1]
-                    flag_y = idy + rel_loc[0]
-                    count_flag += 1
-            else:
-                pass
-
-
-            if idy == flag_y and idx == flag_x:
-                pos_box = (box_x, 0, box_y)
-                siz_box = (size_cell,2,size_cell)
-                arena = add_object(arena, 'Wall', size=siz_box, pos=pos_box, rot=0)
-                pos_box = (box_x, 2, box_y)
-                siz_box = (size_cell, 2, size_cell)
-                arena = add_object(arena, 'Wall', size=siz_box, pos=pos_box, rot=0)
-
-            # add ramps
-                rmp_y_sz = 4
-                ramp1_pos = (box_x,2, prev_y + 0.5 - rmp_y_sz/2)
-                ramp1_dim = (gap, 2, rmp_y_sz)
-                arena = add_object(arena, 'Ramp', size=ramp1_dim, pos=ramp1_pos, rot=180)
-
-
-            prev_x = x
-
-        prev_x = 0
-        prev_y = y
-
-    if random.random() > 0.5:
-        category = random.choice(
-            ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti',
-             'GoodGoalMultiBounce'])
-        size_goal = random_size(category)
-        position_goal = random_pos() if not is_train else None
-        arena = add_object(arena, category, size=size_goal, pos=position_goal)
-
-    for _ in range(2):
-        if random.random() > 0.5:
-            category = random.choice(['BadGoal', 'BadGoalBounce'])
-            size_goal = random_size(category)
-            position_goal = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_goal,
-                               pos=position_goal)
-
-    for _ in range(max_movable):
-        if random.random() < 0.8:
-            category = random.choice(objects_dict['movable_objects'])
-            size_object = random_size(category) if not is_train else None
-            pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_object,
-                               pos=pos_object)
-
-    for _ in range(max_immovable):
-        if random.random() < 0.8:
-            category = random.choice(objects_dict['immovable_objects'])
-            size_object = random_size(category) if not is_train else None
-            pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_object,
-                               pos=pos_object)
-
-    for _ in range(num_red_zones):
-        size_object = random_size('DeathZone')
-        pos_object = random_pos() if not is_train else None
-        arena = add_object(arena, 'DeathZone', size=size_object,
-                           pos=pos_object)
-
-    for _ in range(max_orange_zones):
-        if random.random() > 0.5:
-            size_object = random_size('HotZone')
-            pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, 'HotZone', size=size_object,
-                               pos=pos_object)
-
-
-    size_goal = random_size('GoodGoal')
-    position_goal = random_pos() if not is_train else None
-    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
-
-    position_agent = random_pos() if not is_train else None
-    rotation_agent = random_rotation() if not is_train else None
-    arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
-
-    save_name = '{}/{}'.format(target_path, arena_name)
-    write_arena(save_name, time, arena)
-
-    return 'maze', position_agent, rotation_agent
-
-
 def create_arena_choice(target_path, arena_name, time=250, is_train=False):
 
     arena = add_choice('')
@@ -798,18 +608,119 @@ def create_arena_choice(target_path, arena_name, time=250, is_train=False):
     position_goal = random_pos() if not is_train else None
     arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
 
-    size_goal = random_size('GoodGoal')
+    size_goal = random_size('GoodGoalMulti')
     position_goal = random_pos() if not is_train else None
-    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
-
-    allowed_objects = objects_dict['reward_objects']
-    for _ in range(np.random.randint(1, 5)):
-        category = allowed_objects[np.random.randint(0, len(allowed_objects))]
-        size_goal = random_size(category)
-        position_goal = random_pos() if not is_train else None
-        arena = add_object(arena, category, size=size_goal, pos=position_goal)
+    arena = add_object(arena, 'GoodGoalMulti', size=size_goal, pos=position_goal)
 
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
     return 'choice', (20, 0, 20), 0
+
+
+def create_arena_cross(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = cross_test("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'cross', pos_agent, rot_agent
+
+
+def create_arena_push1(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = push_test_1("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'push1', pos_agent, rot_agent
+
+
+def create_arena_push2(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = push_test_2("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'push2', pos_agent, rot_agent
+
+
+def create_arena_tunnel1(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = tunnel_test_1("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'tunnel1', pos_agent, rot_agent
+
+
+def create_arena_tunnel2(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = tunnel_test_2("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'tunnel2', pos_agent, rot_agent
+
+
+def create_arena_ramp1(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = ramp_test_1("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'ramp1', pos_agent, rot_agent
+
+
+def create_arena_ramp2(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = ramp_test_2("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'ramp2', pos_agent, rot_agent
+
+
+def create_arena_ramp3(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = ramp_test_3("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'ramp3', pos_agent, rot_agent
+
+
+def create_arena_narrow_spaces_1(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = narrow_spaces_1("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'narrow1', pos_agent, rot_agent
+
+
+def create_arena_narrow_spaces_2(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = narrow_spaces_2("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'narrow1', pos_agent, rot_agent
+
+
+def create_arena_pref1(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = preference_test_1("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'ramp3', pos_agent, rot_agent
+
+
+def create_blackout_test_1(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = blackout_test_1("")
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena, blackouts=[10,1000])
+
+    return 'ramp3', pos_agent, rot_agent
