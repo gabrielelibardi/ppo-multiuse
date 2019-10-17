@@ -123,7 +123,6 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
             pred_position, hx, _ = model(
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
-            pred_position = pred_position.view(-1, 3)
 
             loss, pos_error, rot_error = loss_func(
                 pos, rot, pred_position[:, 0:3], pred_position[:, 3:6])
