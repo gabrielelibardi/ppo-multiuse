@@ -2,6 +2,7 @@
 import os
 import gym
 import uuid
+import glob
 import math
 import torch
 import random
@@ -16,7 +17,7 @@ from animal.animal import RetroEnv, FrameSkipEnv
 from animal.wrappers import RetroEnv, Stateful, FilterActionEnv
 
 
-def make_animal_env(list_arenas, list_params, inference_mode, frame_skip, reduced_actions, state):
+def make_animal_env(list_arenas, list_params, inference_mode, frame_skip, reduced_actions, state, arenas_dir=None):
 
     base_port = random.randint(0, 100)
     def make_env(rank):
@@ -34,7 +35,11 @@ def make_animal_env(list_arenas, list_params, inference_mode, frame_skip, reduce
                 resolution=None)
 
             env = RetroEnv(env)
-            env = LabAnimalCollect(env, list_arenas, list_params)
+
+            if arena_dir:
+                env = LabAnimalCollectArenas(env, arenas_dir=arenas_dir)
+            else:
+                env = LabAnimalCollect(env, list_arenas, list_params)
 
             if reduced_actions:
                 env = FilterActionEnv(env)
@@ -107,6 +112,64 @@ class LabAnimalCollect(gym.Wrapper):
         os.remove("/tmp/{}.yaml".format(name))
 
         self._type = arena_type
+        self._env_steps = 0
+        self._agent_pos = agent_pos
+        self._agent_rot = agent_rot
+        self._agent_norm_vel = (0, 0, 0)
+
+        return self.env.reset(arenas_configurations=arena, **kwargs)
+
+
+def analyze_arena(arena):
+    for i in arena.arenas[0].items:
+        if i.name in ['Agent']:
+            return i.position, i.rotation
+
+
+class LabAnimalCollectArenas(gym.Wrapper):
+    def __init__(self, env, arenas_dir):
+        gym.Wrapper.__init__(self, env)
+
+        if os.path.isdir(arenas_dir):
+            files = glob.glob("{}/*.yaml".format(arenas_dir))
+        else:
+            #assume is a pattern
+            files = glob.glob(arenas_dir)
+
+        self.env_list = [(f,ArenaConfig(f)) for f in files]
+        self._arena_file = ''
+
+        self._arena_file = ''
+        self._env_steps = None
+        self._agent_pos = None
+        self._agent_rot = None
+        self._agent_norm_vel = None
+
+    def step(self, action):
+        action = int(action)
+        obs, reward, done, info = self.env.step(action)
+
+        self._env_steps += 1
+        info['arena'] = self._arena_file
+
+        action_ = self.flattener.lookup_action(action)
+        self._agent_pos, self._agent_rot, self._agent_norm_vel = get_new_position(
+            action_, info['vector_obs'], self._agent_pos, self._agent_rot)
+
+        info['agent_position'] = self._agent_pos
+        info['agent_norm_vel'] = self._agent_norm_vel
+        info['agent_rotation'] = (
+            math.cos(
+                math.radians(self._agent_rot)), 0,
+            math.sin(math.radians(self._agent_rot)))
+
+        return obs, reward, done, info
+
+    def reset(self, **kwargs):
+        # Create new arena
+
+        self._arena_file, arena = random.choice(self.env_list)
+        agent_pos, agent_rot = analyze_arena(arena)
         self._env_steps = 0
         self._agent_pos = agent_pos
         self._agent_rot = agent_rot
