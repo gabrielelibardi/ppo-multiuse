@@ -16,7 +16,7 @@ from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import ActionFlattener
 from ppo.envs import FrameSkipEnv,TransposeImage
 from PIL import Image
-from animal.wrappers import RetroEnv,Stateful,FilterActionEnv
+from wrappers import RetroEnv,Stateful,FilterActionEnv
 
 def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed, state):
     base_port = random.randint(0,100)+100*seed  # avoid collisions

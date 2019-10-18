@@ -25,7 +25,7 @@ class Policy(nn.Module):
             obs_shape = input_space[0].shape
             base_kwargs['state_shape'] = input_space[1].shape
         else:
-            obs_shape = input_space
+            obs_shape = input_space.shape
 
         self.base = base(obs_shape[0], **base_kwargs)
 
