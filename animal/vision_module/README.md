@@ -29,7 +29,7 @@ vision_model= ImpalaCNNVision.load(ckpt_path)
 
 #### The network returns 3 things:
 
- - Position prediction of shape (batch_size, 3), with the first 2 positions being x and y coordinates respectively (in range [0, 40]) and the last position being the rotation angle in degrees [0, 360].
+ - Output prediction of shape (batch_size, 6), with the first 3 positions being x, z and y coordinates respectively (in range [0, 40]) and the last 3 positions being the normaized velocity vector also for x, z, and y.
 
  - RNN inner state if the network has been trained with recurrence (No the case for the network in ckpt_path).
 
