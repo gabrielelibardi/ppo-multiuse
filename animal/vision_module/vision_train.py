@@ -17,8 +17,12 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
         dataset_train = DatasetVisionRecurrent(train_data)
         dataset_test = DatasetVisionRecurrent(test_data)
     else:
-        dataset_train = DatasetVision(train_data)
-        dataset_test = DatasetVision(test_data)
+        dataset_train = DatasetVision(
+            data_filename=train_data,
+            multiple_data_path="/shared/albert/train_object_data*")
+        dataset_test = DatasetVision(
+            data_filename=test_data,
+            multiple_data_path="/test_object_data*")
 
     # Define dataloader
     dataloader_parameters = {
@@ -58,20 +62,19 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
                     train_rotation_error=avg_rot_error,
                 )
 
-            images, pos, rot = data
+            images, pos, rot, _ = data
 
             images = images.to(device)
-            pos = pos.view(-1, 2).to(device)
-            rot = rot.view(-1, 1).to(device)
+            pos = pos.view(-1, 3).to(device)
+            rot = rot.view(-1, 3).to(device)
 
             optimizer.zero_grad()
             pred_position, hx, _ = model(
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
-            pred_position = pred_position.view(-1, 3)
 
             loss, pos_error, rot_error = loss_func(
-                pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+                pos, rot, pred_position[:, 0:3], pred_position[:, 3:6])
 
             epoch_loss += loss.item()
             avg_loss = epoch_loss / (idx + 1)
@@ -89,7 +92,7 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
             images = images.view(
                 -1, model.num_inputs, model.image_size, model.image_size)
             figure = plot_prediction(
-                images, pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+                images, pos, rot, pred_position[:, 0:3], pred_position[:, 3:6])
             writer.add_figure(
                 'train_figure_epoch_{}'.format(epoch), figure, epoch)
 
@@ -114,19 +117,18 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
             recurrent_hidden_states = torch.zeros(
                 1, batch_size, model.recurrent_hidden_state_size).to(device)
 
-            images, pos, rot = data
+            images, pos, rot, _ = data
 
             images = images.to(device)
-            pos = pos.view(-1, 2).to(device)
-            rot = rot.view(-1, 1).to(device)
+            pos = pos.view(-1, 3).to(device)
+            rot = rot.view(-1, 3).to(device)
 
             pred_position, hx, _ = model(
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
-            pred_position = pred_position.view(-1, 3)
 
             loss, pos_error, rot_error = loss_func(
-                pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+                pos, rot, pred_position[:, 0:3], pred_position[:, 3:6])
 
             epoch_loss += loss.item()
             avg_loss = epoch_loss / (idx + 1)
@@ -139,7 +141,7 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
             images = images.view(
                 -1, model.num_inputs, model.image_size, model.image_size)
             figure = plot_prediction(
-                images, pos, rot, pred_position[:, 0:2], pred_position[:, -1])
+                images, pos, rot, pred_position[:, 0:3], pred_position[:, 3:6])
             writer.add_figure(
                 'test_figure_epoch_{}'.format(epoch), figure, epoch)
 

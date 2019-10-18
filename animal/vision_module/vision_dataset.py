@@ -1,8 +1,34 @@
 import math
+import glob
 import torch
 import numpy as np
 from torch.utils.data import Dataset
 from scipy.stats import multivariate_normal
+
+
+def load_multiple_files(path):
+
+    files = glob.glob(path)
+
+    observations = []
+    positions = []
+    rotations = []
+    norm_vel = []
+
+    for file in files:
+        data = np.load(file)
+        observations.append(data['observations'])
+        positions.append(data['positions'])
+        rotations.append(data['rotations'])
+        norm_vel.append(data['norm_vel'])
+        frames_per_episode = data['frames_per_episode']
+
+    observations = np.concatenate(observations, axis=0)
+    positions = np.concatenate(positions, axis=0)
+    rotations = np.concatenate(rotations, axis=0)
+    norm_vel = np.concatenate(norm_vel, axis=0)
+
+    return observations, positions, rotations, norm_vel, frames_per_episode
 
 
 class DatasetVision(Dataset):
@@ -12,15 +38,21 @@ class DatasetVision(Dataset):
 
     def __init__(
             self,
-            data_filename,
+            data_filename=None,
+            multiple_data_path=None,
     ):
 
-        data = np.load(data_filename)
-
-        self.observations = data['observations']
-        self.positions = data['positions']
-        self.rotations = data['rotations']
-        self.frames_per_episode = data['frames_per_episode']
+        if data_filename:
+            data = np.load(data_filename)
+            self.observations = data['observations']
+            self.positions = data['positions']
+            self.rotations = data['rotations']
+            self.norm_vel = data['norm_vel']
+            self.frames_per_episode = data['frames_per_episode']
+        else:
+            (self.observations, self.positions,
+             self.rotations, self.norm_vel,
+             self.frames_per_episode) = load_multiple_files(multiple_data_path)
 
         self.num_samples = self.observations.shape[0]
 
@@ -32,11 +64,12 @@ class DatasetVision(Dataset):
 
     def __getitem__(self, idx):
         obs = self.observations[idx, :, :, :]
-        pos = self.positions[idx, 0:3:2]
+        pos = self.positions[idx, :]
         rot = self.rotations[idx, :]
+        norm_vel = self.norm_vel[idx, :]
 
         return (torch.FloatTensor(obs), torch.FloatTensor(pos),
-                torch.FloatTensor(rot))
+                torch.FloatTensor(rot), torch.FloatTensor(norm_vel))
 
 
 class DatasetVisionPaper(Dataset):
@@ -118,6 +151,7 @@ class DatasetVisionRecurrent(Dataset):
         self.observations = data['observations']
         self.positions = data['positions']
         self.rotations = data['rotations']
+        self.norm_vel = data['norm_vel']
         self.frames_per_episode = data['frames_per_episode']
         self.num_samples = (self.observations.shape[0] // self.frames_per_episode) - 1
 
@@ -131,9 +165,13 @@ class DatasetVisionRecurrent(Dataset):
               self.frames_per_episode, :, :, :]
         pos = self.positions[
               self.frames_per_episode * idx:self.frames_per_episode * idx +
-              self.frames_per_episode, 0:3:2]
+              self.frames_per_episode, :]
         rot = self.rotations[
               self.frames_per_episode * idx:self.frames_per_episode * idx +
               self.frames_per_episode, :]
-        return (torch.FloatTensor(obs),
-                torch.FloatTensor(pos), torch.FloatTensor(rot))
+        norm_vel = self.norm_vel[
+              self.frames_per_episode * idx:self.frames_per_episode * idx +
+                                            self.frames_per_episode, :]
+
+        return (torch.FloatTensor(obs), torch.FloatTensor(pos),
+                torch.FloatTensor(rot), torch.FloatTensor(norm_vel))
