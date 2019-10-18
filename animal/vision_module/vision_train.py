@@ -17,8 +17,12 @@ def vision_train(model, epochs, log_dir, train_data, test_data, device, batch_si
         dataset_train = DatasetVisionRecurrent(train_data)
         dataset_test = DatasetVisionRecurrent(test_data)
     else:
-        dataset_train = DatasetVision(train_data)
-        dataset_test = DatasetVision(test_data)
+        dataset_train = DatasetVision(
+            data_filename=train_data,
+            multiple_data_path="/shared/albert/train_object_data*")
+        dataset_test = DatasetVision(
+            data_filename=test_data,
+            multiple_data_path="/test_object_data*")
 
     # Define dataloader
     dataloader_parameters = {
