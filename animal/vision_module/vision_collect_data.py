@@ -188,7 +188,7 @@ if __name__ == '__main__':
         '--realtime', action='store_true', default=False,
         help='If to plot in realtime. ')
     parser.add_argument(
-        '--num-processes',type=int, default=16,
+        '--num-processes',type=int, default=35,
         help='how many training CPU processes to use (default: 16)')
 
     args = parser.parse_args()

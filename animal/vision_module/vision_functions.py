@@ -36,7 +36,7 @@ def make_animal_env(list_arenas, list_params, inference_mode, frame_skip, reduce
 
             env = RetroEnv(env)
 
-            if arena_dir:
+            if arenas_dir:
                 env = LabAnimalCollectArenas(env, arenas_dir=arenas_dir)
             else:
                 env = LabAnimalCollect(env, list_arenas, list_params)
