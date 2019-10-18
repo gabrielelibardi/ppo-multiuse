@@ -7,7 +7,7 @@
 
 ## Trained network
 
-A trained network checkpoint can be found in ckpt_path="/workspace7/Unity3D/albert/vision_module_logs/model_249.ckpt".
+A trained network checkpoint can be found in ckpt_path="/workspace7/Unity3D/albert/vision_module_logs/model_XXX.ckpt".
 
 which can be loaded with the following code snippet:
 
