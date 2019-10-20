@@ -129,7 +129,7 @@ class VecVisionState(VecEnvWrapper):
     def reset(self):
         (viz,states) = self.venv.reset()
         with torch.no_grad():
-            _,_,h = self.visnet(viz[:,-self.visnet.num_inputs:,:,:])  #match network viz take the last obs
-        states = torch.cat((states,h),dim=1)
+            posangles,_,h = self.visnet(viz[:,-self.visnet.num_inputs:,:,:])  #match network viz take the last obs
+        states = torch.cat((states,posangles),dim=1)
         return (viz,states)
     
