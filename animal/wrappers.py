@@ -106,8 +106,10 @@ class FilterActionEnv(gym.ActionWrapper):
 class VecVisionState(VecEnvWrapper):
     def __init__(self, venv, visnet):
         wos = venv.observation_space[1]  # wrapped state space
-        low = np.concatenate((wos.low,   np.full((visnet.output_size,), -np.inf,dtype=np.float32)) )
-        high = np.concatenate((wos.high, np.full((visnet.output_size,),  np.inf,dtype=np.float32)) )
+        #output_size = visnet.output_size
+        output_size = visnet.posangles_size 
+        low = np.concatenate((wos.low,   np.full((output_size,), -np.inf,dtype=np.float32)) )
+        high = np.concatenate((wos.high, np.full((output_size,),  np.inf,dtype=np.float32)) )
         observation_space = gym.spaces.Tuple( 
                 (venv.observation_space[0],
                  gym.spaces.Box(low=low, high=high, dtype=np.float32)) 
@@ -120,8 +122,8 @@ class VecVisionState(VecEnvWrapper):
     def step_wait(self):
         (viz,states), rews, news, infos = self.venv.step_wait()
         with torch.no_grad():
-            _,_,h = self.visnet(viz[:,-self.visnet.num_inputs:,:,:])  #match network viz take the last obs
-        states = torch.cat((states,h),dim=1)
+            posangles,_,h = self.visnet(viz[:,-self.visnet.num_inputs:,:,:])  #match network viz take the last obs
+        states = torch.cat((states,posangles),dim=1)
         return (viz,states), rews, news, infos
 
     def reset(self):

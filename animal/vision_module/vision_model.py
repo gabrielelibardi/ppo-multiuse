@@ -77,6 +77,7 @@ class ImpalaCNNVision(NNBase):
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
         self.linear_pos = init_(nn.Linear(hidden_size, 3))
         self.linear_rot = init_(nn.Linear(hidden_size, 3))
+        self.posangles_size = 6
 
     def forward(self, inputs, rnn_hxs=None):
         x = self.main(inputs / 255.0)
