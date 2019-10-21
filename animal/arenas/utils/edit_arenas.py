@@ -696,25 +696,29 @@ def narrow_spaces_1(arena, is_train=False):
     arena = add_object(arena, category, size=size_wall, pos=(20, 0, 20),
                        rot=rotation_wall)
 
-    possible_positions_reward = []
+    done = False
+    while done is False:
+        possible_positions_reward = []
+        for i in range(4):
+            if random.random() > 0.5:
+                pos = (9, 0, i * (40 // 4) + 2)
+                possible_positions_reward.append((2, height_walls + 0.25, pos[2]))
+                arena = add_object(arena, category,
+                                   size=(18, height_walls, 4),
+                                   pos=pos,
+                                   rot=rotation_wall)
 
-    for i in range(4):
-        if random.random() > 0.5:
-            pos = (9, 0, i * (40 // 4) + 2)
-            possible_positions_reward.append((2, height_walls + 0.25, pos[2]))
-            arena = add_object(arena, category,
-                               size=(18, height_walls, 4),
-                               pos=pos,
-                               rot=rotation_wall)
+        for i in range(4):
+            if random.random() > 0.5:
+                pos = (40 - 9, 0, i * (40 // 4) + 2)
+                possible_positions_reward.append((38, height_walls + 0.25, pos[2]))
+                arena = add_object(arena, category,
+                                   size=(18, height_walls, 4),
+                                   pos=pos,
+                                   rot=rotation_wall)
 
-    for i in range(4):
-        if random.random() > 0.5:
-            pos = (40 - 9, 0, i * (40 // 4) + 2)
-            possible_positions_reward.append((38, height_walls + 0.25, pos[2]))
-            arena = add_object(arena, category,
-                               size=(18, height_walls, 4),
-                               pos=pos,
-                               rot=rotation_wall)
+        if len(possible_positions_reward) > 1:
+            done = True
 
     arena = add_object(
         arena, "DeathZone", size=(40, 0, 40), pos=(20, 0, 20),
