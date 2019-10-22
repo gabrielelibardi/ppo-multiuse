@@ -6,6 +6,7 @@ import tempfile
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from animal.object_detection_module.object_arenas import create_object_arena, num_classes
 
 
 def init(module, weight_init, bias_init, gain=1):
@@ -75,7 +76,7 @@ class ImpalaCNNObject(NNBase):
         self.image_size = image_size
         self.main = ImpalaCNN(image_size,num_inputs,hidden_size)
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
-        self.linear = init_(nn.Linear(hidden_size, 16))
+        self.linear = init_(nn.Linear(hidden_size, num_classes))
 
     def forward(self, inputs, rnn_hxs=None):
         x = self.main(inputs / 255.0)
