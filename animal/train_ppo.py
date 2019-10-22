@@ -154,6 +154,8 @@ def get_args():
     parser.add_argument(
         '--vision-module',default='',help='File to use to load the vision module ') 
     parser.add_argument(
+        '--classifier-module',default='',help='File to use to load the class module ') 
+    parser.add_argument(
         '--behavior',action='append',default=None,help='directory that contains expert policies for high-level actions')
     parser.add_argument(
         '--device',default='cpu',help='Device to run on') 
