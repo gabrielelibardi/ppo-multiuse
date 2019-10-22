@@ -72,6 +72,7 @@ class ImpalaCNNObject(NNBase):
     def __init__(self, num_inputs, recurrent=False, hidden_size=256, image_size=84):
         super(ImpalaCNNObject, self).__init__(recurrent, hidden_size, hidden_size)
 
+        self.num_classes = num_classes
         self.num_inputs = num_inputs
         self.image_size = image_size
         self.main = ImpalaCNN(image_size,num_inputs,hidden_size)
