@@ -68,7 +68,7 @@ def object_module_train(model, epochs, log_dir, train_data, test_data, device, b
             label = label.to(device)
 
             optimizer.zero_grad()
-            pred_label, hx, _ = model(
+            pred_label, _, hx, _ = model(
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
 
