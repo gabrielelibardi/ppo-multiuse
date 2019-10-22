@@ -99,12 +99,14 @@ def set_reward_arena(arena, force_new_size = False):
         if i.name in ['GoodGoal','GoodGoalBounce']:
             if len(i.sizes)==0 or force_new_size:
                 x,y,z = random_size_reward() 
+                i.sizes = []
                 i.sizes.append(Vector3(x,y,z))
             max_good = max(i.sizes[0].x,max_good)
             goods.append(i.sizes[0].x)
         if i.name in ['GoodGoalMulti','GoodGoalMultiBounce']:
             if len(i.sizes)==0 or force_new_size: 
                 x,y,z = random_size_reward() 
+                i.sizes = []
                 i.sizes.append(Vector3(x,y,z))
             tot_reward += i.sizes[0].x
             goodmultis.append(i.sizes[0].x)  
