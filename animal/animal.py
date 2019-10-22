@@ -90,20 +90,20 @@ def random_size_reward():
 
 from animalai.envs.arena_config import Vector3
 
-def set_reward_arena(arena):
+def set_reward_arena(arena, force_new_size = False):
     tot_reward = 0
     max_good = 0
     goods = []
     goodmultis = []
     for i in arena.arenas[0].items:
         if i.name in ['GoodGoal','GoodGoalBounce']:
-            if len(i.sizes)==0:
+            if len(i.sizes)==0 or force_new_size:
                 x,y,z = random_size_reward() 
                 i.sizes.append(Vector3(x,y,z))
             max_good = max(i.sizes[0].x,max_good)
             goods.append(i.sizes[0].x)
         if i.name in ['GoodGoalMulti','GoodGoalMultiBounce']:
-            if len(i.sizes)==0: 
+            if len(i.sizes)==0 or force_new_size: 
                 x,y,z = random_size_reward() 
                 i.sizes.append(Vector3(x,y,z))
             tot_reward += i.sizes[0].x
@@ -141,7 +141,7 @@ class LabAnimal(gym.Wrapper):
         self.env_reward = 0
         self._arena_file, arena = random.choice(self.env_list)
 #        self.max_reward = analyze_arena(arena)
-        self.max_reward = set_reward_arena(arena)
+        self.max_reward = set_reward_arena(arena, force_new_size=True)
         self.max_time = arena.arenas[0].t
         return self.env.reset(arenas_configurations=arena,**kwargs)
         

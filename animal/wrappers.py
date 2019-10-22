@@ -133,3 +133,34 @@ class VecVisionState(VecEnvWrapper):
         states = torch.cat((states,posangles),dim=1)
         return (viz,states)
     
+
+class VecClassState(VecEnvWrapper):
+    def __init__(self, venv, visnet):
+        wos = venv.observation_space[1]  # wrapped state space
+        #output_size = visnet.output_size
+        output_size = visnet.num_classes 
+        low = np.concatenate((wos.low,   np.full((output_size,), -np.inf,dtype=np.float32)) )
+        high = np.concatenate((wos.high, np.full((output_size,),  np.inf,dtype=np.float32)) )
+        observation_space = gym.spaces.Tuple( 
+                (venv.observation_space[0],
+                 gym.spaces.Box(low=low, high=high, dtype=np.float32)) 
+            )
+
+        VecEnvWrapper.__init__(self, venv, observation_space=observation_space)
+
+        self.visnet = visnet
+
+    def step_wait(self):
+        (viz,states), rews, news, infos = self.venv.step_wait()
+        with torch.no_grad():
+            classes,_,h = self.visnet(viz[:,-self.visnet.num_inputs:,:,:])  #match network viz take the last obs
+        states = torch.cat((states,classes),dim=1)
+        return (viz,states), rews, news, infos
+
+    def reset(self):
+        (viz,states) = self.venv.reset()
+        with torch.no_grad():
+            classes,_,h = self.visnet(viz[:,-self.visnet.num_inputs:,:,:])  #match network viz take the last obs
+        states = torch.cat((states,classes),dim=1)
+        return (viz,states)
+  
