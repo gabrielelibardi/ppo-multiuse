@@ -27,9 +27,10 @@ object_model= ImpalaCNNObject.load(ckpt_path)
 
 
 
-#### The network returns 3 things:
+#### The network returns 4 things:
 
- - prediction of detected object in one hot encoding. Where:
+ - logits of detected objects
+ - probabilities of detected object in a vector of length 15. Where:
 
         -   GoodGoal corresponds to position 0
         -   BadGoal corresponds to position 1

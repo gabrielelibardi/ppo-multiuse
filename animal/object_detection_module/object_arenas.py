@@ -37,6 +37,8 @@ labels = {
     'HotZone': 14,
 }
 
+num_classes = len(labels)
+
 
 def create_object_arena(target_path, arena_name, num_objects=7, time=250):
     """ Empty arena with ´num_objects´ objects of the same type"""

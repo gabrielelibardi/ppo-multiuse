@@ -18,7 +18,7 @@ def random_pos(with_respect_to_center=None):
     if with_respect_to_center in ['close', 'medium', 'far']:
         return sample_position_with_respect_to((20., 0., 20.), range='close')
 
-    return (random.randint(1, 400) / 10., 5. / 10., random.randint(1, 400) / 10.)
+    return (random.randint(20, 400) / 10., 0., random.randint(20, 400) / 10.)
 
 
 def random_rotation():

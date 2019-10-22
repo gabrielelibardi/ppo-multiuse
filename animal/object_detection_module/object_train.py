@@ -68,7 +68,7 @@ def object_module_train(model, epochs, log_dir, train_data, test_data, device, b
             label = label.to(device)
 
             optimizer.zero_grad()
-            pred_label, hx, _ = model(
+            pred_label, _, hx, _ = model(
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
 
@@ -109,7 +109,7 @@ def object_module_train(model, epochs, log_dir, train_data, test_data, device, b
             label = label.to(device)
 
             optimizer.zero_grad()
-            pred_label, hx, _ = model(
+            pred_label, _, hx, _ = model(
                 inputs=images,
                 rnn_hxs=recurrent_hidden_states)
 
@@ -144,9 +144,6 @@ if __name__ == "__main__":
     parser.add_argument(
         '--recurrent', action='store_true',
         default=False, help='use RNN model')
-    parser.add_argument(
-        '--frame-skip', type=int, default=0,
-        help='Number of frame to skip for each action')
     args = parser.parse_args()
 
     if not os.path.isdir(args.log_dir):
