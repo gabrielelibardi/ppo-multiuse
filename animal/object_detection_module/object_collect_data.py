@@ -4,7 +4,7 @@ from datetime import datetime
 from ppo.envs import make_vec_envs
 from ppo.model import (Policy, CNNBase, FixupCNNBase, ImpalaCNNBase,
                        StateCNNBase)
-from animal.object_detection_module.object_functions import make_animal_env
+from .object_detection_module.object_functions import make_animal_env
 
 CNN = {'CNN': CNNBase, 'Impala': ImpalaCNNBase, 'Fixup': FixupCNNBase,
        'State': StateCNNBase}
