@@ -141,7 +141,7 @@ class LabAnimal(gym.Wrapper):
         self.env_reward = 0
         self._arena_file, arena = random.choice(self.env_list)
 #        self.max_reward = analyze_arena(arena)
-        self.max_reward = set_reward_arena(arena, force_new_size=True)
+        self.max_reward = set_reward_arena(arena, force_new_size=False)
         self.max_time = arena.arenas[0].t
         return self.env.reset(arenas_configurations=arena,**kwargs)
         
