@@ -6,7 +6,7 @@ import tempfile
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from animal.object_detection_module.object_arenas import create_object_arena, num_classes
+from .settings import num_classes
 
 
 def init(module, weight_init, bias_init, gain=1):
