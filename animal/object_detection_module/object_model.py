@@ -83,7 +83,7 @@ class ImpalaCNNObject(NNBase):
         if self.is_recurrent:
             x, rnn_hxs = self.gru(x, rnn_hxs)
 
-        return self.linear(x), rnn_hxs, x
+        return self.linear(x), F.softmax(self.linear(x), dim=1), rnn_hxs, x
 
 
 class ImpalaCNN(nn.Module):

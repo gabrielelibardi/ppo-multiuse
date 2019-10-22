@@ -5,7 +5,6 @@ import torch
 import random
 import animalai
 import torch.nn as nn
-import torch.nn.functional as F
 from ppo.envs import TransposeImage
 from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import AnimalAIEnv
@@ -35,7 +34,7 @@ class Loss:
     def compute(self, label, prediction):
 
         label = label.view(-1, 1)
-        prediction = F.softmax(prediction.view(-1, num_classes), dim=1)
+        prediction = prediction.view(-1, num_classes)
         loss = self.loss(prediction, label.squeeze(1))
 
         return loss
