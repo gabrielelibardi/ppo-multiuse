@@ -24,7 +24,7 @@ from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model
 from animal import make_animal_env
 from vision_module import ImpalaCNNVision
 from object_detection_module import ImpalaCNNObject
-from wrappers import VecVisionState 
+from wrappers import VecVisionState, VecObjectState 
 
 CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase,'State':StateCNNBase}
 
@@ -57,7 +57,7 @@ def main():
         envs = VecVisionState(envs, vision_module)
 
     if args.object_module:
-        object_module = ImpalaCNNObject.load(args.object_module ,device=device)
+        object_module, _ = ImpalaCNNObject.load(args.object_module ,device=device)
         object_module.to(device)
         envs = VecObjectState(envs, object_module)
 
