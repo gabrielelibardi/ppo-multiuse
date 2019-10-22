@@ -2,22 +2,22 @@ import os
 import gym
 import uuid
 import torch
-import torch.nn as nn
 import random
 import animalai
+import torch.nn as nn
 from ppo.envs import TransposeImage
 from animalai.envs.arena_config import ArenaConfig
 from animalai.envs.gym.environment import AnimalAIEnv
 from animal.animal import RetroEnv, FrameSkipEnv
 from animal.wrappers import RetroEnv, Stateful, FilterActionEnv
-from animal.object_detection_module.object_arenas import create_object_arena
+from animal.object_detection_module.object_arenas import create_object_arena, num_classes
 
 
 def compute_error(label, logits):
     """ Compute batch error as number of objects wrongly classified. """
 
     label = label.view(-1, 1)
-    logits = logits.view(-1, 16)
+    logits = logits.view(-1, num_classes)
     prediction = torch.argmax(logits, dim=1)
     error = torch.sum((label.squeeze(1) != prediction), dim=0).double() / label.shape[0]
 
@@ -34,7 +34,7 @@ class Loss:
     def compute(self, label, prediction):
 
         label = label.view(-1, 1)
-        prediction = prediction.view(-1, 16)
+        prediction = prediction.view(-1, num_classes)
         loss = self.loss(prediction, label.squeeze(1))
 
         return loss
