@@ -12,7 +12,7 @@ from baselines.bench import load_results
 from matplotlib import pylab as plt
 import numpy as np
 
-exps = glob('RUNS/exp_3*')
+exps = glob('RUNS/exp_5*')
 print(exps)
 
 while True:
@@ -33,6 +33,7 @@ while True:
             ax = plt.subplot(2, 2, 1)
             ax.set_title(' {} total time: {:.1f} h FPS {:.1f}'.format(d.upper(),total_time/3600, total_steps/total_time))
             df[['f','r']].rolling(roll).mean().iloc[0:-1:40].plot('f','r',  ax=ax,legend=False)
+            df[['f','ereward']].rolling(roll).mean().iloc[0:-1:40].plot('f','ereward',  ax=ax,legend=False)
             ax.set_xlabel('N. steps (M)')
             ax.set_ylabel('Reward')
             ax.grid(True)
@@ -48,7 +49,13 @@ while True:
             ax.set_xlabel('N. steps (M)')
             ax.set_ylabel('Estimated evalai score')
             ax.grid(True)
-             
+
+            ax = plt.subplot(2, 2, 4)
+            df[['l']].rolling(roll).mean().iloc[0:-1:40].plot(y='l', ax=ax,legend=False)
+            ax.set_xlabel('N. episodes')
+            ax.set_ylabel('Episode lenght')
+            ax.grid(True)
+              
             fig.tight_layout() 
             ax.get_figure().savefig('/webdata/'+d+'.jpg')
             plt.clf()
