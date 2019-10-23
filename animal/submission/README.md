@@ -30,6 +30,7 @@ Create new image for submission
 Test it
 ```
   docker run -v "$PWD"/test_submission:/aaio/test submission python /aaio/test/testDocker.py
+  #docker run --gpus all -v "$PWD"/test_submission:/aaio/test submission python /aaio/test/eval_train_docker.py
 ```
 
 If the results says success, then it's ok and go on to submit.

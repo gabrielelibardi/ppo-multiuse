@@ -101,8 +101,8 @@ def main():
         total_reward += cumulated_reward
         performance = cumulated_reward/max_reward
         total_perf += performance
-        print('Episode {} completed, reward {}:{}  performance {}:{}'.format(a, cumulated_reward, 
-            cumulated_reward/(count+1), performance, performance/(count+1)))
+        print('Episode {}:{} completed, reward {}:{}  performance {}:{}'.format(count,a, cumulated_reward, 
+            total_reward/(count+1), performance, total_perf/(count+1)),flush=True)
 
     print('SUCCESS {} {}'.format(total_reward/count,total_perf/(count+1)))
 
