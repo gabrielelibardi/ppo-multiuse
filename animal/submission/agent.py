@@ -10,7 +10,8 @@ from PIL import Image
 from ppo.envs import VecPyTorchFrameStack, TransposeImage, VecPyTorch, VecPyTorchState
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from ppo.vision_model import ImpalaCNNVision 
-from ppo.wrappers import VecVisionState
+from ppo.object_model import ImpalaCNNObject
+from ppo.wrappers import VecVisionState, VecObjectState
 import numpy as np
 from gym.spaces import Box
 import gym
@@ -38,13 +39,16 @@ class FakeAnimalEnv(gym.Env):
 
 
 frame_skip = 2
-frame_stack = 2
-state_stack = 2
-CNN=FixupCNNBase
-#CNN=StateCNNBase
+frame_stack = 4
+state_stack = 16
+#CNN=FixupCNNBase
+CNN=StateCNNBase
 reduced_actions = True
+recurrent = True 
 vision_module_file = None 
 #vision_module_file = '/aaio/data/model_249.ckpt'
+object_module_file = None
+
 
 def make_env():
     env = FakeAnimalEnv()
@@ -81,11 +85,16 @@ class Agent(object):
             vision_module.to(device)
             envs = VecVisionState(envs, vision_module)
 
+        if object_module_file:
+            object_module, _ = ImpalaCNNObject.load(object_module_file ,device=device)
+            object_module.to(device)
+            envs = VecObjectState(envs, object_module)
+
         self.envs = envs
         self.flattener = self.envs.unwrapped.envs[0].flattener
         # Load the configuration and model using *** ABSOLUTE PATHS ***
         self.model_path = '/aaio/data/animal.state_dict'
-        base_kwargs={'recurrent': True}
+        base_kwargs={'recurrent': recurrent}
         self.policy = Policy(self.envs.observation_space,self.envs.action_space,base=CNN,base_kwargs=base_kwargs)
         self.policy.load_state_dict(torch.load(self.model_path,map_location=device))
         self.policy.to(device)
