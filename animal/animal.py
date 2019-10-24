@@ -19,7 +19,7 @@ from PIL import Image
 from wrappers import RetroEnv,Stateful,FilterActionEnv
 
 def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed, state):
-    base_port = random.randint(0,100)+100*seed  # avoid collisions
+    base_port = 100*seed  # avoid collisions
     def make_env(rank):
         def _thunk():
             
@@ -146,7 +146,53 @@ class LabAnimal(gym.Wrapper):
         self.max_reward = set_reward_arena(arena, force_new_size=False)
         self.max_time = arena.arenas[0].t
         return self.env.reset(arenas_configurations=arena,**kwargs)
+
+
+class LabAnimalSampler(gym.Wrapper):
+    def __init__(self, env, arenas_dir, log_dir=None):
+        gym.Wrapper.__init__(self, env)
+        if os.path.isdir(arenas_dir):
+            files = glob.glob("{}/*.yaml".format(arenas_dir))
+        else:
+            #assume is a pattern
+            files = glob.glob(arenas_dir)
         
+        self.env_list = [(f,ArenaConfig(f)) for f in files]
+        self._num_arenas = len(self.env_list)
+        self._arena_file = ''
+        self._num_episodes = 0
+        self._log_dir = log_dir
+        self._arena_weights = 1/self._num_arenas*np.ones((self._num_arenas,))  #equal prob
+        
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        self.steps += 1
+        self.env_reward += reward
+        info['arena']=self._arena_file  #for monitor
+        info['max_reward']=self.max_reward
+        info['max_time']=self.max_time
+        info['ereward'] = self.env_reward
+        return obs, reward, done, info        
+
+    def reset(self, **kwargs):
+        self.steps = 0
+        self.env_reward = 0
+        stats_period = 100 # every 100 episodes of this worker 
+        if self._num_episodes % stats_period == 0  and self._num_episodes > 0:
+            self._arena_weights = self._compute_stats()
+        idx = np.random.choice(self._num_arenas,p=self._arena_weights)
+        self._arena_file, arena = self.env_list[idx]
+        self.max_reward = set_reward_arena(arena, force_new_size=False)
+        self.max_time = arena.arenas[0].t
+        self._num_episodes += 1
+        return self.env.reset(arenas_configurations=arena,**kwargs)
+
+    def _compute_stats():
+        df = load_results(log_dir)
+        last = df.iloc[-num_episodes:]  #last episodes
+
+
 class RewardShaping(gym.Wrapper):
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
