@@ -110,8 +110,9 @@ class PPOKL():
         action_loss_epoch /= num_updates
         dist_entropy_epoch /= num_updates
         kl_div_epoch /= num_updates
-
-        return value_loss_epoch, action_loss_epoch, dist_entropy_epoch, kl_div_epoch
+        mean_loss = value_loss_epoch * self.value_loss_coef +  action_loss_epoch 
+        mean_loss += dist_entropy_epoch*self.entropy_coef if self.actor_behaviors is None else kl_div_epoch*self.entropy_coef 
+        return value_loss_epoch, action_loss_epoch, dist_entropy_epoch, kl_div_epoch, mean_loss
 
 
 
@@ -139,9 +140,9 @@ def ppo_update(agent, actor_critic, rollouts, use_gae, gamma, gae_lambda, use_pr
             rollouts.masks[-1]).detach()
 
     rollouts.compute_returns(next_value, use_gae, gamma, gae_lambda, use_proper_time_limits)
-    value_loss, action_loss, dist_entropy, kl_div = agent.update(rollouts)
+    value_loss, action_loss, dist_entropy, kl_div, loss = agent.update(rollouts)
     rollouts.after_update()
-    return value_loss, action_loss, dist_entropy, kl_div
+    return value_loss, action_loss, dist_entropy, kl_div, loss
 
 
 def ppo_save_model(actor_critic, fname, iter):
