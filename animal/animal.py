@@ -148,6 +148,7 @@ class LabAnimal(gym.Wrapper):
         return self.env.reset(arenas_configurations=arena,**kwargs)
 
 
+# NOT WORKING< WORK IN PROGRESS
 class LabAnimalSampler(gym.Wrapper):
     def __init__(self, env, arenas_dir, log_dir=None):
         gym.Wrapper.__init__(self, env)
