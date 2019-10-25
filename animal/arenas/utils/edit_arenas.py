@@ -516,20 +516,6 @@ def ramp_test_2(arena, is_train=False):
                        else (np.random.randint(20 + 10, 38), 0,
                              np.random.randint(5, 38)))
 
-    position_agent = (
-        np.random.randint(
-            5, 38), 0,
-        np.random.randint(5, 20 - 10)) if rotation_wall == 90 else (
-        (np.random.randint(5, 20 - 10), 0, np.random.randint(5, 38))
-    )
-
-    rotation_agent = random_rotation() if not is_train else None
-    arena = add_object(
-        arena, 'Agent',
-        pos=position_agent,
-        rot=rotation_agent,
-    )
-
     for _ in range(2):
         category = random.choice(['GoodGoalMulti'])
         arena = add_object(arena, category)
