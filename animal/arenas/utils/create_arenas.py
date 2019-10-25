@@ -622,8 +622,8 @@ def create_arena_choice(target_path, arena_name, time=250, is_train=False):
 
 def create_arena_cross(target_path, arena_name, time=250, is_train=False):
 
-    arena, pos_agent, rot_agent = cross_test("")
-    save_name = '{}/{}'.format(target_path, arena_name, is_train=is_train)
+    arena, pos_agent, rot_agent = cross_test("", is_train=is_train)
+    save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
     return 'cross', pos_agent, rot_agent
@@ -631,8 +631,8 @@ def create_arena_cross(target_path, arena_name, time=250, is_train=False):
 
 def create_arena_push1(target_path, arena_name, time=250, is_train=False):
 
-    arena, pos_agent, rot_agent = push_test_1("")
-    save_name = '{}/{}'.format(target_path, arena_name, is_train=is_train)
+    arena, pos_agent, rot_agent = push_test_1("", is_train=is_train)
+    save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
     return 'push1', pos_agent, rot_agent
@@ -640,8 +640,8 @@ def create_arena_push1(target_path, arena_name, time=250, is_train=False):
 
 def create_arena_push2(target_path, arena_name, time=250, is_train=False):
 
-    arena, pos_agent, rot_agent = push_test_2("")
-    save_name = '{}/{}'.format(target_path, arena_name, is_train=is_train)
+    arena, pos_agent, rot_agent = push_test_2("", is_train=is_train)
+    save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
     return 'push2', pos_agent, rot_agent
@@ -649,8 +649,8 @@ def create_arena_push2(target_path, arena_name, time=250, is_train=False):
 
 def create_arena_tunnel1(target_path, arena_name, time=250, is_train=False):
 
-    arena, pos_agent, rot_agent = tunnel_test_1("")
-    save_name = '{}/{}'.format(target_path, arena_name, is_train=is_train)
+    arena, pos_agent, rot_agent = tunnel_test_1("", is_train=is_train)
+    save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
     return 'tunnel1', pos_agent, rot_agent
@@ -658,8 +658,8 @@ def create_arena_tunnel1(target_path, arena_name, time=250, is_train=False):
 
 def create_arena_tunnel2(target_path, arena_name, time=250, is_train=False):
 
-    arena, pos_agent, rot_agent = tunnel_test_2("")
-    save_name = '{}/{}'.format(target_path, arena_name, is_train=is_train)
+    arena, pos_agent, rot_agent = tunnel_test_2("", is_train=is_train)
+    save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
     return 'tunnel2', pos_agent, rot_agent
@@ -667,8 +667,8 @@ def create_arena_tunnel2(target_path, arena_name, time=250, is_train=False):
 
 def create_arena_ramp1(target_path, arena_name, time=250, is_train=False):
 
-    arena, pos_agent, rot_agent = ramp_test_1("")
-    save_name = '{}/{}'.format(target_path, arena_name, is_train=is_train)
+    arena, pos_agent, rot_agent = ramp_test_1("", is_train=is_train)
+    save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
     return 'ramp1', pos_agent, rot_agent
