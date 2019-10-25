@@ -7,7 +7,9 @@ from .sample_features import (random_size, random_pos, random_rotation)
 from .edit_arenas import (add_ramp_scenario, add_walled, add_choice,
                           cross_test, ramp_test_1, ramp_test_2, ramp_test_3,
                           tunnel_test_1, tunnel_test_2, push_test_1,
-                          push_test_2, narrow_spaces_1, narrow_spaces_2,preference_test_1, blackout_test_1)
+                          push_test_2, narrow_spaces_1, narrow_spaces_2,
+                          preference_test_1, blackout_test_1, reasoning_step_1,
+                          reasoning_step_2, reasoning_step_3)
 
 objects_dict = {
     'reward_objects': [
@@ -705,8 +707,7 @@ def create_arena_narrow_spaces_2(target_path, arena_name, time=250, is_train=Fal
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
-    return 'narrow1', pos_agent, rot_agent
-
+    return 'narrow2', pos_agent, rot_agent
 
 def create_arena_pref1(target_path, arena_name, time=250, is_train=False):
 
@@ -714,7 +715,7 @@ def create_arena_pref1(target_path, arena_name, time=250, is_train=False):
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
-    return 'ramp3', pos_agent, rot_agent
+    return 'pref', pos_agent, rot_agent
 
 
 def create_blackout_test_1(target_path, arena_name, time=250, is_train=False):
@@ -723,4 +724,31 @@ def create_blackout_test_1(target_path, arena_name, time=250, is_train=False):
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena, blackouts=[10,1000])
 
-    return 'ramp3', pos_agent, rot_agent
+    return 'blackout', pos_agent, rot_agent
+
+
+def create_reasoning_step_1(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = reasoning_step_1("", is_train=is_train)
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'reasoning1', pos_agent, rot_agent
+
+
+def create_reasoning_step_2(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = reasoning_step_2("", is_train=is_train)
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'reasoning2', pos_agent, rot_agent
+
+
+def create_reasoning_step_3(target_path, arena_name, time=250, is_train=False):
+
+    arena, pos_agent, rot_agent = reasoning_step_3("", is_train=is_train)
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'reasoning3', pos_agent, rot_agent
