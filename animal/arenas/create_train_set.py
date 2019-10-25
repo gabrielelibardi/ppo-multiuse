@@ -196,17 +196,14 @@ if __name__ == '__main__':
                 is_train=True)
 
     print("Creating mazes arenas...")
-
-    if not arguments.only_specific:
-        # mazes
-        for i in range(1, 1001):
-            create_maze(
-                arguments.target_dir if arguments.unify
-                else "{}/mazes/".format(arguments.target_dir),
-                'c8_{}'.format(str(i).zfill(4)),
-                time=random.choice([500, 1000]), num_cells=2,
-                obj=random.choice(['CylinderTunnel', 'door', 'Cardbox1']),
-                is_train=True)
+    for i in range(1, 1001):
+        create_maze(
+            arguments.target_dir if arguments.unify
+            else "{}/mazes/".format(arguments.target_dir),
+            'c8_{}'.format(str(i).zfill(4)),
+            time=random.choice([500, 1000]), num_cells=2,
+            obj=random.choice(['CylinderTunnel', 'door', 'Cardbox1']),
+            is_train=True)
 
     print("Creating choices arenas...")
 
