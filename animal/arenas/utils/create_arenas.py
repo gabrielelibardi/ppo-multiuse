@@ -56,7 +56,8 @@ def create_c1_arena(target_path, arena_name, max_reward=5, time=250,
    """
 
     allowed_objects = objects_dict['reward_objects']
-    size_goal = (np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
+    size_goal = (
+    np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
     position_goal = random_pos() if not is_train else None
     reward = float(max_reward)
     arena = add_object('', 'GoodGoal', size=size_goal, pos=position_goal)
@@ -142,7 +143,7 @@ def create_c2_arena(target_path, arena_name, max_reward=5, time=250,
     allowed_objects = objects_dict['reward_objects']
     reward = float(max_reward)
     size_goal = (
-    np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
+        np.clip(random_size('GoodGoal')[0], 1.0, max_reward), 0.0, 0.0)
     position_goal = random_pos() if not is_train else None
     arena = add_object('', 'GoodGoal', size=size_goal, pos=position_goal)
     best_goal = size_goal[0]
@@ -189,7 +190,7 @@ def create_c2_arena(target_path, arena_name, max_reward=5, time=250,
 
 def create_c3_arena_basic(target_path, arena_name, time=250, num_walls=1,
                           is_train=False):
-    """ _ """
+    """ include explanation """
 
     category = random.choice(
         ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
@@ -355,14 +356,16 @@ def create_c5_arena(target_path, arena_name, time=250, max_movable=1,
             category = random.choice(objects_dict['movable_objects'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_object, pos=pos_object)
+            arena = add_object(arena, category, size=size_object,
+                               pos=pos_object)
 
     for _ in range(max_immovable):
         if random.random() < 0.8:
             category = random.choice(['Wall', 'Ramp', 'CylinderTunnel'])
             size_object = random_size(category) if not is_train else None
             pos_object = random_pos() if not is_train else None
-            arena = add_object(arena, category, size=size_object, pos=pos_object)
+            arena = add_object(arena, category, size=size_object,
+                               pos=pos_object)
 
     position_agent = random_pos() if not is_train else None
     rotation_agent = random_rotation() if not is_train else None
@@ -376,7 +379,7 @@ def create_c5_arena(target_path, arena_name, time=250, max_movable=1,
 
 def create_c6_arena_basic(target_path, arena_name, time=250, num_walls=1,
                           is_train=False):
-    """ _ """
+    """ include explanation """
 
     category = random.choice(
         ['GoodGoal', 'GoodGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce'])
@@ -531,7 +534,7 @@ def create_c7_arena(target_path, arena_name, time=250, max_movable=3,
 
 def create_maze(target_path, arena_name, time=250, num_cells=3, obj=None,
                 is_train=False):
-    """ _ """
+    """ include explanation """
 
     wall_type = random.choice(['Wall', 'WallTransparent'])
     arena = ''
@@ -603,6 +606,7 @@ def create_maze(target_path, arena_name, time=250, num_cells=3, obj=None,
 
 
 def create_arena_choice(target_path, arena_name, time=250, is_train=False):
+    """ include explanation """
 
     arena = add_choice('')
 
@@ -612,7 +616,8 @@ def create_arena_choice(target_path, arena_name, time=250, is_train=False):
 
     size_goal = random_size('GoodGoalMulti')
     position_goal = random_pos() if not is_train else None
-    arena = add_object(arena, 'GoodGoalMulti', size=size_goal, pos=position_goal)
+    arena = add_object(arena, 'GoodGoalMulti', size=size_goal,
+                       pos=position_goal)
 
     save_name = '{}/{}'.format(target_path, arena_name, is_train=is_train)
     write_arena(save_name, time, arena)
@@ -621,6 +626,7 @@ def create_arena_choice(target_path, arena_name, time=250, is_train=False):
 
 
 def create_arena_cross(target_path, arena_name, time=250, is_train=False):
+    """ include explanation """
 
     arena, pos_agent, rot_agent = cross_test("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -630,6 +636,7 @@ def create_arena_cross(target_path, arena_name, time=250, is_train=False):
 
 
 def create_arena_push1(target_path, arena_name, time=250, is_train=False):
+    """ include explanation """
 
     arena, pos_agent, rot_agent = push_test_1("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -639,6 +646,7 @@ def create_arena_push1(target_path, arena_name, time=250, is_train=False):
 
 
 def create_arena_push2(target_path, arena_name, time=250, is_train=False):
+    """ include explanation """
 
     arena, pos_agent, rot_agent = push_test_2("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -648,6 +656,7 @@ def create_arena_push2(target_path, arena_name, time=250, is_train=False):
 
 
 def create_arena_tunnel1(target_path, arena_name, time=250, is_train=False):
+    """ include explanation """
 
     arena, pos_agent, rot_agent = tunnel_test_1("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -657,6 +666,7 @@ def create_arena_tunnel1(target_path, arena_name, time=250, is_train=False):
 
 
 def create_arena_tunnel2(target_path, arena_name, time=250, is_train=False):
+    """ include explanation """
 
     arena, pos_agent, rot_agent = tunnel_test_2("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -666,6 +676,7 @@ def create_arena_tunnel2(target_path, arena_name, time=250, is_train=False):
 
 
 def create_arena_ramp1(target_path, arena_name, time=250, is_train=False):
+    """ include explanation """
 
     arena, pos_agent, rot_agent = ramp_test_1("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -675,6 +686,7 @@ def create_arena_ramp1(target_path, arena_name, time=250, is_train=False):
 
 
 def create_arena_ramp2(target_path, arena_name, time=250, is_train=False):
+    """ include explanation """
 
     arena, pos_agent, rot_agent = ramp_test_2("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -684,6 +696,7 @@ def create_arena_ramp2(target_path, arena_name, time=250, is_train=False):
 
 
 def create_arena_ramp3(target_path, arena_name, time=250, is_train=False):
+    """ include explanation """
 
     arena, pos_agent, rot_agent = ramp_test_3("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -692,7 +705,9 @@ def create_arena_ramp3(target_path, arena_name, time=250, is_train=False):
     return 'ramp3', pos_agent, rot_agent
 
 
-def create_arena_narrow_spaces_1(target_path, arena_name, time=250, is_train=False):
+def create_arena_narrow_spaces_1(target_path, arena_name, time=250,
+                                 is_train=False):
+    """ include explanation """
 
     arena, pos_agent, rot_agent = narrow_spaces_1("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -701,7 +716,9 @@ def create_arena_narrow_spaces_1(target_path, arena_name, time=250, is_train=Fal
     return 'narrow1', pos_agent, rot_agent
 
 
-def create_arena_narrow_spaces_2(target_path, arena_name, time=250, is_train=False):
+def create_arena_narrow_spaces_2(target_path, arena_name, time=250,
+                                 is_train=False):
+    """ include explanation """
 
     arena, pos_agent, rot_agent = narrow_spaces_2("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
@@ -709,9 +726,11 @@ def create_arena_narrow_spaces_2(target_path, arena_name, time=250, is_train=Fal
 
     return 'narrow2', pos_agent, rot_agent
 
-def create_arena_pref1(target_path, arena_name, time=250, is_train=False):
 
-    arena, pos_agent, rot_agent = preference_test_1("")
+def create_arena_pref1(target_path, arena_name, time=250, is_train=False):
+    """ include explanation """
+
+    arena, pos_agent, rot_agent = preference_test_1("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
@@ -719,16 +738,14 @@ def create_arena_pref1(target_path, arena_name, time=250, is_train=False):
 
 
 def create_blackout_test_1(target_path, arena_name, time=250, is_train=False):
-
-    arena, pos_agent, rot_agent = blackout_test_1("")
+    arena, pos_agent, rot_agent = blackout_test_1("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
-    write_arena(save_name, time, arena, blackouts=[10,1000])
+    write_arena(save_name, time, arena, blackouts=[10, 1000])
 
     return 'blackout', pos_agent, rot_agent
 
 
 def create_reasoning_step_1(target_path, arena_name, time=250, is_train=False):
-
     arena, pos_agent, rot_agent = reasoning_step_1("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
@@ -737,7 +754,6 @@ def create_reasoning_step_1(target_path, arena_name, time=250, is_train=False):
 
 
 def create_reasoning_step_2(target_path, arena_name, time=250, is_train=False):
-
     arena, pos_agent, rot_agent = reasoning_step_2("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
@@ -746,9 +762,253 @@ def create_reasoning_step_2(target_path, arena_name, time=250, is_train=False):
 
 
 def create_reasoning_step_3(target_path, arena_name, time=250, is_train=False):
-
     arena, pos_agent, rot_agent = reasoning_step_3("", is_train=is_train)
     save_name = '{}/{}'.format(target_path, arena_name)
     write_arena(save_name, time, arena)
 
     return 'reasoning3', pos_agent, rot_agent
+
+
+def create_front_back(target_path, arena_name, time=1000, is_train=False,
+                      rew_range=[0.5, 5]):
+    """ include explanation """
+
+    arena = ''
+
+    range_list = list(np.linspace(rew_range[0], rew_range[1],
+                                  (rew_range[1] - rew_range[0]) / 0.1 + 1))
+    range_list = [round(elem, 2) for elem in range_list]
+    list_siz = random.sample(range_list, 2)
+
+    size = list_siz[0]
+    size_goal = (size, size, size)
+    position_goal = (20, 0, 30)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = list_siz[1]
+    size_goal = (size, size, size)
+    position_goal = (20, 0, 10)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    pos_agent = (20, 0, 20)
+    arena = add_object(arena, "Agent", pos=pos_agent, rot=0)
+
+    save_name = '{}/{}'.format(target_path, arena_name)
+    blackout_options_2 = [[-10], [1000, 1000]]
+    write_arena(save_name, time, arena,
+                blackouts=random.choice(blackout_options_2))
+
+    return 'front_back', (20, 0, 20), 0
+
+
+def create_left_right(target_path, arena_name, time=1000, is_train=False,
+                      rew_range=[0.5, 5]):
+    """ include explanation """
+
+    arena = ''
+
+    range_list = list(np.linspace(rew_range[0], rew_range[1],
+                                  (rew_range[1] - rew_range[0]) / 0.1 + 1))
+    range_list = [round(elem, 2) for elem in range_list]
+    list_siz = random.sample(range_list, 2)
+
+    size = list_siz[0]
+    size_goal = (size, size, size)
+    position_goal = (10, 0, 20)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = list_siz[1]
+    size_goal = (size, size, size)
+    position_goal = (30, 0, 20)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    pos_agent = (20, 0, 20)
+    arena = add_object(arena, "Agent", pos=pos_agent, rot=0)
+
+    save_name = '{}/{}'.format(target_path, arena_name)
+    blackout_options_2 = [[-10], [1000, 1000]]
+    write_arena(save_name, time, arena,
+                blackouts=random.choice(blackout_options_2))
+
+    return 'left_right', (20, 0, 20), 0
+
+
+def create_corners_green(target_path, arena_name, time=1000, is_train=False,
+                         rew_range=[0.5, 5]):
+    """ include explanation """
+
+    arena = ''
+
+    range_list = list(np.linspace(rew_range[0], rew_range[1],
+                                  (rew_range[1] - rew_range[0]) / 0.1 + 1))
+    range_list = [round(elem, 2) for elem in range_list]
+    list_siz = random.sample(range_list, 4)
+
+    size = list_siz[0]
+    size_goal = (size, size, size)
+    position_goal = (37, 0, 37)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = list_siz[1]
+    size_goal = (size, size, size)
+    position_goal = (3, 0, 37)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = list_siz[2]
+    size_goal = (size, size, size)
+    position_goal = (37, 0, 3)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = list_siz[3]
+    size_goal = (size, size, size)
+    position_goal = (3, 0, 3)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    pos_agent = (20, 0, 20)
+    arena = add_object(arena, "Agent", pos=pos_agent)
+
+    save_name = '{}/{}'.format(target_path, arena_name)
+    blackout_options_2 = [[-10], [1000, 1000]]
+    write_arena(save_name, time, arena,
+                blackouts=random.choice(blackout_options_2))
+
+    return 'corners_green', (20, 0, 20), 0
+
+
+def create_cross_green(target_path, arena_name, time=1000, is_train=False,
+                       rew_range=[0.5, 5]):
+    """ include explanation """
+
+    arena = ''
+
+    range_list = list(np.linspace(rew_range[0], rew_range[1],
+                                  (rew_range[1] - rew_range[0]) / 0.1 + 1))
+    range_list = [round(elem, 2) for elem in range_list]
+    list_siz = random.sample(range_list, 4)
+
+    size = list_siz[0]
+    size_goal = (size, size, size)
+    position_goal = (30, 0, 20)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = list_siz[1]
+    size_goal = (size, size, size)
+    position_goal = (10, 0, 20)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = list_siz[2]
+    size_goal = (size, size, size)
+    position_goal = (20, 0, 10)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = list_siz[3]
+    size_goal = (size, size, size)
+    position_goal = (20, 0, 30)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    pos_agent = (20, 0, 20)
+    arena = add_object(arena, "Agent", pos=pos_agent)
+
+    save_name = '{}/{}'.format(target_path, arena_name)
+    blackout_options_2 = [[-10], [1000, 1000]]
+    write_arena(save_name, time, arena,
+                blackouts=random.choice(blackout_options_2))
+
+    return 'cross_green', (20, 0, 20), 0
+
+
+def create_in_front(target_path, arena_name, time=1000, is_train=False,
+                    rew_range=[0.5, 5]):
+    """ include explanation """
+
+    arena = ''
+
+    range_list = list(np.linspace(rew_range[0], rew_range[1],
+                                  (rew_range[1] - rew_range[0]) / 0.1 + 1))
+    range_list = [round(elem, 2) for elem in range_list]
+    list_siz = random.sample(range_list, 2)
+
+    size = list_siz[0]
+    size_goal = (size, size, size)
+    position_goal = (30, 0, 35)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = list_siz[1]
+    size_goal = (size, size, size)
+    position_goal = (10, 0, 35)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    pos_agent = (20, 0, 3)
+    arena = add_object(arena, "Agent", pos=pos_agent, rot=0)
+
+    save_name = '{}/{}'.format(target_path, arena_name)
+    blackout_options_2 = [[-10], [1000, 1000]]
+    write_arena(save_name, time, arena,
+                blackouts=random.choice(blackout_options_2))
+
+    return 'in_front', (20, 0, 20), 0
+
+
+def create_make_fall_1(target_path, arena_name, time=1000, is_train=False,
+                       rew_range=[5, 50]):
+    """
+    The  reward is on top of a box. Agent must push the box to make reward fall down.
+    """
+    arena = ''
+
+    height = random.randint(2, 7)
+    pos_box = (random.randint(5, 35), 0, random.randint(5, 35))
+    siz_box = (random.randint(2, 4), height, random.randint(2, 4))
+    category = random.choice(['Cardbox1', 'Cardbox2'])
+    arena = add_object(arena, category, size=siz_box, pos=pos_box, rot=0)
+
+    rew_size = random.randint(1, 5)
+    rew_pos = (pos_box[0], siz_box[1] + rew_size / 2, pos_box[2])
+    arena = add_object(arena, random.choice(["GoodGoal", "GoodGoalMulti"]),
+                       size=(rew_size, rew_size, rew_size), pos=rew_pos)
+
+    rotation_agent = random_rotation()
+    position_agent = random_pos()
+    arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
+
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'make_fall', position_agent, rotation_agent
+
+
+def create_arena_choice_2(target_path, arena_name, time=250, is_train=False,
+                          rew_range=[0.5, 5]):
+    """ include explanation """
+
+    arena = add_choice('')
+
+    range_list = list(np.linspace(rew_range[0], rew_range[1],
+                                  (rew_range[1] - rew_range[0]) / 0.1 + 1))
+    range_list = [round(elem, 2) for elem in range_list]
+    list_siz = random.sample(range_list, 4)
+
+    size = list_siz[0]
+    size_goal = (size, size, size)
+    position_goal = (30, 0, 30)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = list_siz[1]
+    size_goal = (size, size, size)
+    position_goal = (10, 0, 30)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = list_siz[2]
+    size_goal = (size, size, size)
+    position_goal = (10, 0, 10)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    size = size = list_siz[3]
+    size_goal = (size, size, size)
+    position_goal = (30, 0, 10)
+    arena = add_object(arena, 'GoodGoal', size=size_goal, pos=position_goal)
+
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'choice2', (20, 0, 20), 0

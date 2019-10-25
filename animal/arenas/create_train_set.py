@@ -3,6 +3,8 @@
 import random
 import numpy as np
 from animal.arenas.utils import (
+
+    # random
     create_c1_arena,
     create_c1_arena_weird,
     create_c2_arena,
@@ -13,10 +15,10 @@ from animal.arenas.utils import (
     create_c6_arena,
     create_c6_arena_basic,
     create_c7_arena,
-    create_maze,
-    create_arena_choice,
 
     # skills
+    create_maze,
+    create_arena_choice,
     create_arena_cross,
     create_arena_push1,
     create_arena_push2,
@@ -32,6 +34,15 @@ from animal.arenas.utils import (
     create_reasoning_step_1,
     create_reasoning_step_2,
     create_reasoning_step_3,
+
+    # more skills
+    create_left_right,
+    create_front_back,
+    create_corners_green,
+    create_cross_green,
+    create_in_front,
+    create_make_fall_1,
+    create_arena_choice_2,
 )
 
 if __name__ == '__main__':
@@ -48,6 +59,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '-o', '--only-specific', action='store_true', default=False,
         help='Create only arenas of specific skills')
+    parser.add_argument(
+        '-p', '--phases', action='store_true', default=False,
+        help='Create arenas to train skills in phases')
     arguments = parser.parse_args()
     if not os.path.isdir(arguments.target_dir):
         os.mkdir(arguments.target_dir)
@@ -58,11 +72,14 @@ if __name__ == '__main__':
 
         if arguments.only_specific:
             skills = ["push", "ramps", "narrow", "tunnels", "reasoning",
-                      "navigate", "mazes"]
+                      "navigate", "mazes", "blackouts", "make_fall"]
         else:
             skills = ["preferences", "push", "ramps", "narrow", "zones",
                       "tunnels", "navigate", "generalize", "internal_model",
-                      "mazes", "choices", "reasoning"]
+                      "mazes", "choices", "reasoning", "blackouts", "make_fall"]
+
+        if arguments.phases:
+            skills += ["train_in_phases"]
 
         for skill in skills:
             if not os.path.isdir("{}/{}".format(arguments.target_dir, skill)):
@@ -331,3 +348,199 @@ if __name__ == '__main__':
             'c10_{}'.format(str(i).zfill(4)),
             time=random.choice([500, 1000]),
             is_train=True)
+
+    # make fall 1
+    for i in range(1, 1000):
+        create_make_fall_1(arguments.target_dir if arguments.unify
+                           else "{}/make_fall/".format(
+            arguments.target_dir),
+                           'make_fall_1_{}'.format(str(i).zfill(4)),
+                           time=random.choice([1000]), is_train=True)
+
+
+    ###########################################################################
+
+    if arguments.phases:
+
+        # create folders
+        for name_phase in ["choices_1, choices_2, choices_3",
+                           "preferences_1", "preferences_2", "preferences_3"]:
+            os.mkdir("{}/train_in_phases/{}".format(arguments.target_dir, name_phase))
+
+        # choice 2 rewards different sizes, learn preferences
+        for i in range(1, 1000):
+            reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_arena_choice_2(arguments.target_dir if arguments.unify
+                                  else "{}/train_in_phases/choices_1/".format(
+                arguments.target_dir),
+                                  'c9_{}'.format(str(i).zfill(4)),
+                                  time=random.choice([500, 1000]), is_train=True,
+                                  rew_range=reward_range)
+
+        # choice 2 rewards all sizes together
+        for i in range(1, 1000):
+            reward_range_list = [[0.5, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_arena_choice_2(arguments.target_dir if arguments.unify
+                                  else "{}/train_in_phases/choices_2/".format(
+                arguments.target_dir),
+                                  'c9_{}'.format(str(i).zfill(4)),
+                                  time=random.choice([500, 1000]), is_train=True,
+                                  rew_range=reward_range)
+
+        # choice 2 rewards only big balls, small difference
+        for i in range(1, 1000):
+            reward_range_list = [[4, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_arena_choice_2(arguments.target_dir if arguments.unify
+                                  else "{}/train_in_phases/choices_3/".format(
+                arguments.target_dir),
+                                  'c9_{}'.format(str(i).zfill(4)),
+                                  time=random.choice([500, 1000]), is_train=True,
+                                  rew_range=reward_range)
+
+        # left right
+        for i in range(1, 1000):
+            reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_left_right(arguments.target_dir if arguments.unify
+                              else "{}/train_in_phases/preferences_1/".format(
+                arguments.target_dir),
+                              'left_right_{}'.format(str(i).zfill(4)),
+                              time=random.choice([500, 1000]), is_train=True,
+                              rew_range=reward_range)
+
+
+        # front back
+        for i in range(1, 1000):
+            reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_front_back(arguments.target_dir if arguments.unify
+                              else "{}/train_in_phases/preferences_1/".format(
+                arguments.target_dir),
+                              'front_back_{}'.format(str(i).zfill(4)),
+                              time=random.choice([500, 1000]), is_train=True,
+                              rew_range=reward_range)
+
+
+        # cross
+        for i in range(1, 1000):
+            reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_cross_green(arguments.target_dir if arguments.unify
+                               else "{}/train_in_phases/preferences_1/".format(
+                arguments.target_dir),
+                               'cross_{}'.format(str(i).zfill(4)),
+                               time=random.choice([500, 1000]), is_train=True,
+                               rew_range=reward_range)
+
+        # corners
+        for i in range(1, 1000):
+            reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_corners_green(arguments.target_dir if arguments.unify
+                                 else "{}/train_in_phases/preferences_1".format(
+                arguments.target_dir),
+                                 'corners_{}'.format(str(i).zfill(4)),
+                                 time=random.choice([500, 1000]), is_train=True,
+                                 rew_range=reward_range)
+
+        # in front
+        for i in range(1, 1000):
+            reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_in_front(arguments.target_dir if arguments.unify
+                            else "{}/train_in_phases/preferences_1/".format(
+                arguments.target_dir),
+                            'in_front_{}'.format(str(i).zfill(4)),
+                            time=random.choice([500, 1000]), is_train=True,
+                            rew_range=reward_range)
+
+        # left right
+        for i in range(1, 1000):
+            reward_range_list = [[0.5, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_left_right(arguments.target_dir if arguments.unify
+                              else "{}/train_in_phases/preferences_2/".format(
+                arguments.target_dir),
+                              'left_right_{}'.format(str(i).zfill(4)),
+                              time=random.choice([500, 1000]), is_train=True,
+                              rew_range=reward_range)
+
+        # cross
+        for i in range(1, 1000):
+            reward_range_list = [[0.5, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_cross_green(arguments.target_dir if arguments.unify
+                               else "{}/train_in_phases/preferences_2/".format(
+                arguments.target_dir),
+                               'cross_{}'.format(str(i).zfill(4)),
+                               time=random.choice([500, 1000]), is_train=True,
+                               rew_range=reward_range)
+
+        # corners
+        for i in range(1, 1000):
+            reward_range_list = [[0.5, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_corners_green(arguments.target_dir if arguments.unify
+                                 else "{}/train_in_phases/preferences_2/".format(
+                arguments.target_dir),
+                                 'corners_{}'.format(str(i).zfill(4)),
+                                 time=random.choice([500, 1000]), is_train=True,
+                                 rew_range=reward_range)
+
+        # corners
+        for i in range(1, 1000):
+            reward_range_list = [[4, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_corners_green(arguments.target_dir if arguments.unify
+                                 else "{}/train_in_phases/preferences_3/".format(
+                arguments.target_dir),
+                                 'corners_{}'.format(str(i).zfill(4)),
+                                 time=random.choice([500, 1000]), is_train=True,
+                                 rew_range=reward_range)
+
+        # cross
+        for i in range(1, 1000):
+            reward_range_list = [[4, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_cross_green(arguments.target_dir if arguments.unify
+                               else "{}/train_in_phases/preferences_3/".format(
+                arguments.target_dir),
+                               'cross_{}'.format(str(i).zfill(4)),
+                               time=random.choice([500, 1000]), is_train=True,
+                               rew_range=reward_range)
+
+        # front back
+        for i in range(1, 1000):
+            reward_range_list = [[0.5, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_front_back(arguments.target_dir if arguments.unify
+                              else "{}/train_in_phases/preferences_3/".format(
+                arguments.target_dir),
+                              'front_back_{}'.format(str(i).zfill(4)),
+                              time=random.choice([500, 1000]), is_train=True,
+                              rew_range=reward_range)
+
+        # front back
+        for i in range(1, 1000):
+            reward_range_list = [[4, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_front_back(arguments.target_dir if arguments.unify
+                              else "{}/train_in_phases/preferences_3/".format(
+                arguments.target_dir),
+                              'front_back_{}'.format(str(i).zfill(4)),
+                              time=random.choice([500, 1000]), is_train=True,
+                              rew_range=reward_range)
+
+        # left right
+        for i in range(1, 1000):
+            reward_range_list = [[4, 5]]
+            reward_range = random.choice(reward_range_list)
+            create_left_right(arguments.target_dir if arguments.unify
+                              else "{}/train_in_phases/preferences_3/".format(
+                arguments.target_dir),
+                              'left_right_{}'.format(str(i).zfill(4)),
+                              time=random.choice([500, 1000]), is_train=True,
+                              rew_range=reward_range)
