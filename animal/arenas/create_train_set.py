@@ -363,9 +363,11 @@ if __name__ == '__main__':
     if arguments.phases:
 
         # create folders
-        for name_phase in ["choices_1, choices_2, choices_3",
+        for name_phase in ["choices_1" "choices_2", "choices_3",
                            "preferences_1", "preferences_2", "preferences_3"]:
             os.mkdir("{}/train_in_phases/{}".format(arguments.target_dir, name_phase))
+
+        print("Creating arenas to train in phases (choices)...")
 
         # choice 2 rewards different sizes, learn preferences
         for i in range(1, 1000):
@@ -399,6 +401,8 @@ if __name__ == '__main__':
                                   'c9_{}'.format(str(i).zfill(4)),
                                   time=random.choice([500, 1000]), is_train=True,
                                   rew_range=reward_range)
+
+        print("Creating arenas to train in phases (preferences)...")
 
         # left right
         for i in range(1, 1000):
