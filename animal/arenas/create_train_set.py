@@ -57,7 +57,8 @@ if __name__ == '__main__':
     else:
 
         if arguments.only_specific:
-            skills = ["push", "ramps", "narrow", "tunnels", "reasoning", "navigate"]
+            skills = ["push", "ramps", "narrow", "tunnels", "reasoning",
+                      "navigate", "mazes"]
         else:
             skills = ["preferences", "push", "ramps", "narrow", "zones",
                       "tunnels", "navigate", "generalize", "internal_model",
