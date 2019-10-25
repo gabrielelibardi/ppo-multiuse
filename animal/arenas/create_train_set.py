@@ -357,15 +357,15 @@ if __name__ == '__main__':
                            'make_fall_1_{}'.format(str(i).zfill(4)),
                            time=random.choice([1000]), is_train=True)
 
-
-    ###########################################################################
-
     if arguments.phases:
 
         # create folders
-        for name_phase in ["choices_1", "choices_2", "choices_3",
-                           "preferences_1", "preferences_2", "preferences_3"]:
-            os.mkdir("{}/train_in_phases/{}".format(arguments.target_dir, name_phase))
+        if not arguments.unify:
+            for name_phase in ["choices_1", "choices_2", "choices_3",
+                               "preferences_1", "preferences_2", "preferences_3"]:
+                os.mkdir(
+                    "{}/train_in_phases/{}".format(
+                        arguments.target_dir, name_phase))
 
         print("Creating arenas to train in phases (choices)...")
 
