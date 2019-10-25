@@ -34,6 +34,15 @@ from .create_arenas import (
     create_arena_narrow_spaces_1,
     create_arena_narrow_spaces_2,
     create_arena_pref1,
-    create_blackout_test_1
-
+    create_blackout_test_1,
+    create_reasoning_step_1,
+    create_reasoning_step_2,
+    create_reasoning_step_3,
+    create_left_right,
+    create_front_back,
+    create_corners_green,
+    create_cross_green,
+    create_in_front,
+    create_make_fall_1,
+    create_arena_choice_2,
 )

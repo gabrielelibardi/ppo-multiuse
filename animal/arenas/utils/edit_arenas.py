@@ -508,17 +508,8 @@ def ramp_test_2(arena, is_train=False):
         arena = add_object(arena, category, size=(8, height_walls, 8),
                            pos=(position_ramp_2 - 5, 0, 20 + 5), rot=0)
 
-    category = random.choice(['GoodGoal'])
-    arena = add_object(arena, category,
-                       pos=(np.random.randint(5, 38), 0,
-                            np.random.randint(20 + 10, 38))
-                       if rotation_wall == 90
-                       else (np.random.randint(20 + 10, 38), 0,
-                             np.random.randint(5, 38)))
-
     position_agent = (
-        np.random.randint(
-            5, 38), 0,
+        np.random.randint(5, 38), 0,
         np.random.randint(5, 20 - 10)) if rotation_wall == 90 else (
         (np.random.randint(5, 20 - 10), 0, np.random.randint(5, 38))
     )
@@ -530,16 +521,20 @@ def ramp_test_2(arena, is_train=False):
         rot=rotation_agent,
     )
 
+    category = random.choice(['GoodGoal'])
+    arena = add_object(arena, category,
+                       pos=(np.random.randint(5, 38), 0,
+                            np.random.randint(20 + 10, 38))
+                       if rotation_wall == 90
+                       else (np.random.randint(20 + 10, 38), 0,
+                             np.random.randint(5, 38)))
+
     for _ in range(2):
         category = random.choice(['GoodGoalMulti'])
         arena = add_object(arena, category)
 
     category = random.choice(['BadGoal'])
     arena = add_object(arena, category)
-
-    position_agent = random_pos() if not is_train else None
-    rotation_agent = random_rotation() if not is_train else None
-    arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
 
     return arena, position_agent, rotation_agent
 
