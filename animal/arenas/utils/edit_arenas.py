@@ -510,8 +510,8 @@ def ramp_test_2(arena, is_train=False):
 
     position_agent = (
         np.random.randint(5, 38), 0,
-        np.random.randint(10, 20 - 10)) if rotation_wall == 90 else (
-        (np.random.randint(10, 20 - 10), 0, np.random.randint(5, 38))
+        np.random.randint(5, 20 - 10)) if rotation_wall == 90 else (
+        (np.random.randint(5, 20 - 10), 0, np.random.randint(5, 38))
     )
 
     rotation_agent = random_rotation() if not is_train else None
