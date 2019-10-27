@@ -219,8 +219,9 @@ def messy_arenas(narenas):
 
 
 if __name__ == "__main__":    
+    obj_1()
     obj_2()
-    #obj_3()
+    obj_3()
     c2_preferences()
     c3_obstacles()
     c3_see_throught()
