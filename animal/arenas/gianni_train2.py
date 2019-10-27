@@ -90,7 +90,7 @@ def obj_2(repeats = 1):
                 arena = ''
                 arena = add_object(arena,a)
                 arena = add_object(arena,a2)
-                write_arena('a2_i{}_i2{}_r{}'.format(i,i2,r),time_limits, arena)
+                write_arena('a2_i{}_i2{}_r{}'.format(i,i2,r),[random.choice(time_limits)], arena)
 
 def obj_3(repeats = 1):
 # If I have three objects in the arena it has to be one food,anything else and non_reward objects
@@ -104,7 +104,7 @@ def obj_3(repeats = 1):
                     arena = add_object(arena,a)
                     arena = add_object(arena,a2)
                     arena = add_object(arena,a3)
-                    write_arena('a3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),time_limits, arena)
+                    write_arena('a3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),[random.choice(time_limits)], arena)
  
 
 def obj_4(repeats = 1):
@@ -121,7 +121,7 @@ def obj_4(repeats = 1):
                         arena = add_object(arena,a2)
                         arena = add_object(arena,a3)
                         arena = add_object(arena,a4)
-                        write_arena('a3_i{}_i2{}_i3{}_i4{}_r{}'.format(i,i2,i3,i4,r),time_limits, arena)
+                        write_arena('a3_i{}_i2{}_i3{}_i4{}_r{}'.format(i,i2,i3,i4,r),[random.choice(time_limits)], arena)
  
 
 def c2_preferences(repeats = 1):
@@ -136,7 +136,7 @@ def c2_preferences(repeats = 1):
                     arena = add_object(arena,a)
                     arena = add_object(arena,a2)
                     arena = add_object(arena,a3)
-                    write_arena('c2_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),time_limits, arena)
+                    write_arena('c2_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),[random.choice(time_limits)], arena)
 
 def c3_obstacles(repeats = 1):
 # If I have three objects in the arena it has to be one food,anything else and non_reward objects
@@ -150,7 +150,7 @@ def c3_obstacles(repeats = 1):
                     arena = add_object(arena,a)
                     arena = add_object(arena,a2)
                     arena = add_object(arena,a3)
-                    write_arena('c3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),time_limits, arena)
+                    write_arena('c3_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),[random.choice(time_limits)], arena)
 
 
 def c3_see_throught(repeats = 1):
@@ -166,7 +166,7 @@ def c3_see_throught(repeats = 1):
                     arena = add_object(arena,a)
                     arena = add_object(arena,a2)
                     arena = add_object(arena,a3)
-                    write_arena('c3st_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),time_limits, arena)
+                    write_arena('c3st_i{}_i2{}_i3{}_r{}'.format(i,i2,i3,r),[random.choice(time_limits)], arena)
 
 
 def messy_arenas(narenas):
