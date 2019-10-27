@@ -73,7 +73,7 @@ def main():
         actor_behaviors = []
         for a in args.behavior:
             actor = Policy(envs.observation_space, envs.action_space, base=CNN[args.cnn],
-                            base_kwargs={'recurrent': args.recurrent_policy})
+                            base_kwargs={'recurrent': args.behavior_recurrent})
             actor.load_state_dict(torch.load(a,map_location=device))
             actor.to(device)
             actor_behaviors.append(actor) 
@@ -163,6 +163,8 @@ def get_args():
         '--object-module',default='',help='File to use to load the object module ') 
     parser.add_argument(
         '--behavior',action='append',default=None,help='directory that contains expert policies for high-level actions')
+    parser.add_argument(
+        '--behavior-recurrent',action='store_true',default=False,help='if the behavior policy is recurrent')
     parser.add_argument(
         '--device',default='cpu',help='Device to run on') 
     parser.add_argument(
