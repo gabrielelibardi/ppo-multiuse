@@ -141,7 +141,7 @@ if __name__ == '__main__':
                 is_train=True)
 
     # cross
-    for i in range(1, 501):
+    for i in range(1, 200):
         create_arena_cross(
             arguments.target_dir if arguments.unify
             else "{}/navigate/".format(
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     print("Creating ramps arenas...")
 
     # c5
-    for i in range(1, 500):
+    for i in range(1, 200):
         create_c5_arena(
             arguments.target_dir if arguments.unify
             else "{}/ramps/".format(arguments.target_dir),
@@ -214,7 +214,7 @@ if __name__ == '__main__':
                 is_train=True)
 
     print("Creating mazes arenas...")
-    for i in range(1, 1001):
+    for i in range(1, 200):
         create_maze(
             arguments.target_dir if arguments.unify
             else "{}/mazes/".format(arguments.target_dir),
@@ -237,7 +237,7 @@ if __name__ == '__main__':
     print("Creating push arenas...")
 
     # push1
-    for i in range(501, 1001):
+    for i in range(501, 701):
         create_arena_push1(
             arguments.target_dir if arguments.unify
             else "{}/push/".format(arguments.target_dir),
@@ -246,7 +246,7 @@ if __name__ == '__main__':
             is_train=True)
 
     # push2
-    for i in range(1001, 1501):
+    for i in range(1001, 1201):
         create_arena_push2(
             arguments.target_dir if arguments.unify
             else "{}/push/".format(arguments.target_dir),
@@ -257,7 +257,7 @@ if __name__ == '__main__':
     print("Creating tunnel arenas...")
 
     # tunnel1
-    for i in range(1501, 2001):
+    for i in range(1501, 1701):
         create_arena_tunnel1(
             arguments.target_dir if arguments.unify
             else "{}/tunnels/".format(arguments.target_dir),
@@ -265,7 +265,7 @@ if __name__ == '__main__':
             time=random.choice([500, 1000]),
             is_train=True)
     # tunnel2
-    for i in range(2001, 2501):
+    for i in range(1701, 1901):
         create_arena_tunnel2(
             arguments.target_dir if arguments.unify
             else "{}/tunnels/".format(arguments.target_dir),
@@ -276,7 +276,7 @@ if __name__ == '__main__':
     print("Creating ramp arenas...")
 
     # ramp1
-    for i in range(2501, 3001):
+    for i in range(1901, 2001):
         create_arena_ramp1(
             arguments.target_dir if arguments.unify
             else "{}/ramps/".format(arguments.target_dir),
@@ -284,7 +284,7 @@ if __name__ == '__main__':
             time=random.choice([500, 1000]),
             is_train=True)
     # ramp2
-    for i in range(3001, 3501):
+    for i in range(2101, 2201):
         create_arena_ramp2(
             arguments.target_dir if arguments.unify
             else "{}/ramps/".format(arguments.target_dir),
@@ -292,7 +292,7 @@ if __name__ == '__main__':
             time=random.choice([500, 1000]),
             is_train=True)
     # ramp3
-    for i in range(3501, 4001):
+    for i in range(2301, 2401):
         create_arena_ramp3(
             arguments.target_dir if arguments.unify
             else "{}/ramps/".format(arguments.target_dir),
@@ -303,7 +303,7 @@ if __name__ == '__main__':
     print("Creating narrow spaces arenas...")
 
     # narrow1
-    for i in range(4001, 4501):
+    for i in range(2501, 2701):
         create_arena_narrow_spaces_1(
             arguments.target_dir if arguments.unify
             else "{}/narrow/".format(arguments.target_dir),
@@ -312,7 +312,7 @@ if __name__ == '__main__':
             is_train=True)
 
     # narrow1
-    for i in range(4501, 5001):
+    for i in range(2701, 2901):
         create_arena_narrow_spaces_2(
             arguments.target_dir if arguments.unify
             else "{}/narrow/".format(arguments.target_dir),
@@ -350,7 +350,7 @@ if __name__ == '__main__':
             is_train=True)
 
     # make fall 1
-    for i in range(1, 1000):
+    for i in range(1, 100):
         create_make_fall_1(arguments.target_dir if arguments.unify
                            else "{}/make_fall/".format(
             arguments.target_dir),
@@ -370,7 +370,7 @@ if __name__ == '__main__':
         print("Creating arenas to train in phases (choices)...")
 
         # choice 2 rewards different sizes, learn preferences
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
             reward_range = random.choice(reward_range_list)
             create_arena_choice_2(arguments.target_dir if arguments.unify
@@ -381,7 +381,7 @@ if __name__ == '__main__':
                                   rew_range=reward_range)
 
         # choice 2 rewards all sizes together
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[0.5, 5]]
             reward_range = random.choice(reward_range_list)
             create_arena_choice_2(arguments.target_dir if arguments.unify
@@ -392,7 +392,7 @@ if __name__ == '__main__':
                                   rew_range=reward_range)
 
         # choice 2 rewards only big balls, small difference
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[4, 5]]
             reward_range = random.choice(reward_range_list)
             create_arena_choice_2(arguments.target_dir if arguments.unify
@@ -405,7 +405,7 @@ if __name__ == '__main__':
         print("Creating arenas to train in phases (preferences)...")
 
         # left right
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
             reward_range = random.choice(reward_range_list)
             create_left_right(arguments.target_dir if arguments.unify
@@ -417,7 +417,7 @@ if __name__ == '__main__':
 
 
         # front back
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
             reward_range = random.choice(reward_range_list)
             create_front_back(arguments.target_dir if arguments.unify
@@ -429,7 +429,7 @@ if __name__ == '__main__':
 
 
         # cross
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
             reward_range = random.choice(reward_range_list)
             create_cross_green(arguments.target_dir if arguments.unify
@@ -440,7 +440,7 @@ if __name__ == '__main__':
                                rew_range=reward_range)
 
         # corners
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
             reward_range = random.choice(reward_range_list)
             create_corners_green(arguments.target_dir if arguments.unify
@@ -451,7 +451,7 @@ if __name__ == '__main__':
                                  rew_range=reward_range)
 
         # in front
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[0.5, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
             reward_range = random.choice(reward_range_list)
             create_in_front(arguments.target_dir if arguments.unify
@@ -462,7 +462,7 @@ if __name__ == '__main__':
                             rew_range=reward_range)
 
         # left right
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[0.5, 5]]
             reward_range = random.choice(reward_range_list)
             create_left_right(arguments.target_dir if arguments.unify
@@ -473,7 +473,7 @@ if __name__ == '__main__':
                               rew_range=reward_range)
 
         # cross
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[0.5, 5]]
             reward_range = random.choice(reward_range_list)
             create_cross_green(arguments.target_dir if arguments.unify
@@ -484,7 +484,7 @@ if __name__ == '__main__':
                                rew_range=reward_range)
 
         # corners
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[0.5, 5]]
             reward_range = random.choice(reward_range_list)
             create_corners_green(arguments.target_dir if arguments.unify
@@ -495,7 +495,7 @@ if __name__ == '__main__':
                                  rew_range=reward_range)
 
         # corners
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[4, 5]]
             reward_range = random.choice(reward_range_list)
             create_corners_green(arguments.target_dir if arguments.unify
@@ -506,7 +506,7 @@ if __name__ == '__main__':
                                  rew_range=reward_range)
 
         # cross
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[4, 5]]
             reward_range = random.choice(reward_range_list)
             create_cross_green(arguments.target_dir if arguments.unify
@@ -517,7 +517,7 @@ if __name__ == '__main__':
                                rew_range=reward_range)
 
         # front back
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[0.5, 5]]
             reward_range = random.choice(reward_range_list)
             create_front_back(arguments.target_dir if arguments.unify
@@ -528,7 +528,7 @@ if __name__ == '__main__':
                               rew_range=reward_range)
 
         # front back
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[4, 5]]
             reward_range = random.choice(reward_range_list)
             create_front_back(arguments.target_dir if arguments.unify
@@ -539,7 +539,7 @@ if __name__ == '__main__':
                               rew_range=reward_range)
 
         # left right
-        for i in range(1, 1000):
+        for i in range(1, 25):
             reward_range_list = [[4, 5]]
             reward_range = random.choice(reward_range_list)
             create_left_right(arguments.target_dir if arguments.unify

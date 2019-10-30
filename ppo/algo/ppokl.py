@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions.kl import kl_divergence
 from shutil import copy2
+import random
 
 
 class PPOKL():
@@ -116,7 +117,7 @@ class PPOKL():
 
 
 
-def ppo_rollout(num_steps, envs, actor_critic, rollouts):
+def ppo_rollout_old(num_steps, envs, actor_critic, rollouts):
     for step in range(num_steps):
         # Sample actions
         with torch.no_grad():
@@ -132,6 +133,52 @@ def ppo_rollout(num_steps, envs, actor_critic, rollouts):
 
         rollouts.insert(obs, recurrent_hidden_states, action,
                         action_log_prob, value, reward, masks, bad_masks)
+
+def ppo_rollout(num_steps, envs, actor_critic, actor_critic_expert, rollouts):
+    for step in range(num_steps):
+        # Sample actions
+        with torch.no_grad():
+            _, _, action_log_prob, recurrent_hidden_states, _ = actor_critic.act(
+                rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+
+            value, action, _, _, _ = actor_critic_expert.act(
+                rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+
+        # Obser reward and next obs
+        obs, reward, done, infos = envs.step(action)
+
+        # If done then clean the history of observations.
+        masks = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
+        bad_masks = torch.FloatTensor([[0.0] if 'bad_transition' in info.keys() else [1.0] for info in infos])
+
+        rollouts.insert(obs, recurrent_hidden_states, action,
+                        action_log_prob, value, reward, masks, bad_masks)
+
+
+def ppo_rollout_2(num_steps, envs, actor_critic, actor_critic_expert, rollouts, ratio=0.4):
+    for step in range(num_steps):
+        # Sample actions
+        with torch.no_grad():
+
+            if random.random() > ratio:
+                _, _, action_log_prob, recurrent_hidden_states, _ = actor_critic.act(
+                    rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+
+                value, action, _, _, _ = actor_critic_expert.act(
+                    rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+            else:
+                value, action, action_log_prob, recurrent_hidden_states, _ = actor_critic_expert.act(
+                    rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+
+        # Obser reward and next obs
+        obs, reward, done, infos = envs.step(action)
+
+        # If done then clean the history of observations.
+        masks = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
+        bad_masks = torch.FloatTensor([[0.0] if 'bad_transition' in info.keys() else [1.0] for info in infos])
+
+        rollouts.insert(obs, recurrent_hidden_states, action,
+                        action_log_prob, value, reward, masks, bad_masks)            
 
 
 def ppo_update(agent, actor_critic, rollouts, use_gae, gamma, gae_lambda, use_proper_time_limits):

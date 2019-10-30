@@ -20,7 +20,7 @@ from ppo.envs import make_vec_envs
 from ppo.model import Policy
 from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase
 from ppo.storage import RolloutStorage
-from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model
+from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model,ppo_rollout_2, ppo_rollout_old
 from animal import make_animal_env
 from vision_module import ImpalaCNNVision
 from object_detection_module import ImpalaCNNObject
@@ -86,7 +86,7 @@ def main():
                               obs, envs.action_space,
                               actor_critic.recurrent_hidden_state_size)
 
-
+ 
     rollouts.to(device)  #they live in GPU, converted to torch from the env wrapper
 
     start = time.time()
@@ -94,7 +94,14 @@ def main():
 
     for j in range(num_updates):
 
-        ppo_rollout(args.num_steps, envs, actor_critic, rollouts)
+        if args.imitation:
+            ppo_rollout(args.num_steps, envs, actor_critic, actor_behaviors[0], rollouts)
+
+        elif args.expert_ratio != 0.:
+            ppo_rollout_2(args.num_steps, envs, actor_critic, actor_behaviors[0], rollouts, ratio=1.-args.expert_ratio)
+
+        else:
+            ppo_rollout_old(args.num_steps, envs, actor_critic, rollouts)
 
         value_loss, action_loss, dist_entropy, kl_div, loss = ppo_update(agent, actor_critic, rollouts,
                                     args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits)
@@ -181,6 +188,10 @@ def get_args():
         '--arenas-dir',default=None,help='directory where the yamls files for the environemnt are (default: None)')   
     parser.add_argument(
         '--reduced-actions',action='store_true',default=False,help='Use reduced actions set')
+    parser.add_argument(
+        '--imitation',action='store_true',default=False,help='Agents learns to imitate behavior policy')
+    parser.add_argument(
+        '--expert-ratio',default=0, type=float, help='Ratio of expert actions')
     args = parser.parse_args()
     args.log_dir = os.path.expanduser(args.log_dir)
     args.state = args.cnn=='State'

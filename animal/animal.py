@@ -17,6 +17,7 @@ from animalai.envs.gym.environment import ActionFlattener
 from ppo.envs import FrameSkipEnv,TransposeImage
 from PIL import Image
 from wrappers import RetroEnv,Stateful,FilterActionEnv
+import os.path as osp
 
 def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed, state):
     base_port = 100*seed  # avoid collisions
@@ -59,6 +60,7 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
         return _thunk
 
     return make_env
+
 
 
 def analyze_arena(arena):
@@ -214,4 +216,50 @@ class RewardShaping(gym.Wrapper):
 
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
+
+
+class LabAnimal2(gym.Wrapper):
+    def __init__(self, env, arenas_dir):
+        gym.Wrapper.__init__(self, env)
+        print('START LOADING ARENAS')
+        
+        files1 = glob.glob("{}/*.yaml".format(arenas_dir))
+        print('LENGTH FILE1',len(files1))
+        #import pdb; pdb.set_trace()
+        arenas_dir_all = osp.dirname(arenas_dir)
+        #arenas_dir_all = "/".join(arenas_dir.split("/")[:-1])
+        files2 = glob.glob("{}/*/*.yaml".format(arenas_dir_all))
+        print('LENGTH FILE2',len(files2))
+            
+        
+        self.env_list_1 = [(f,ArenaConfig(f)) for f in files1]
+        print('LENGTH FILE1',len(self.env_list_1))
+
+        self.env_list_2 = [(f,ArenaConfig(f)) for f in files2]
+        print('LENGTH FILE2',len(self.env_list_2))
+
+        self._arena_file = ''
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        self.steps += 1
+        self.env_reward += reward
+        info['arena']=self._arena_file  #for monitor
+        info['max_reward']=self.max_reward
+        info['max_time']=self.max_time
+        info['ereward'] = self.env_reward
+        return obs, reward, done, info        
+
+    def reset(self, **kwargs):
+        self.steps = 0
+        self.env_reward = 0
+        if random.random() > 0.2:
+            self._arena_file, arena = random.choice(self.env_list_1)
+        else:
+            self._arena_file, arena = random.choice(self.env_list_2)
+
+#        self.max_reward = analyze_arena(arena)
+        self.max_reward = set_reward_arena(arena, force_new_size=False)
+        self.max_time = arena.arenas[0].t
+        return self.env.reset(arenas_configurations=arena,**kwargs)
 
