@@ -20,7 +20,7 @@ from ppo.envs import make_vec_envs
 from ppo.model import Policy
 from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase
 from ppo.storage import RolloutStorage
-from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model,ppo_rollout_2, ppo_rollout_old
+from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model,ppo_rollout_2, ppo_rollout_old, ppo_rollout_mix
 from animal import make_animal_env
 from vision_module import ImpalaCNNVision
 from object_detection_module import ImpalaCNNObject
@@ -99,6 +99,9 @@ def main():
 
         elif args.expert_ratio != 0.:
             ppo_rollout_2(args.num_steps, envs, actor_critic, actor_behaviors[0], rollouts, ratio=1.-args.expert_ratio)
+
+        elif args.mix_behaviors:
+            ppo_rollout_mix(args.num_steps, envs, actor_critic, rollouts, actor_behaviors=actor_behaviors)
 
         else:
             ppo_rollout_old(args.num_steps, envs, actor_critic, rollouts)
@@ -192,6 +195,8 @@ def get_args():
         '--imitation',action='store_true',default=False,help='Agents learns to imitate behavior policy')
     parser.add_argument(
         '--expert-ratio',default=0, type=float, help='Ratio of expert actions')
+    parser.add_argument(
+        '--mix-behaviors',action='store_true',default=False, help='Mixing different behaviors')
     args = parser.parse_args()
     args.log_dir = os.path.expanduser(args.log_dir)
     args.state = args.cnn=='State'

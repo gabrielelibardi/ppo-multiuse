@@ -178,6 +178,51 @@ def ppo_rollout_2(num_steps, envs, actor_critic, actor_critic_expert, rollouts, 
         bad_masks = torch.FloatTensor([[0.0] if 'bad_transition' in info.keys() else [1.0] for info in infos])
 
         rollouts.insert(obs, recurrent_hidden_states, action,
+                        action_log_prob, value, reward, masks, bad_masks)
+
+def ppo_rollout_mix(num_steps, envs, actor_critic, rollouts,actor_behaviors = None):
+    for step in range(num_steps):
+
+
+        if actor_behaviors is not None:
+            values_list = []
+            probs_list = []
+            entropy_list= []
+            with torch.no_grad():
+                for behavior in actor_behaviors:
+                    
+                    value, action, action_log_prob, recurrent_hidden_states, _ = behavior.act(rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+                    value, _, _, _, dist = behavior.evaluate_actions(rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step],action)
+                    
+                    values_list.append(torch.exp(value))
+                    probs_list.append(dist.probs)
+                    entropy_list.append(torch.exp(dist.entropy()).unsqueeze(0))
+
+            
+
+            entropy_list = [ele / sum(values_list) for ele in values_list]
+            entropy_list = [ele / sum(entropy_list)  for ele in entropy_list]
+            
+            weights = sum([a*b for a,b in zip(entropy_list,probs_list)])
+            dist = Categorical(probs = weights)
+            action = dist.sample()
+
+
+
+        else:
+            # Sample actions
+            with torch.no_grad():
+                value, action, action_log_prob, recurrent_hidden_states, _ = actor_critic.act(
+                    rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+
+        # Obser reward and next obs
+        obs, reward, done, infos = envs.step(action)
+        
+        # If done then clean the history of observations.
+        masks = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
+        bad_masks = torch.FloatTensor([[0.0] if 'bad_transition' in info.keys() else [1.0] for info in infos])
+
+        rollouts.insert(obs, recurrent_hidden_states, action,
                         action_log_prob, value, reward, masks, bad_masks)            
 
 
