@@ -16,8 +16,9 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, input_space, action_space, base, base_kwargs=None):
+    def __init__(self, input_space, action_space, base, base_kwargs=None, rnd=False):
         super(Policy, self).__init__()
+        self.rnd = rnd
         if base_kwargs is None:
             base_kwargs = {}
 
@@ -40,6 +41,9 @@ class Policy(nn.Module):
             self.dist = Bernoulli(self.base.output_size, num_outputs)
         else:
             raise NotImplementedError
+        if rnd:
+            self.RND = RND(obs_shape[0])
+
 
     @property
     def is_recurrent(self):
@@ -270,6 +274,40 @@ class StateCNNBase(NNBase):
             x, rnn_hxs = self._forward_gru(x, rnn_hxs, masks)
 
         return self.critic_linear(x), x, rnn_hxs
+
+
+class NN(torch.nn.Module):
+    def __init__(self, num_inputs, hidden_size):
+        super(NN, self).__init__()
+
+        self.main = nn.Sequential(
+            nn.Conv2d(num_inputs, 32, 8, stride=4), nn.ReLU(),
+            nn.Conv2d(32, 64, 4, stride=2), nn.ReLU(),
+            nn.Conv2d(64, 32, 3, stride=1), nn.ReLU(), Flatten(),
+            nn.Linear(32 * 7 * 7, hidden_size), nn.ReLU())
+        
+    def forward(self,inputs):
+        y = self.main(inputs / 255.0)
+        #y = self.softmax(y)
+        return y
+
+
+class RND:
+    def __init__(self,num_inputs ,hidden_size=100):
+        self.target = NN(num_inputs,hidden_size)
+        self.model = NN(num_inputs,hidden_size)
+        self.optimizer = torch.optim.Adam(self.model.parameters(),lr=0.0001)
+        
+    def get_reward(self,x):
+        y_true = self.target(x).detach()
+        y_pred = self.model(x)
+
+        reward = torch.sum(torch.pow(y_pred - y_true,2), dim=1)
+        return reward
+    
+    def update(self,Ri):
+        Ri.sum().backward()
+        self.optimizer.step()
 
 class FixupCNNBase(NNBase):
     def __init__(self, num_channels, recurrent=False, hidden_size=256, image_size=84):

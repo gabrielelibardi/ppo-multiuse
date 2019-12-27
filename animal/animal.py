@@ -18,8 +18,11 @@ from ppo.envs import FrameSkipEnv,TransposeImage
 from PIL import Image
 from wrappers import RetroEnv,Stateful,FilterActionEnv
 import os.path as osp
+import torch
+import pickle
+import matplotlib.pyplot as plt
 
-def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed, state):
+def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed, state, replay_ratio, record_actions):
     base_port = 100*seed  # avoid collisions
     def make_env(rank):
         def _thunk():
@@ -34,9 +37,12 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
             env = RetroEnv(env)
             if reduced_actions:
                 env = FilterActionEnv(env)
-            env = LabAnimal(env,arenas_dir)
 
-            env = RewardShaping(env)
+            if record_actions:
+                env = LabAnimalRecordAction(env,arenas_dir,replay_ratio, record_actions)
+            else:
+                env = LabAnimalReplayAll(env,arenas_dir,replay_ratio)
+            #env = RewardShaping(env)
             
             if state:
                 env = Stateful(env)
@@ -85,6 +91,92 @@ def analyze_arena(arena):
     goodmultis.sort()
     return tot_reward
 
+
+class ReplayActions():
+    def __init__(self,replay_ratio):
+        self.rho = replay_ratio
+        self.replay = False
+        #self.flattener = ActionFlattener([3,3])
+
+    def replay_step(self, action):
+
+        if self.replay == True:
+            if  self.num_steps >  self.step: 
+                act = self.acts[self.step]
+                self.step +=1
+                act = int(act)
+                return act
+                
+            else:
+                return action
+        else:
+            return action
+    
+    def reset(self,arena_name):
+        actions_name =  arena_name.split('/')[-1].split('.')[0]
+        self.filename = '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_actions/{}'.format(actions_name)
+        if os.path.isfile( self.filename):
+            if  random.choices([0,1], weights=[self.rho, 1-self.rho])[0] == 0:
+                self.replay = True
+                self.acts = torch.load(self.filename)
+                self.num_steps = len(self.acts)
+                
+                self.step = 0
+            else:
+                self.replay = False
+
+
+class ReplayAll():
+    def __init__(self,replay_ratio,arenas):
+        self.rho = replay_ratio
+        self.replay = False
+        #self.flattener = ActionFlattener([3,3])
+        self.recordings = {}
+        for arena  in arenas:
+            actions_name =  arena.split('/')[-1].split('.')[0]
+            filename = '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_actions_3/{}.npz'.format(actions_name)
+            if os.path.isfile(filename):
+                self.recordings[arena] = np.load(filename)
+        
+
+    def replay_step(self, action):
+
+        if self.replay == True:
+            if  self.num_steps > self.step:
+                act = self.acts[self.step]
+                obs = self.obs[self.step]
+                reward = self.rews[self.step]
+                if self.step == (self.num_steps -1):
+                    done = True
+                else:
+                    done = False
+                self.step +=1
+                return [act, obs, reward, done]
+                
+            else:
+                return [action]
+        else:
+            return [action]
+    
+    def reset(self,arena_name):
+        actions_name =  arena_name.split('/')[-1].split('.')[0]
+        self.filename = '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_actions_3/{}.npz'.format(actions_name)
+        if os.path.isfile( self.filename):
+            if  random.choices([0,1], weights=[self.rho, 1-self.rho])[0] == 0:
+                self.replay = True
+                
+                self.acts = self.recordings[arena_name]['actions']
+                self.obs = self.recordings[arena_name]['observations']
+                self.rews = self.recordings[arena_name]['rewards']
+                self.num_steps = self.acts.shape[0]
+                self.step = 0
+            else:
+                self.replay = False
+        return self.replay
+
+        
+
+
 def random_size_reward():
     #according to docs it's 0.5-5
     s = random.randint(5, 50)/10
@@ -118,8 +210,54 @@ def set_reward_arena(arena, force_new_size = False):
     goodmultis.sort()
     return tot_reward
 
+
+class LabAnimalReplayAll(gym.Wrapper):
+    def __init__(self, env, arenas_dir, replay_ratio):
+        gym.Wrapper.__init__(self, env)
+        if os.path.isdir(arenas_dir):
+            files = glob.glob("{}/*/*.yaml".format(arenas_dir)) + glob.glob("{}/*.yaml".format(arenas_dir))
+            
+        else:
+            #assume is a pattern
+            files = glob.glob(arenas_dir)
+        
+        self.env_list = [(f,ArenaConfig(f)) for f in files]
+        self._arena_file = ''
+        self.replayer = ReplayAll(replay_ratio,files)
+
+    def step(self, action):
+        out =self.replayer.replay_step(action)
+        if len(out) == 1:
+            obs, reward, done, info = self.env.step(action)
+        else:
+            action, obs, reward, done = out
+            info = {}
+        self.steps += 1
+        self.env_reward += reward
+        info['arena']=self._arena_file  #for monitor
+        info['max_reward']=self.max_reward
+        info['max_time']=self.max_time
+        info['ereward'] = self.env_reward
+        info['action'] = action
+        return obs, reward, done, info        
+
+    def reset(self, **kwargs):
+        self.steps = 0
+        self.env_reward = 0
+        """  while True:
+            self._arena_file, arena = random.choice(self.env_list)
+            replay = self.replayer.reset(self._arena_file)
+            if replay:
+                break """
+        self._arena_file, arena = random.choice(self.env_list)
+        replay = self.replayer.reset(self._arena_file)
+#        self.max_reward = analyze_arena(arena)
+        self.max_reward = set_reward_arena(arena, force_new_size=False)
+        self.max_time = arena.arenas[0].t
+        return self.env.reset(arenas_configurations=arena,**kwargs)    
+
 class LabAnimal(gym.Wrapper):
-    def __init__(self, env, arenas_dir):
+    def __init__(self, env, arenas_dir, replay_ratio):
         gym.Wrapper.__init__(self, env)
         if os.path.isdir(arenas_dir):
             files = glob.glob("{}/*.yaml".format(arenas_dir))
@@ -129,24 +267,85 @@ class LabAnimal(gym.Wrapper):
         
         self.env_list = [(f,ArenaConfig(f)) for f in files]
         self._arena_file = ''
+        self.replayer = ReplayActions(replay_ratio)
 
     def step(self, action):
-        obs, reward, done, info = self.env.step(action)
+        action_ =self.replayer.replay_step(action)
+        obs, reward, done, info = self.env.step(action_)
         self.steps += 1
         self.env_reward += reward
         info['arena']=self._arena_file  #for monitor
         info['max_reward']=self.max_reward
         info['max_time']=self.max_time
         info['ereward'] = self.env_reward
+        info['action'] = action_ 
         return obs, reward, done, info        
 
     def reset(self, **kwargs):
         self.steps = 0
         self.env_reward = 0
         self._arena_file, arena = random.choice(self.env_list)
+        self.replayer.reset(self._arena_file)
 #        self.max_reward = analyze_arena(arena)
         self.max_reward = set_reward_arena(arena, force_new_size=False)
         self.max_time = arena.arenas[0].t
+        return self.env.reset(arenas_configurations=arena,**kwargs)
+
+
+class LabAnimalRecordAction(gym.Wrapper):
+    def __init__(self, env, arenas_dir, replay_ratio, record_actions):
+        gym.Wrapper.__init__(self, env)
+        if os.path.isdir(arenas_dir):
+            files = glob.glob("{}/*.yaml".format(arenas_dir))
+        else:
+            #assume is a pattern
+            files = glob.glob(arenas_dir)
+        
+        self.env_list = [(f,ArenaConfig(f)) for f in files]
+        self._arena_file = ''
+        self.replayer = ReplayActions(replay_ratio)
+        self.obs_rollouts = []
+        self.rews_rollouts = []
+        self.actions_rollouts = []
+        self.directory = record_actions
+
+    def step(self, action):
+        
+        action_ =self.replayer.replay_step(action)
+        obs, reward, done, info = self.env.step(action)
+        self.obs_rollouts.append(obs)
+        self.rews_rollouts.append(reward)
+        self.actions_rollouts.append(action)
+        self.steps += 1
+        self.env_reward += reward
+        info['arena']=self._arena_file  #for monitor
+        info['max_reward']=self.max_reward
+        info['max_time']=self.max_time
+        info['ereward'] = self.env_reward
+        info['action'] = action_ 
+        return obs, reward, done, info        
+
+    def reset(self, **kwargs):
+        self.steps = 0
+        self.env_reward = 0
+
+        if len (self.actions_rollouts) > 0:
+            arena_name =  self._arena_file.split('/')[-1].split('.')[0]
+            self.filename = '{}/{}'.format( self.directory ,arena_name)
+            np.savez(self.filename,observations=np.array(self.obs_rollouts),
+                        rewards=np.array(self.rews_rollouts),
+                        actions=np.array(self.actions_rollouts))
+
+        self._arena_file, arena = random.choice(self.env_list)
+        self.replayer.reset(self._arena_file)
+#        self.max_reward = analyze_arena(arena)
+        self.max_reward = set_reward_arena(arena, force_new_size=False)
+        self.max_time = arena.arenas[0].t
+
+        self.obs_rollouts = []
+        self.rews_rollouts = []
+        self.actions_rollouts = []
+
         return self.env.reset(arenas_configurations=arena,**kwargs)
 
 

@@ -11,8 +11,23 @@ from time import sleep
 from baselines.bench import load_results
 from matplotlib import pylab as plt
 import numpy as np
+import argparse
+import os
 
-exps = glob('RUNS/exp_5*')
+
+def get_args():
+
+    parser = argparse.ArgumentParser(description='RL')
+    parser.add_argument(
+        '--log-dir',default=None, help='dir save models and statistics')
+    args = parser.parse_args()
+    args.log_dir = os.path.expanduser(args.log_dir)
+    return args
+
+
+args = get_args()
+my_dir = args.log_dir
+exps = glob(my_dir+'*')
 print(exps)
 
 while True:
@@ -21,11 +36,11 @@ while True:
         try:
             df = load_results(d)
             df['f']= df['l'].cumsum()/1000000
-            df['perf']= df['ereward']/(df['max_reward'])
+            df['perf']= df['r']/(df['max_reward'])
             df['perf'].where(df['perf']>0,0,inplace=True)
             df['goal'] = df['perf']>0.9  #guess a threadshold
 
-            roll = 500 
+            roll =500
             total_time = df['t'].iloc[-1]
             total_steps = df['l'].sum()
             total_episodes = df['r'].size
@@ -57,7 +72,7 @@ while True:
             ax.grid(True)
               
             fig.tight_layout() 
-            ax.get_figure().savefig('/webdata/'+d+'.jpg')
+            ax.get_figure().savefig(my_dir + '/monitor.jpg')
             plt.clf()
         except Exception as e: 
             print(e) 

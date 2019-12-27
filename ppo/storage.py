@@ -152,7 +152,8 @@ class RolloutStorage(object):
             return_batch = self.returns[:-1].view(-1, 1)[indices]
             masks_batch = self.masks[:-1].view(-1, 1)[indices]
             old_action_log_probs_batch = self.action_log_probs.view(-1,1)[indices]
-            states_batch = self.states.view(-1,self.states.size(-1))[indices]
+            if self.has_states:
+            	states_batch = self.states.view(-1,self.states.size(-1))[indices]
 
             if advantages is None:
                 adv_targ = None

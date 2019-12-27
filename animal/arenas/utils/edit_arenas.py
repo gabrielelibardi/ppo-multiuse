@@ -185,7 +185,7 @@ def cross_test(arena, is_train=False):
         else (np.random.randint(position_door_axis_2 + 2, 35), 0,
               np.random.randint(5, 35)))
 
-    rotation_agent = random_rotation() if not is_train else None
+    rotation_agent = random_rotation() if  is_train else None
     position_agent = (
         np.random.randint(5, 35), 0, np.random.randint(
             5, position_door_axis_2 - 2)) if rotation_wall == 90 else (
@@ -256,7 +256,7 @@ def push_test_1(arena, is_train=False):
         else (np.random.randint(position_door_axis_2 + 2, 35), 0,
               np.random.randint(5, 35)))
 
-    rotation_agent = random_rotation() if not is_train else None
+    rotation_agent = random_rotation() if is_train else None
     position_agent = (
         np.random.randint(5, 35), 0, np.random.randint(
             5, position_door_axis_2 - 2)) if rotation_wall == 90 else (
@@ -320,8 +320,8 @@ def push_test_2(arena, is_train=False):
     category = random.choice(['BadGoal'])
     arena = add_object(arena, category)
 
-    position_agent = random_pos() if not is_train else None
-    rotation_agent = random_rotation() if not is_train else None
+    position_agent = random_pos() if  is_train else None
+    rotation_agent = random_rotation() if  is_train else None
     arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
 
     return arena, position_agent, rotation_agent
@@ -379,7 +379,7 @@ def tunnel_test_1(arena, is_train=False):
         else (np.random.randint(position_door_axis_2 + 2, 35), 0,
               np.random.randint(5, 35)))
 
-    rotation_agent = random_rotation() if not is_train else None
+    rotation_agent = random_rotation() if is_train else None
     position_agent = (
         np.random.randint(5, 35), 0, np.random.randint(
             5, position_door_axis_2 - 2)) if rotation_wall == 90 else (
@@ -435,8 +435,8 @@ def tunnel_test_2(arena, is_train=False):
     category = random.choice(['BadGoal'])
     arena = add_object(arena, category)
 
-    position_agent = random_pos() if not is_train else None
-    rotation_agent = random_rotation() if not is_train else None
+    position_agent = random_pos() if is_train else None
+    rotation_agent = random_rotation() if is_train else None
     arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
 
     return arena, position_agent, rotation_agent
@@ -471,8 +471,8 @@ def ramp_test_1(arena, is_train=False):
     category = random.choice(['BadGoal'])
     arena = add_object(arena, category)
 
-    position_agent = random_pos() if not is_train else None
-    rotation_agent = random_rotation() if not is_train else None
+    position_agent = random_pos() if is_train else None
+    rotation_agent = random_rotation() if is_train else None
     arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
 
     return arena, position_agent, rotation_agent
@@ -514,7 +514,7 @@ def ramp_test_2(arena, is_train=False):
         (np.random.randint(5, 20 - 10), 0, np.random.randint(5, 38))
     )
 
-    rotation_agent = random_rotation() if not is_train else None
+    rotation_agent = random_rotation() if  is_train else None
     arena = add_object(
         arena, 'Agent',
         pos=position_agent,
@@ -559,8 +559,8 @@ def ramp_test_3(arena, is_train=False):
     category = random.choice(['BadGoal'])
     arena = add_object(arena, category)
 
-    position_agent = random_pos() if not is_train else None
-    rotation_agent = random_rotation() if not is_train else None
+    position_agent = random_pos() if is_train else None
+    rotation_agent = random_rotation() if is_train else None
     arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
 
     return arena, position_agent, rotation_agent
@@ -591,11 +591,11 @@ def reasoning_step_1(arena, is_train=False):
 
     arena = add_object(arena, 'GoodGoal', pos=(
         position_x + inv * 8.5, height_platform + 0.25, position_y))
-    category = random.choice(['BadGoal'])
-    arena = add_object(arena, category)
+    #category = random.choice(['BadGoal'])
+    #arena = add_object(arena, category)
 
-    position_agent = random_pos() if not is_train else None
-    rotation_agent = random_rotation() if not is_train else None
+    position_agent = random_pos(with_respect_to_center='far')   if is_train else None
+    rotation_agent = random_rotation() if is_train else None
     arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
 
     return arena, position_agent, rotation_agent
@@ -623,11 +623,12 @@ def reasoning_step_2(arena, is_train=False):
 
     arena = add_object(arena, 'GoodGoal', pos=(
         position_x + inv * 8.5, height_platform + 0.25, position_y))
-    category = random.choice(['BadGoal'])
-    arena = add_object(arena, category)
+    #category = random.choice(['BadGoal'])
+    #arena = add_object(arena, category)
 
-    position_agent = random_pos() if not is_train else None
-    rotation_agent = random_rotation() if not is_train else None
+    position_agent = random_pos(with_respect_to_center='far')  if is_train else None
+    rotation_agent = random_rotation() if is_train else None
+    
     arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
 
     return arena, position_agent, rotation_agent
@@ -665,7 +666,7 @@ def reasoning_step_3(arena, is_train=False):
         else (np.random.randint(position_x + 10, 35), 0,
               np.random.randint(5, 35)))
 
-    rotation_agent = random_rotation() if not is_train else None
+    rotation_agent = random_rotation() if is_train else None
     position_agent = (np.random.randint(5, 35), 0,
                       np.random.randint(
                           position_y + 10, 35)) if rotation_wall == 90 else (
@@ -674,8 +675,8 @@ def reasoning_step_3(arena, is_train=False):
 
     arena = add_object(arena, 'Agent', pos=position_agent, rot=rotation_agent)
 
-    category = random.choice(['BadGoal'])
-    arena = add_object(arena, category)
+    #category = random.choice(['BadGoal'])
+    #arena = add_object(arena, category)
 
     return arena, position_agent, rotation_agent
 
@@ -719,7 +720,7 @@ def narrow_spaces_1(arena, is_train=False):
         arena, "DeathZone", size=(40, 0, 40), pos=(20, 0, 20),
         rot=rotation_wall)
 
-    rotation_agent = random_rotation() if not is_train else None
+    rotation_agent = random_rotation() if is_train else None
     position_agent = random.choice(possible_positions_reward)
     arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
 
@@ -777,8 +778,8 @@ def narrow_spaces_2(arena, is_train=False):
     arena = add_object(arena, "HotZone", size=(40, 0, 40), pos=(20, 0, 20),
                        rot=rotation_wall)
 
-    position_agent = random_pos() if not is_train else None
-    rotation_agent = random_rotation() if not is_train else None
+    position_agent = random_pos() if is_train else None
+    rotation_agent = random_rotation() if  is_train else None
     arena = add_object(arena, "Agent", pos=position_agent, rot=rotation_agent)
 
     return arena, position_agent, rotation_agent
@@ -818,7 +819,7 @@ def preference_test_1(arena, is_train=False):
                        rot=0)
 
     position_agent = (20, 0, 20)
-    rotation_agent = random_rotation() if not is_train else None
+    rotation_agent = random_rotation() if is_train else None
 
     arena = add_object(arena, 'Agent', pos=position_agent, rot=rotation_agent)
     rew_size = np.random.randint(1, 5)

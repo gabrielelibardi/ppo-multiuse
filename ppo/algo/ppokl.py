@@ -1,11 +1,13 @@
 import os
 import torch
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions.kl import kl_divergence
 from shutil import copy2
 import random
+from torch.distributions.categorical import Categorical
 
 
 class PPOKL():
@@ -20,7 +22,8 @@ class PPOKL():
                  eps=None,
                  max_grad_norm=None,
                  use_clipped_value_loss=True,
-                 actor_behaviors=None):
+                 actor_behaviors=None,
+                 vanilla = None):
 
         self.actor_critic = actor_critic
 
@@ -37,6 +40,7 @@ class PPOKL():
         self.actor_behaviors=actor_behaviors
 
         self.optimizer = optim.Adam(actor_critic.parameters(), lr=lr, eps=eps)
+        self.vanilla = vanilla
 
     def update(self, rollouts):
         advantages = rollouts.returns[:-1] - rollouts.value_preds[:-1]
@@ -67,7 +71,15 @@ class PPOKL():
                 surr1 = ratio * adv_targ
                 surr2 = torch.clamp(ratio, 1.0 - self.clip_param,
                                     1.0 + self.clip_param) * adv_targ
-                action_loss = -torch.min(surr1, surr2).mean()
+                
+
+                if self.vanilla:
+                    action_loss = -surr1.mean()
+                else:
+                    action_loss = -torch.min(surr1, surr2).mean()
+
+
+
 
                 if self.use_clipped_value_loss:
                     value_pred_clipped = value_preds_batch + \
@@ -99,6 +111,10 @@ class PPOKL():
                 nn.utils.clip_grad_norm_(self.actor_critic.parameters(),
                                          self.max_grad_norm)
                 self.optimizer.step()
+
+                if self.actor_critic.rnd:
+                    Ri = self.actor_critic.RND.get_reward(obs_batch)
+                    self.actor_critic.RND.update(Ri)
                 
                 value_loss_epoch += value_loss.item()
                 action_loss_epoch += action_loss.item()
@@ -117,6 +133,32 @@ class PPOKL():
 
 
 
+def ppo_rollout_imitate(num_steps, envs, actor_critic, rollouts):
+    for step in range(num_steps):
+        # Sample actions
+        with torch.no_grad():
+            value, action, action_log_prob, recurrent_hidden_states, _ = actor_critic.act(
+                rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+        
+            if step == 0:
+                action = action*0
+        # Obser reward and next obs
+        obs, reward, done, infos = envs.step(action)
+        
+        with torch.no_grad():
+            
+            for ii,info in enumerate(infos):
+                action[ii] = int(info['action'])
+
+        # If done then clean the history of observations.
+        masks = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
+        bad_masks = torch.FloatTensor([[0.0] if 'bad_transition' in info.keys() else [1.0] for info in infos])
+
+        rollouts.insert(obs, recurrent_hidden_states, action,
+                        action_log_prob, value, reward, masks, bad_masks)
+
+
+
 def ppo_rollout_old(num_steps, envs, actor_critic, rollouts):
     for step in range(num_steps):
         # Sample actions
@@ -126,6 +168,30 @@ def ppo_rollout_old(num_steps, envs, actor_critic, rollouts):
 
         # Obser reward and next obs
         obs, reward, done, infos = envs.step(action)
+
+        # If done then clean the history of observations.
+        masks = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
+        bad_masks = torch.FloatTensor([[0.0] if 'bad_transition' in info.keys() else [1.0] for info in infos])
+
+        rollouts.insert(obs, recurrent_hidden_states, action,
+                        action_log_prob, value, reward, masks, bad_masks)
+
+
+def ppo_rollout_RND(num_steps, envs, actor_critic, rollouts,rnd_weight):
+    for step in range(num_steps):
+        # Sample actions
+        with torch.no_grad():
+            value, action, action_log_prob, recurrent_hidden_states, _ = actor_critic.act(
+                rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+
+
+        # Obser reward and next obs
+        obs, reward, done, infos = envs.step(action)
+
+        # Intrinsic Reward
+        with torch.no_grad():
+            Ri = actor_critic.RND.get_reward(obs).cpu().unsqueeze(1)
+            reward += Ri*rnd_weight
 
         # If done then clean the history of observations.
         masks = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
@@ -181,32 +247,56 @@ def ppo_rollout_2(num_steps, envs, actor_critic, actor_critic_expert, rollouts, 
                         action_log_prob, value, reward, masks, bad_masks)
 
 def ppo_rollout_mix(num_steps, envs, actor_critic, rollouts,actor_behaviors = None):
-    for step in range(num_steps):
-
+    entropy_list= []
+    for i in range(len(actor_behaviors)):
+        entropy_list.append([])
+        step = 0
+    while True:
 
         if actor_behaviors is not None:
-            values_list = []
-            probs_list = []
-            entropy_list= []
+
+            values_array = np.zeros(2)
+
             with torch.no_grad():
-                for behavior in actor_behaviors:
+                for i,behavior in enumerate(actor_behaviors):
+                    value, action, action_log_prob, recurrent_hidden_states, _ = behavior.act(rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+                    value, _, _, _, dist = behavior.evaluate_actions(rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step],action)
+                    q = 1/(step+1)
+                    values_array[i] = (q) * values_array[i] + (1-q) * dist.entropy().cpu().numpy()  
+
+                with torch.no_grad():
+                    print(np.argmin(values_array))
+                    value, action, action_log_prob, recurrent_hidden_states, _  = actor_behaviors[np.argmin(values_array)].act(rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+
+
+            """ with torch.no_grad():
+                for i,behavior in enumerate(actor_behaviors):
                     
                     value, action, action_log_prob, recurrent_hidden_states, _ = behavior.act(rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
                     value, _, _, _, dist = behavior.evaluate_actions(rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step],action)
                     
                     values_list.append(torch.exp(value))
                     probs_list.append(dist.probs)
-                    entropy_list.append(torch.exp(dist.entropy()).unsqueeze(0))
+                    entropy_list[i].append(dist.entropy().unsqueeze(0))
+                    dist_list.append(dist)
+            
+                entropy_list = [ele / sum(values_list) for ele in values_list]
+                entropy_list = [ele / sum(entropy_list)  for ele in entropy_list]
+                
+                weights = sum([a*b for a,b in zip(entropy_list,probs_list)])
+                dist = Categorical(probs = weights)
+                action = dist.sample()
+                entropy_list_mean = [sum(i)/len(i) for i in entropy_list]
 
             
-
-            entropy_list = [ele / sum(values_list) for ele in values_list]
-            entropy_list = [ele / sum(entropy_list)  for ele in entropy_list]
+            min_tensor = torch.cat(entropy_list_mean,0) == torch.min(torch.cat(entropy_list_mean,0),0)[0]
             
-            weights = sum([a*b for a,b in zip(entropy_list,probs_list)])
+
+            min_2 = [i .squeeze(0).unsqueeze(1) for i in torch.split(min_tensor,1)]
+            min_3 = [i.repeat(1,7) for i in min_2]
+            weights = sum([a*b for a,b in zip(min_3,probs_list)])
             dist = Categorical(probs = weights)
-            action = dist.sample()
-
+            action = dist.sample() """
 
 
         else:
@@ -217,13 +307,15 @@ def ppo_rollout_mix(num_steps, envs, actor_critic, rollouts,actor_behaviors = No
 
         # Obser reward and next obs
         obs, reward, done, infos = envs.step(action)
+
+        if done:
+            break
         
         # If done then clean the history of observations.
         masks = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
         bad_masks = torch.FloatTensor([[0.0] if 'bad_transition' in info.keys() else [1.0] for info in infos])
 
-        rollouts.insert(obs, recurrent_hidden_states, action,
-                        action_log_prob, value, reward, masks, bad_masks)            
+        rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks, bad_masks)
 
 
 def ppo_update(agent, actor_critic, rollouts, use_gae, gamma, gae_lambda, use_proper_time_limits):
