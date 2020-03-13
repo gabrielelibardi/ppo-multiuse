@@ -13,7 +13,6 @@ from matplotlib import pylab as plt
 import numpy as np
 import argparse
 import os
-import pandas as pd
 
 
 def get_args():
@@ -37,23 +36,15 @@ while True:
         fig = plt.figure(i,clear=True, figsize=(15,9))
         try:
             df = load_results(d)
-            df2 = pd.DataFrame() 
             #import ipdb; ipdb.set_trace()
-            
             df['f']= df['l'].cumsum()/1000000
-            
+            df['f_real']= df['len_real'].cumsum()/1000000
             #import ipdb; ipdb.set_trace()
             df['perf']= df['ereward']/(df['max_reward'])
             df['perf'].where(df['perf']>0,0,inplace=True)
             df['goal'] = df['perf']>0.9  #guess a threadshold
-            
-            df2['len_real'] = df['l'][~((df['ereward'] != 0) & (df['reward_woD'] == 0))] 
-            df2['f_real']= df2['len_real'].cumsum()/1000000
-            df2['reward_woD'] = df['reward_woD'][~((df['ereward'] != 0) & (df['reward_woD'] == 0))] 
-            df2['real_perf']= df2['reward_woD']/(df['max_reward'][~((df['ereward'] != 0) & (df['reward_woD'] == 0))])
-
-           
-            num_good_traj = df2['real_perf'][df2['real_perf'] > 0].count()
+            df['real_perf']= df['reward_woD']/(df['max_reward'])
+            num_good_traj = df['real_perf'][df['real_perf'] > 0].count()
             roll =300
             total_time = df['t'].iloc[-1]
             total_steps = df['l'].sum()
@@ -76,9 +67,9 @@ while True:
             ax.grid(True)
 
             ax = plt.subplot(2, 2, 3)
-            df2[['f_real','real_perf']].rolling(roll).mean().iloc[0:-1:40].plot('f_real','real_perf', ax=ax,legend=False)
+            df[['f_real','real_perf']].rolling(roll).mean().iloc[0:-1:40].plot('f_real','real_perf', ax=ax,legend=False)
             ax.set_xlabel('N. steps (M)')
-            ax.set_ylabel('Performance without Deomnstrations')
+            ax.set_ylabel('Reward without Deomnstrations')
             #plt.xlim((0, xlim_))
             ax.grid(True)
 
@@ -90,7 +81,7 @@ while True:
             ax.grid(True)
               
             fig.tight_layout() 
-            ax.get_figure().savefig(my_dir + '/monitor-2.jpg')
+            ax.get_figure().savefig(my_dir + '/monitor.jpg')
             plt.clf()
         except Exception as e: 
             print(e) 

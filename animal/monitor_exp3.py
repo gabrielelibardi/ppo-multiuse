@@ -54,63 +54,63 @@ df = pd.DataFrame()
 fig = plt.figure(figsize=(15, 9))
 
 for num, experiment in enumerate(experiments_path):
+    df = pd.DataFrame()
+    #if experiment.split("/")[-2] not in black_list:
+    exps = glob(experiment+'/*/')   
+    #exps = glob(experiment)
+    print(exps)
 
-    if experiment.split("/")[-2] not in black_list:
-
-        exps = glob(experiment)
-        print(exps)
-
-        for _, name in enumerate(exps):
-
-            df_ = load_results(name)
-            
-            df = df.append(df_)
+    for _, name in enumerate(exps):
+        df_ = load_results(name)   
+        df = df.append(df_)
 
 
+    df['f']= df['l'].cumsum()/1000000
+    df['perf']= df['ereward']/(df['max_reward'])
+    df['perf'].where(df['perf']>0,0,inplace=True)
+    df['goal'] = df['perf']>0.9  #guess a threadshold
 
+    roll = 500
+    total_time = df['t'].iloc[-1]
+    total_steps = df['l'].sum()
+    total_episodes = df['r'].size
+    experiment_names[num] += " ({:.1f} h, FPS {:.1f})".format(total_time / 3600, total_steps/total_time)
 
+    """ ax = plt.subplot(1, 2, 1)
+    df[['f','r']].rolling(roll).mean().iloc[0:-1:40].plot('f','r',  ax=ax,legend=False)
+    ax.set_xlabel('N. steps (M)')
+    ax.set_ylabel('Reward')
+    ax.grid(True)
+    plt.legend(experiment_names, loc='best') """
 
+    """ ax = plt.subplot(1, 1, 1)
+    df[['f','perf']].rolling(roll).mean().iloc[0:-1:40].plot('f','perf', ax=ax,legend=False)
+    ax.set_xlabel('N. steps (M)')
+    ax.set_ylabel('Performance')
+    ax.grid(True)
+    plt.legend(experiment_names, loc='best') """
 
-df['f']= df['l'].cumsum()/1000000
-df['perf']= df['ereward']/(df['max_reward'])
-df['perf'].where(df['perf']>0,0,inplace=True)
-df['goal'] = df['perf']>0.9  #guess a threadshold
+    ax = plt.subplot(1, 1, 1)
+    df[['f','reward_woD']].rolling(roll).mean().iloc[0:-1:40].plot('f','reward_woD', ax=ax,legend=False)
+    ax.set_xlabel('N. steps (M)')
+    ax.set_ylabel('Reward without Deomnstrations')
+    ax.grid(True)
 
-roll = 500
-total_time = df['t'].iloc[-1]
-total_steps = df['l'].sum()
-total_episodes = df['r'].size
-experiment_names[num] += " ({:.1f} h, FPS {:.1f})".format(total_time / 3600, total_steps/total_time)
+    """ ax = plt.subplot(2, 2, 3)
+    df[['f','goal']].rolling(roll).mean().iloc[0:-1:40].plot('f','goal', ax=ax,legend=False)
+    ax.set_xlabel('N. steps (M)')
+    ax.set_ylabel('Estimated evalai score')
+    ax.grid(True)
+    plt.legend(experiment_names, loc='best')
 
-""" ax = plt.subplot(1, 2, 1)
-df[['f','r']].rolling(roll).mean().iloc[0:-1:40].plot('f','r',  ax=ax,legend=False)
-ax.set_xlabel('N. steps (M)')
-ax.set_ylabel('Reward')
-ax.grid(True)
-plt.legend(experiment_names, loc='best') """
+    ax = plt.subplot(2, 2, 4)
+    df[['l']].rolling(roll).mean().iloc[0:-1:40].plot(y='l', ax=ax,legend=False)
+    ax.set_xlabel('N. episodes')
+    ax.set_ylabel('Episode lenght')
+    ax.grid(True) """
 
-ax = plt.subplot(1, 1, 1)
-df[['f','perf']].rolling(roll).mean().iloc[0:-1:40].plot('f','perf', ax=ax,legend=False)
-ax.set_xlabel('N. steps (M)')
-ax.set_ylabel('Performance')
-ax.grid(True)
-plt.legend(experiment_names, loc='best')
-
-""" ax = plt.subplot(2, 2, 3)
-df[['f','goal']].rolling(roll).mean().iloc[0:-1:40].plot('f','goal', ax=ax,legend=False)
-ax.set_xlabel('N. steps (M)')
-ax.set_ylabel('Estimated evalai score')
-ax.grid(True)
-plt.legend(experiment_names, loc='best')
-
-ax = plt.subplot(2, 2, 4)
-df[['l']].rolling(roll).mean().iloc[0:-1:40].plot(y='l', ax=ax,legend=False)
-ax.set_xlabel('N. episodes')
-ax.set_ylabel('Episode lenght')
-ax.grid(True) """
-
-plt.legend(experiment_names, loc='best')
-fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.1, hspace=0.2)
+    plt.legend(experiment_names, loc='best')
+    fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, wspace=0.1, hspace=0.2)
 
 
 # fig.tight_layout()

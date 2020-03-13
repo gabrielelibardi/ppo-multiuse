@@ -37,13 +37,13 @@ def main():
 
     utils.cleanup_log_dir(args.log_dir)
     env_make = make_animal_env(log_dir = args.log_dir, inference_mode=args.realtime,  frame_skip=args.frame_skip , 
-            arenas_dir=args.arenas_dir, info_keywords=('ereward','max_reward','max_time','arena'), 
-            reduced_actions=args.reduced_actions, seed=args.seed, state=args.state, replay_ratio = args.replay_ratio, record_actions = args.record_actions)
+            arenas_dir=args.arenas_dir, info_keywords=('ereward','max_reward','max_time','arena','reward_woD', 'len_real'), 
+            reduced_actions=args.reduced_actions, seed=args.seed, state=args.state, replay_ratio = args.replay_ratio, record_actions = args.record_actions, schedule_ratio = args.schedule_ratio, demo_dir = args.demo_dir)
     
     #spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
     #               gym.spaces.Discrete(9) )
     if args.cnn == 'State':
-         #TODO: hugly hack
+         #TODO: ugly hack
         state_shape = (13,) if args.reduced_actions else (15,)  
     else:
         state_shape = None
@@ -82,7 +82,7 @@ def main():
             actor_behaviors.append(actor) 
 
     agent = algo.PPOKL(actor_critic,args.clip_param,args.ppo_epoch, args.num_mini_batch,args.value_loss_coef,
-            args.entropy_coef,lr=args.lr,eps=args.eps,max_grad_norm=args.max_grad_norm,actor_behaviors=actor_behaviors,vanilla=args.vanilla)
+            args.entropy_coef,lr=args.lr,eps=args.eps,max_grad_norm=args.max_grad_norm,actor_behaviors=actor_behaviors,vanilla=args.vanilla, behaviour_cloning=args.behaviour_cloning, test = args.test)
 
     obs = envs.reset()
     rollouts = RolloutStorage(args.num_steps, args.num_processes,
@@ -129,7 +129,7 @@ def main():
                 total_num_steps = (j + 1) * args.num_processes * args.num_steps
                 s =  "Update {}, num timesteps {}, FPS {} \n".format(j, total_num_steps,int(total_num_steps / ( time.time() - start)))
                 s += "Loss {}, Entropy {}, value_loss {}, action_loss {}, kl_divergence {}".format(loss, dist_entropy, value_loss,action_loss,kl_div)
-                print(s,flush=True)
+                print(s)
     
 
 def get_args():
@@ -215,9 +215,17 @@ def get_args():
     parser.add_argument(
         '--replay-ratio',default=0, type=float, help='ratio of demonstration replays during training')
     parser.add_argument(
-        '--record-actions',action='store_true',default=False ,help='Wether to record the actions and savethem without updating the model')
+        '--record-actions',default='', help='if not not none records actions, directory for the recordings to be stored in ' )
     parser.add_argument(
         '--vanilla',action='store_true',default=None ,help='Does not use the PPO clipping instead it uses AC style loss function')
+    parser.add_argument(
+        '--schedule-ratio',action='store_true',default=False ,help='Wether to schedule the replayer ratio')
+    parser.add_argument(
+        '--behaviour-cloning', action='store_true',default=False ,help='Adds a behavioural cloning loss')
+    parser.add_argument(
+    '--demo-dir',default='', help='directory where to get the demonstrations from')
+    parser.add_argument(
+        '--test', action='store_true',default=False ,help='Sets the loss to zero, so we can get the test loss on a test set')
 
 
 

@@ -23,7 +23,9 @@ class PPOKL():
                  max_grad_norm=None,
                  use_clipped_value_loss=True,
                  actor_behaviors=None,
-                 vanilla = None):
+                 vanilla = None,
+                 behaviour_cloning = None,
+                 test = None):
 
         self.actor_critic = actor_critic
 
@@ -41,11 +43,22 @@ class PPOKL():
 
         self.optimizer = optim.Adam(actor_critic.parameters(), lr=lr, eps=eps)
         self.vanilla = vanilla
+        self.behaviour_cloning = behaviour_cloning
+        self.impala = False
+        self.test = test
+
+
 
     def update(self, rollouts):
-        advantages = rollouts.returns[:-1] - rollouts.value_preds[:-1]
-        advantages = (advantages - advantages.mean()) / (
-            advantages.std() + 1e-5)
+
+    
+
+        if self.vanilla:
+            advantages = rollouts.returns[:-1]
+        else:
+            advantages = rollouts.returns[:-1] - rollouts.value_preds[:-1]
+        
+        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-5)
 
         value_loss_epoch = 0
         action_loss_epoch = 0
@@ -57,23 +70,29 @@ class PPOKL():
                 data_generator = rollouts.recurrent_generator( advantages, self.num_mini_batch)
             else:
                 data_generator = rollouts.feed_forward_generator( advantages, self.num_mini_batch)
+            
+            # assert if self.impala then batch_size = 1
 
             for sample in data_generator:
                 obs_batch, recurrent_hidden_states_batch, actions_batch, \
                    value_preds_batch, return_batch, masks_batch, old_action_log_probs_batch, \
-                        adv_targ = sample
+                        adv_targ, is_demo_batch = sample
+                
+                
 
                 # Reshape to do in a single forward pass for all steps
                 values, action_log_probs, dist_entropy, _, dist_a = self.actor_critic.evaluate_actions(
                     obs_batch, recurrent_hidden_states_batch, masks_batch,actions_batch)
+
 
                 ratio = torch.exp(action_log_probs - old_action_log_probs_batch)
                 surr1 = ratio * adv_targ
                 surr2 = torch.clamp(ratio, 1.0 - self.clip_param,
                                     1.0 + self.clip_param) * adv_targ
                 
-
                 if self.vanilla:
+                    #action_loss = -surr1.mean()
+                    surr1 = ratio*adv_targ
                     action_loss = -surr1.mean()
                 else:
                     action_loss = -torch.min(surr1, surr2).mean()
@@ -92,9 +111,28 @@ class PPOKL():
                 else:
                     value_loss = 0.5 * (return_batch - values).pow(2).mean()
 
+                
+                # behavioural cloning loss
+                if self.behaviour_cloning:
+                    loss = nn.CrossEntropyLoss()
+                    actions_prob = self.actor_critic.actions_prob(obs_batch, recurrent_hidden_states_batch, masks_batch,actions_batch)
+                    actions_prob_demo = actions_prob[(is_demo_batch == 1).squeeze()]
+                    actions_batch_demo = actions_batch[is_demo_batch == 1]
+                    if actions_batch_demo.shape[0] != 0:
+                        BC_loss = loss(actions_prob_demo,actions_batch_demo.view(-1))
+                    else:
+                        BC_loss = 0
+                else:
+                    BC_loss = 0 
+                    
+
+
                 self.optimizer.zero_grad()
-                #loss = value_loss * self.value_loss_coef + action_loss - dist_entropy * self.entropy_coef
-                loss = value_loss * self.value_loss_coef + action_loss 
+                if self.behaviour_cloning:
+                    loss = BC_loss + value_loss * self.value_loss_coef
+                else:
+                    loss = value_loss * self.value_loss_coef + action_loss
+                
                 kl_div = 0 * torch.as_tensor(loss)
                 if self.actor_behaviors is not None:
                     for behavior in self.actor_behaviors:
@@ -106,6 +144,9 @@ class PPOKL():
                     loss += kl_div * self.entropy_coef / len(self.actor_behaviors)
                 else:
                     loss +=  - dist_entropy * self.entropy_coef
+                if self.test:
+                    loss = 0*loss
+                
 
                 loss.backward()
                 nn.utils.clip_grad_norm_(self.actor_critic.parameters(),
@@ -146,16 +187,25 @@ def ppo_rollout_imitate(num_steps, envs, actor_critic, rollouts):
         obs, reward, done, infos = envs.step(action)
         
         with torch.no_grad():
+            is_demos = torch.zeros(action.shape, dtype=torch.int32, device= action.device)
+            
             
             for ii,info in enumerate(infos):
-                action[ii] = int(info['action'])
+
+                if int(info['action']) != 99:
+                    action[ii] = int(info['action'])
+                    action_log_prob[ii] = 0
+                    is_demos[ii] = 1
+
+
+            
 
         # If done then clean the history of observations.
         masks = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
         bad_masks = torch.FloatTensor([[0.0] if 'bad_transition' in info.keys() else [1.0] for info in infos])
 
         rollouts.insert(obs, recurrent_hidden_states, action,
-                        action_log_prob, value, reward, masks, bad_masks)
+                        action_log_prob, value, reward, masks, bad_masks, is_demos)
 
 
 

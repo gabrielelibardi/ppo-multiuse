@@ -59,8 +59,8 @@ for num, experiment in enumerate(experiments_path):
         print(exps)
 
         for _, name in enumerate(exps):
-
             df = load_results(name)
+              
             df['f']= df['l'].cumsum()/1000000
             df['perf']= df['ereward']/(df['max_reward'])
             df['perf'].where(df['perf']>0,0,inplace=True)
@@ -70,7 +70,7 @@ for num, experiment in enumerate(experiments_path):
             total_time = df['t'].iloc[-1]
             total_steps = df['l'].sum()
             total_episodes = df['r'].size
-            experiment_names[num] += " ({:.1f} h, FPS {:.1f})".format(total_time / 3600, total_steps/total_time)
+            #experiment_names[num] += " ({:.1f} h, FPS {:.1f})".format(total_time / 3600, total_steps/total_time)
 
             """ ax = plt.subplot(1, 2, 1)
             df[['f','r']].rolling(roll).mean().iloc[0:-1:40].plot('f','r',  ax=ax,legend=False)
@@ -85,7 +85,7 @@ for num, experiment in enumerate(experiments_path):
             ax.set_ylabel('Performance')
             ax.grid(True)
             plt.legend(experiment_names, loc='best')
-            #plt.xlim((0, 50)) 
+            plt.xlim((0, 100)) 
 
             """ ax = plt.subplot(2, 2, 3)
             df[['f','goal']].rolling(roll).mean().iloc[0:-1:40].plot('f','goal', ax=ax,legend=False)

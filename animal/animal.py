@@ -22,7 +22,7 @@ import torch
 import pickle
 import matplotlib.pyplot as plt
 
-def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed, state, replay_ratio, record_actions):
+def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywords, reduced_actions, seed, state, replay_ratio, record_actions, schedule_ratio, demo_dir):
     base_port = 100*seed  # avoid collisions
     def make_env(rank):
         def _thunk():
@@ -38,10 +38,12 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
             if reduced_actions:
                 env = FilterActionEnv(env)
 
-            if record_actions:
+            if record_actions: 
                 env = LabAnimalRecordAction(env,arenas_dir,replay_ratio, record_actions)
             else:
-                env = LabAnimalReplayAll(env,arenas_dir,replay_ratio)
+                #env = LabAnimalReplayAll(env,arenas_dir,replay_ratio, schedule_ratio, demo_dir)
+                #env = LabAnimalReplayRecord(env,arenas_dir,replay_ratio, schedule_ratio, demo_dir)
+                env = LabAnimal(env, arenas_dir,replay_ratio)
             #env = RewardShaping(env)
             
             if state:
@@ -127,17 +129,27 @@ class ReplayActions():
 
 
 class ReplayAll():
-    def __init__(self,replay_ratio,arenas):
+    def __init__(self,replay_ratio,arenas,schedule_ratio, demo_dir):
         self.rho = replay_ratio
         self.replay = False
         #self.flattener = ActionFlattener([3,3])
-        self.recordings = {}
-        for arena  in arenas:
-            actions_name =  arena.split('/')[-1].split('.')[0]
-            filename = '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_actions_3/{}.npz'.format(actions_name)
-            if os.path.isfile(filename):
-                self.recordings[arena] = np.load(filename)
         
+        self.schedule_ratio = schedule_ratio
+        """ for arena  in arenas:
+            actions_name =  arena.split('/')[-1].split('.')[0]
+            filename = '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_reason/{}.npz'.format(actions_name)
+            if os.path.isfile(filename):
+                self.recordings[arena] = np.load(filename) """
+        self.demo_dir = demo_dir
+        self.files = glob.glob("{}/*".format(demo_dir))
+        #self.files = glob.glob("{}/*".format('/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_reason2'))
+        
+        self.recordings = [np.load(filename) for ii, filename in enumerate(self.files) if 100 >= ii ]
+        self.num_extra = len(self.recordings) -1
+        self.max_N_demonstrations = 100
+        #import ipdb; ipdb.set_trace()
+        self.old_files = []
+
 
     def replay_step(self, action):
 
@@ -158,24 +170,158 @@ class ReplayAll():
         else:
             return [action]
     
-    def reset(self,arena_name):
-        actions_name =  arena_name.split('/')[-1].split('.')[0]
-        self.filename = '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_actions_3/{}.npz'.format(actions_name)
-        if os.path.isfile( self.filename):
-            if  random.choices([0,1], weights=[self.rho, 1-self.rho])[0] == 0:
+    def reset(self,arena_name, average_performance):
+        
+        if self.schedule_ratio:
+            rho = (1 - average_performance)*self.rho
+        else:
+            rho = self.rho
+        #actions_name =  arena_name.split('/')[-1].split('.')[0]
+        #self.filename = '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_reason/{}.npz'.format(actions_name)
+        #if os.path.isfile( self.filename):
+        if len(self.files) != 0:
+            recording = random.choice(self.recordings)
+            #print(recording['actions'].shape)
+            if  random.choices([0,1], weights=[rho, 1 - rho])[0] == 0:
                 self.replay = True
                 
-                self.acts = self.recordings[arena_name]['actions']
-                self.obs = self.recordings[arena_name]['observations']
-                self.rews = self.recordings[arena_name]['rewards']
+                self.acts = recording['actions']
+                self.obs = recording['observations']
+                self.rews = recording['rewards']
                 self.num_steps = self.acts.shape[0]
                 self.step = 0
             else:
                 self.replay = False
+        else:
+            self.replay = False
+
         return self.replay
-
+    
         
+    def check_new_recording(self):
+        
+        files = glob.glob("{}/*".format(self.demo_dir))
+        new_files = [ii for ii in files if ii not in self.files]
+        new_files = [ii for ii in files if ii not in self.old_files]
+        #self.files = glob.glob("{}/*".format('/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_reason2'))
+        for filename in new_files:
+            
+            self.recordings.insert(1,np.load(filename)) 
+            self.files.insert(1,filename)
+            
+            self.num_extra = len(self.recordings) -1
 
+            if self.num_extra >=  100:
+                self.old_files += self.files.pop()
+                self.recordings.pop()
+
+
+
+class LabAnimalReplayRecord(gym.Wrapper):
+    def __init__(self, env, arenas_dir, replay_ratio,schedule_ratio, demo_dir):
+        gym.Wrapper.__init__(self, env)
+        if os.path.isdir(arenas_dir):
+            #files = glob.glob("{}/*/*.yaml".format(arenas_dir)) + glob.glob("{}/*.yaml".format(arenas_dir))
+            files = glob.glob("{}/*.yml".format(arenas_dir)) + glob.glob("{}/*.yaml".format(arenas_dir))
+        else:
+            #assume is a pattern
+            files = glob.glob(arenas_dir)
+        
+        self.env_list = [(f,ArenaConfig(f)) for f in files]
+        self._arena_file = ''
+        self.replayer = ReplayAll(replay_ratio,files,schedule_ratio, demo_dir)
+        self.performance_tracker = np.zeros(1000)
+        self.n_arenas = 0
+        self.directory = demo_dir
+        self.obs_rollouts = []
+        self.rews_rollouts = []
+        self.actions_rollouts = []
+        self.buffer_save = []
+        
+    
+
+    def step(self, action):
+        out =self.replayer.replay_step(action)
+        info = {}
+        if len(out) == 1:
+            obs, reward, done, info = self.env.step(action)
+            self.obs_rollouts.append(obs)
+            self.rews_rollouts.append(reward)
+            self.actions_rollouts.append(action)
+            if (reward > -0.01 ) and (reward < 0):
+                reward = 0 # get rid of the time reward
+            
+            self.env_reward_no_D += reward
+            self.len_real +=1
+            
+            info['action'] = 99
+        else:
+            action, obs, reward, done = out
+            
+            if (reward > -0.01 ) and (reward < 0):
+                reward = 0 # get rid of the time reward
+        
+            info['action'] = action
+            self.len_real  = 0
+             
+        self.steps += 1
+
+        self.env_reward += reward
+        info['arena']=self._arena_file  #for monitor
+        info['max_reward']=self.max_reward
+        info['max_time']=self.max_time
+        info['ereward'] = self.env_reward
+        info['reward_woD'] = self.env_reward_no_D
+        info['len_real'] = self.len_real
+        if done:
+            self.performance_tracker[self.n_arenas % 1000] = max(self.env_reward_no_D, 0)/self.max_reward
+
+        return obs, reward, done, info        
+
+    def reset(self, **kwargs):
+        self.n_arenas += 1
+        self.steps = 0
+        self.env_reward = 0
+        self.env_reward_no_D = 0
+        self.len_real = 0
+        if (len (self.actions_rollouts) > 0) and (sum(self.rews_rollouts) > 0.5):
+            arena_name =  self._arena_file.split('/')[-1].split('.')[0]
+            self.filename = '{}/{}_{}'.format(self.directory , arena_name, random.getrandbits(50))
+
+            
+            to_save = {'name':self.filename,'observations':np.array(self.obs_rollouts),
+                            'rewards':np.array(self.rews_rollouts),
+                            'actions':np.array(self.actions_rollouts) }
+
+            self.buffer_save.append(to_save)
+            """ np.savez(self.filename,observations=np.array(self.obs_rollouts),
+                            rewards=np.array(self.rews_rollouts),
+                            actions=np.array(self.actions_rollouts)) """
+          
+    
+           
+        self.obs_rollouts = []
+        self.rews_rollouts = []
+        self.actions_rollouts = []
+
+        if  self.n_arenas % 1 == 0:
+            for recording in self.buffer_save:
+                #print('-----------',self.n_arenas)
+                np.savez(recording['name'],observations=recording['observations'],
+                                rewards=recording['rewards'],
+                                actions=recording['actions'])
+
+            self.replayer.check_new_recording() 
+            self.buffer_save = []
+
+        self._arena_file, arena = random.choice(self.env_list)
+
+        average_performance = np.average(self.performance_tracker)
+        replay = self.replayer.reset(self._arena_file, average_performance)
+#        self.max_reward = analyze_arena(arena)
+        self.max_reward = set_reward_arena(arena, force_new_size=False)
+        self.max_time = arena.arenas[0].t
+        return self.env.reset(arenas_configurations=arena,**kwargs) 
 
 def random_size_reward():
     #according to docs it's 0.5-5
@@ -212,7 +358,7 @@ def set_reward_arena(arena, force_new_size = False):
 
 
 class LabAnimalReplayAll(gym.Wrapper):
-    def __init__(self, env, arenas_dir, replay_ratio):
+    def __init__(self, env, arenas_dir, replay_ratio,schedule_ratio, demo_dir):
         gym.Wrapper.__init__(self, env)
         if os.path.isdir(arenas_dir):
             files = glob.glob("{}/*/*.yaml".format(arenas_dir)) + glob.glob("{}/*.yaml".format(arenas_dir))
@@ -223,34 +369,56 @@ class LabAnimalReplayAll(gym.Wrapper):
         
         self.env_list = [(f,ArenaConfig(f)) for f in files]
         self._arena_file = ''
-        self.replayer = ReplayAll(replay_ratio,files)
+        self.replayer = ReplayAll(replay_ratio,files,schedule_ratio, demo_dir)
+        self.performance_tracker = np.zeros(1000)
+        self.n_arenas = 0
 
     def step(self, action):
         out =self.replayer.replay_step(action)
+        info = {}
         if len(out) == 1:
             obs, reward, done, info = self.env.step(action)
+            if (reward > -0.01 ) and (reward < 0):
+                reward = 0 # get rid of the time reward
+            
+            self.env_reward_no_D += reward
+            info['action'] = 99
         else:
             action, obs, reward, done = out
-            info = {}
+            
+            if (reward > -0.01 ) and (reward < 0):
+                reward = 0 # get rid of the time reward
+        
+            info['action'] = action
+                  
         self.steps += 1
+
         self.env_reward += reward
         info['arena']=self._arena_file  #for monitor
         info['max_reward']=self.max_reward
         info['max_time']=self.max_time
         info['ereward'] = self.env_reward
-        info['action'] = action
+        info['reward_woD'] = self.env_reward_no_D
+        if done:
+            self.performance_tracker[self.n_arenas % 1000] = max(self.env_reward_no_D, 0)/self.max_reward
+
         return obs, reward, done, info        
 
     def reset(self, **kwargs):
+        self.n_arenas += 1
         self.steps = 0
         self.env_reward = 0
+        self.env_reward_no_D = 0
+        
         """  while True:
             self._arena_file, arena = random.choice(self.env_list)
             replay = self.replayer.reset(self._arena_file)
             if replay:
                 break """
         self._arena_file, arena = random.choice(self.env_list)
-        replay = self.replayer.reset(self._arena_file)
+
+        average_performance = np.average(self.performance_tracker)
+        replay = self.replayer.reset(self._arena_file, average_performance)
 #        self.max_reward = analyze_arena(arena)
         self.max_reward = set_reward_arena(arena, force_new_size=False)
         self.max_time = arena.arenas[0].t
@@ -308,6 +476,7 @@ class LabAnimalRecordAction(gym.Wrapper):
         self.rews_rollouts = []
         self.actions_rollouts = []
         self.directory = record_actions
+        self.arena_num = 0
 
     def step(self, action):
         
@@ -326,17 +495,25 @@ class LabAnimalRecordAction(gym.Wrapper):
         return obs, reward, done, info        
 
     def reset(self, **kwargs):
-        self.steps = 0
-        self.env_reward = 0
-
-        if len (self.actions_rollouts) > 0:
+        
+        if (len (self.actions_rollouts) > 0) and (self.env_reward > 0) :
             arena_name =  self._arena_file.split('/')[-1].split('.')[0]
             self.filename = '{}/{}'.format( self.directory ,arena_name)
-            np.savez(self.filename,observations=np.array(self.obs_rollouts),
-                        rewards=np.array(self.rews_rollouts),
-                        actions=np.array(self.actions_rollouts))
 
-        self._arena_file, arena = random.choice(self.env_list)
+            print(os.path.exists('{}.npz'.format(self.filename)))
+            print(self.filename)
+            if not os.path.exists('{}.npz'.format(self.filename)):
+            
+                np.savez(self.filename,observations=np.array(self.obs_rollouts),
+                            rewards=np.array(self.rews_rollouts),
+                            actions=np.array(self.actions_rollouts))
+            self.arena_num += 1
+
+        #self._arena_file, arena = random.choice(self.env_list)
+        self._arena_file, arena   = self.env_list[self.arena_num % len(self.env_list)]
+        self.steps = 0
+        self.env_reward = 0
+        
         self.replayer.reset(self._arena_file)
 #        self.max_reward = analyze_arena(arena)
         self.max_reward = set_reward_arena(arena, force_new_size=False)

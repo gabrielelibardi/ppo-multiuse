@@ -35,7 +35,7 @@ parser.add_argument(
 parser.add_argument(
     '--device', default='cuda', help='Cuda device  or cpu (default:cuda:0 )')
 parser.add_argument(
-    '--non-det', action='store_true', default=True, help='whether to use a non-deterministic policy')
+    '--det', action='store_true', default=False, help='whether to use a non-deterministic policy')
 parser.add_argument(
     '--recurrent-policy', action='store_true', default=False, help='use a recurrent policy')
 parser.add_argument(
@@ -51,20 +51,23 @@ parser.add_argument(
 parser.add_argument(
     '--vae-model',default=None,help='directory for the dictionary of the initial VAE model')
 parser.add_argument(
-    '--cnn',default='Fixup',help='Type of cnn. Options are CNN,Impala,Fixup')     
+    '--cnn',default='CNN',help='Type of cnn. Options are CNN,Impala,Fixup')     
 parser.add_argument(
     '--replay-ratio',default=0.5, type=float, help='ratio of demonstration replays during training')
 parser.add_argument(
     '--record-actions',default='', help='if not not none records actions, directory for the recordings to be stored in ' )
-
+parser.add_argument(
+    '--schedule-ratio',action='store_true',default=False ,help='Wether to schedule the replayer ratio')
+parser.add_argument(
+    '--demo-dir',default= '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_reason2', help='directory where to get the demonstrations from')
+    
 
 args = parser.parse_args()
-args.det = not args.non_det
 device = torch.device(args.device)
 
 maker = make_animal_env(log_dir = None, inference_mode=args.realtime,  frame_skip=args.frame_skip , 
             arenas_dir=args.arenas_dir, info_keywords=('ereward','max_reward','max_time','arena'), 
-            reduced_actions=args.reduced_actions, seed= 1, state= False, replay_ratio= args.replay_ratio, record_actions = args.record_actions)
+            reduced_actions=args.reduced_actions, seed= 1, state= False, replay_ratio= args.replay_ratio, record_actions = args.record_actions,schedule_ratio = args.schedule_ratio, demo_dir = args.demo_dir)
 
 env = make_vec_envs(maker, 1, None, device=device, num_frame_stack=args.frame_stack, 
                         state_shape=None, num_state_stack=14 )
@@ -77,10 +80,33 @@ env = make_vec_envs(maker, 1, None, device=device, num_frame_stack=args.frame_st
 base_kwargs={'recurrent': args.recurrent_policy}
 actor_critic = Policy(env.observation_space,env.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs)
 
+sum = 0.0
+for parameter in actor_critic.parameters():
+    sum += parameter.sum()
+print(sum)
+
 if args.load_model:
+    
+    
+    #import ipdb; ipdb.set_trace()
+
+    AA = torch.load(args.load_model,map_location=device)
+
+    sum = 0.0
+    for parameter in AA:
+        sum += AA[parameter].sum()
+    print(sum)
+
+    print(args.load_model)
     actor_critic.load_state_dict(torch.load(args.load_model,map_location=device))
 actor_critic.to(device)
 
+
+sum = 0.0
+for parameter in actor_critic.parameters():
+    sum += parameter.sum()
+print(sum)
+#import ipdb; ipdb.set_trace()
 
 
 recurrent_hidden_states = torch.zeros(1, actor_critic.recurrent_hidden_state_size).to(device)
@@ -148,6 +174,7 @@ def unroll(acts):
 
 
 
+
 recording = False
 
 
@@ -182,9 +209,16 @@ with keyboard.Listener(
             rews_rollouts.append(reward)
             actions_rollouts.append(action)
             recording = True """
+
+        """ sum = 0.0
+        for parameter in actor_critic.parameters():
+            sum += parameter.sum()
+        print(sum)
+        #import ipdb; ipdb.set_trace() """
             
         obs, reward, done, info = env.step(action)
 
+        
 
         if "u" not in pressed_keys and recording == True:
             filename = '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_actions_3/{}'.format(arena_name)
