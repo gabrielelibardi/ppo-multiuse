@@ -32,18 +32,17 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
             exe = os.path.join(os.path.dirname(animalai.__file__),'../../env/AnimalAI')
             env = AnimalAIEnv(environment_filename = exe,
                                retro=False, worker_id=base_port+rank, docker_training=False, 
-                               seed = 0, n_arenas = 1, arenas_configurations=None, 
+                               seed = 7, n_arenas = 1, arenas_configurations=None, 
                                greyscale=False, inference=inference_mode,resolution=None)
             env = RetroEnv(env)
             if reduced_actions:
                 env = FilterActionEnv(env)
-
             if record_actions: 
                 env = LabAnimalRecordAction(env,arenas_dir,replay_ratio, record_actions)
             else:
                 #env = LabAnimalReplayAll(env,arenas_dir,replay_ratio, schedule_ratio, demo_dir)
-                #env = LabAnimalReplayRecord(env,arenas_dir,replay_ratio, schedule_ratio, demo_dir)
-                env = LabAnimal(env, arenas_dir,replay_ratio)
+                env = LabAnimalReplayRecord(env,arenas_dir,replay_ratio, schedule_ratio, demo_dir)
+                #env = LabAnimal(env, arenas_dir,replay_ratio)
             #env = RewardShaping(env)
             
             if state:

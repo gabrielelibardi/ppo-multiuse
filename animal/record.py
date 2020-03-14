@@ -80,34 +80,9 @@ env = make_vec_envs(maker, 1, None, device=device, num_frame_stack=args.frame_st
 base_kwargs={'recurrent': args.recurrent_policy}
 actor_critic = Policy(env.observation_space,env.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs)
 
-sum = 0.0
-for parameter in actor_critic.parameters():
-    sum += parameter.sum()
-print(sum)
-
 if args.load_model:
-    
-    
-    #import ipdb; ipdb.set_trace()
-
-    AA = torch.load(args.load_model,map_location=device)
-
-    sum = 0.0
-    for parameter in AA:
-        sum += AA[parameter].sum()
-    print(sum)
-
-    print(args.load_model)
     actor_critic.load_state_dict(torch.load(args.load_model,map_location=device))
 actor_critic.to(device)
-
-
-sum = 0.0
-for parameter in actor_critic.parameters():
-    sum += parameter.sum()
-print(sum)
-#import ipdb; ipdb.set_trace()
-
 
 recurrent_hidden_states = torch.zeros(1, actor_critic.recurrent_hidden_state_size).to(device)
 masks = torch.zeros(1, 1).to(device)
