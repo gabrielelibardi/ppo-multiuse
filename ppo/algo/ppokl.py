@@ -186,10 +186,6 @@ def ppo_rollout_imitate(num_steps, envs, actor_critic, rollouts):
         # Obser reward and next obs
         obs, reward, done, infos = envs.step(action)
         
-        sum = 0.0
-        for parameter in actor_critic.parameters():
-            sum += parameter.sum()
-        print(sum)
         
         with torch.no_grad():
             is_demos = torch.zeros(action.shape, dtype=torch.int32, device= action.device)

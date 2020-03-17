@@ -1017,11 +1017,11 @@ def create_arena_choice_2(target_path, arena_name, time=250, is_train=False,
 def create_box_reasoning(target_path, arena_name, time=1000, is_train=True):
     """ The  reward is on top of a box. agent must push box in the right position to be able to acces the reward platform."""
     arena = ''
-    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(13.5, 0, 15), rot=90)
-    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(22, 0, 15), rot=90)
+    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(13.5, 0, 20), rot=90)
+    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(22, 0, 20), rot=90)
     arena = add_object(arena, 'Cardbox1', size=(4, 2, 4), pos=(17.75, 0, 9), rot=90)
-    arena = add_object(arena, 'Ramp', size=(8, 2, 8), pos=(28, 0, 15), rot=90)
-    arena = add_object(arena, 'GoodGoal', size=(3, 3, 3), pos=(13.5, 2.25, 15), rot=0)
+    arena = add_object(arena, 'Ramp', size=(8, 2, 8), pos=(28, 0, 20), rot=90)
+    arena = add_object(arena, 'GoodGoal', size=(3, 3, 3), pos=(13.5, 2.25, 20), rot=0)
     
 
     agent_rotation = random_rotation()
@@ -1029,10 +1029,10 @@ def create_box_reasoning(target_path, arena_name, time=1000, is_train=True):
 
         agent_pos = random_pos()
 
-        if pos_on_obj(agent_pos,(13.5, 0, 15),(4, 2, 4)) == False:
-            if pos_on_obj(agent_pos,(22, 0, 15),(4, 2, 4)) == False:
+        if pos_on_obj(agent_pos,(13.5, 0, 20),(4, 2, 4)) == False:
+            if pos_on_obj(agent_pos,(22, 0, 20),(4, 2, 4)) == False:
                 if pos_on_obj(agent_pos,(17.75, 0, 9),(4, 2, 4)) == False:
-                    if pos_on_obj(agent_pos,(28, 0, 15),(8, 2, 8)) == False:
+                    if pos_on_obj(agent_pos,(28, 0, 20),(8, 2, 8)) == False:
                         break
 
     
