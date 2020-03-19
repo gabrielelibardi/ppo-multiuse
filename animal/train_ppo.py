@@ -95,6 +95,8 @@ def main():
     start = time.time()
     num_updates = int(args.num_env_steps) // args.num_steps // args.num_processes
 
+    demos_in = [[] for i in range(args.num_processes)]
+
     for j in range(num_updates):
 
         """ if args.imitation:
@@ -114,7 +116,7 @@ def main():
             ppo_rollout_RND(args.num_steps, envs, actor_critic, rollouts, rnd_weight)
 
         else:
-            ppo_rollout_imitate(args.num_steps, envs, actor_critic, rollouts)
+            demos_in = ppo_rollout_imitate(args.num_steps, envs, actor_critic, rollouts, demos_in)
 
         if not args.record_actions:    
 

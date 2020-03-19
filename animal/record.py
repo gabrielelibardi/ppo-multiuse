@@ -60,7 +60,7 @@ parser.add_argument(
     '--schedule-ratio',action='store_true',default=False ,help='Wether to schedule the replayer ratio')
 parser.add_argument(
     '--demo-dir',default= '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_reason2', help='directory where to get the demonstrations from')
-    
+
 
 args = parser.parse_args()
 device = torch.device(args.device)
@@ -148,11 +148,6 @@ def unroll(acts):
 
 
 
-
-
-recording = False
-
-
 with keyboard.Listener(
         on_press=on_press,
         on_release=on_release) as listener:
@@ -188,32 +183,11 @@ with keyboard.Listener(
         """ sum = 0.0
         for parameter in actor_critic.parameters():
             sum += parameter.sum()
-        print(sum)
-        #import ipdb; ipdb.set_trace() """
-            
+        print(sum)"""
+        #import ipdb; ipdb.set_trace()
+        
         obs, reward, done, info = env.step(action)
 
-        
-
-        if "u" not in pressed_keys and recording == True:
-            filename = '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_actions_3/{}'.format(arena_name)
-            np.savez(filename,observations=np.array(obs_rollouts),
-                     rewards=np.array(rews_rollouts),
-                     actions=np.array(actions_rollouts))
-            recording=False
-
-
-        if done == True and recording == True:
-            filename = '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_actions_3/{}'.format(arena_name)
-            np.savez(filename,observations=np.array(obs_rollouts),
-                     rewards=np.array(rews_rollouts),
-                     actions=np.array(actions_rollouts))
-            recording=False
-              
-        """ if reward >= 2 :
-            print("REACHED")
-        else:
-            print("NO") """
    
 
         masks.fill_(0.0 if done else 1.0)

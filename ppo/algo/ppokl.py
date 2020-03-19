@@ -174,7 +174,7 @@ class PPOKL():
 
 
 
-def ppo_rollout_imitate(num_steps, envs, actor_critic, rollouts):
+def ppo_rollout_imitate(num_steps, envs, actor_critic, rollouts, demos_in):
     for step in range(num_steps):
         # Sample actions
         with torch.no_grad():
@@ -183,10 +183,13 @@ def ppo_rollout_imitate(num_steps, envs, actor_critic, rollouts):
         
             if step == 0:
                 action = action*0
-        # Obser reward and next obs
-        obs, reward, done, infos = envs.step(action)
+
         
-        
+        action_ = (action, demos_in)
+        obs, reward, done, infos = envs.step(action_)
+        demos_in = [[] for i in range(len(action))]
+
+
         with torch.no_grad():
             is_demos = torch.zeros(action.shape, dtype=torch.int32, device= action.device)
             
@@ -198,8 +201,12 @@ def ppo_rollout_imitate(num_steps, envs, actor_critic, rollouts):
                     action_log_prob[ii] = 0
                     is_demos[ii] = 1
 
+                demo_out = info['demo_out']
+                if demo_out:
+                    for kk in range(len(demos_in)):
+                        if kk != ii:
+                            demos_in[kk].append(demo_out)
 
-            
 
         # If done then clean the history of observations.
         masks = torch.FloatTensor([[0.0] if done_ else [1.0] for done_ in done])
@@ -207,6 +214,8 @@ def ppo_rollout_imitate(num_steps, envs, actor_critic, rollouts):
 
         rollouts.insert(obs, recurrent_hidden_states, action,
                         action_log_prob, value, reward, masks, bad_masks, is_demos)
+
+    return demos_in
 
 
 

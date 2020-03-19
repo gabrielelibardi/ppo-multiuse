@@ -46,5 +46,7 @@ from .create_arenas import (
     create_make_fall_1,
     create_arena_choice_2,
     create_box_reasoning,
+    create_box_reasoning_hard,
+    create_box_reasoning_2,
     
 )

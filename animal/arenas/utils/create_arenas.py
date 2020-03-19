@@ -1044,6 +1044,71 @@ def create_box_reasoning(target_path, arena_name, time=1000, is_train=True):
 
 
 
+def create_box_reasoning_hard(target_path, arena_name, time=1000, is_train=True):
+    """ The  reward is on top of a box. agent must push box in the right position to be able to acces the reward platform."""
+    pos_box_ = [(10, 0, 10),(10, 0, 30),(30, 0, 10),(30, 0, 30)]
+    pos_box = random.choice(pos_box_)
+    arena = ''
+    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(13.5, 0, 20), rot=90)
+    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(22, 0, 20), rot=90)
+    arena = add_object(arena, 'Cardbox1', size=(4, 2, 4), pos=pos_box, rot=90)
+    arena = add_object(arena, 'Ramp', size=(8, 2, 8), pos=(28, 0, 20), rot=90)
+    arena = add_object(arena, 'GoodGoal', size=(3, 3, 3), pos=(13.5, 2.25, 20), rot=0)
+    
+
+    agent_rotation = random_rotation()
+    while True:
+
+        agent_pos = random_pos()
+
+        if pos_on_obj(agent_pos,(13.5, 0, 20),(4, 2, 4)) == False:
+            if pos_on_obj(agent_pos,(22, 0, 20),(4, 2, 4)) == False:
+                if pos_on_obj(agent_pos, pos_box,(4, 2, 4)) == False:
+                    if pos_on_obj(agent_pos,(28, 0, 20),(8, 2, 8)) == False:
+                        break
+
+    
+    arena = add_object(arena, "Agent", pos= agent_pos, rot=agent_rotation)                     
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'box_reasoning', (20, 0, 3), 0
+
+
+def create_box_reasoning_2(target_path, arena_name, time=1000, is_train=True):
+    """ The  reward is on top of a box. agent must push box in the right position to be able to acces the reward platform."""
+    pos_box_ = [(10, 0, 10),(10, 0, 30),(30, 0, 10),(30, 0, 30)]
+    pos_box1, pos_box2  = random.sample(pos_box_, k=2)
+
+    arena = ''
+    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(7.5, 0, 20), rot=90)
+    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(22, 0, 20), rot=90)
+    arena = add_object(arena, 'Cardbox1', size=(4, 2, 4), pos=pos_box1, rot=90)
+    arena = add_object(arena, 'Cardbox1', size=(4, 2, 4), pos=pos_box2, rot=90)
+    arena = add_object(arena, 'Ramp', size=(8, 2, 8), pos=(28, 0, 20), rot=90)
+    arena = add_object(arena, 'GoodGoal', size=(3, 3, 3), pos=(7.5, 2.25, 20), rot=0)
+    
+
+    agent_rotation = random_rotation()
+    while True:
+
+        agent_pos = random_pos()
+
+        if pos_on_obj(agent_pos,(7.5, 0, 20),(4, 2, 4)) == False:
+            if pos_on_obj(agent_pos,(22, 0, 20),(4, 2, 4)) == False:
+                if pos_on_obj(agent_pos, pos_box1,(4, 2, 4)) == False:
+                    if pos_on_obj(agent_pos, pos_box2,(4, 2, 4)) == False:
+                        if pos_on_obj(agent_pos,(28, 0, 20),(8, 2, 8)) == False:
+                            break
+
+    
+    arena = add_object(arena, "Agent", pos= agent_pos, rot=agent_rotation)                     
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'box_reasoning', (20, 0, 3), 0
+
+
 def pos_on_obj(agent_pos, obj_pos, obs_size):
     x_lim1 = obj_pos[0] -  obs_size[0]/2
     x_lim2 = obj_pos[0] +  obs_size[0]/2
