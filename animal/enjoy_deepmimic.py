@@ -54,7 +54,7 @@ args.det = not args.non_det
 args.state = args.cnn=='State'
 device = torch.device(args.device)
 
-maker = make_deepmimic_env()
+maker = make_deepmimic_env(renders = True)
 
 if args.state:
     #TODO: hugly hack
