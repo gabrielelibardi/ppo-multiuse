@@ -297,6 +297,7 @@ def ppo_rollout_2(num_steps, envs, actor_critic, actor_critic_expert, rollouts, 
                     rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
 
         # Obser reward and next obs
+        import ipdb; ipdb.set_trace()
         obs, reward, done, infos = envs.step(action)
 
         # If done then clean the history of observations.

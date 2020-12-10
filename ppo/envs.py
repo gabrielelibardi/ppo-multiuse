@@ -9,7 +9,7 @@ from baselines import bench
 from baselines.common.atari_wrappers import make_atari, wrap_deepmind
 from baselines.common.vec_env import VecEnvWrapper
 from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
-from ppo.subproc_vec_env import MySubprocVecEnv
+#from ppo.subproc_vec_env import MySubprocVecEnv
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from baselines.common.vec_env.shmem_vec_env import ShmemVecEnv
 from baselines.common.vec_env.vec_normalize import  VecNormalize as VecNormalize_
@@ -19,8 +19,8 @@ def make_vec_envs(make,num_processes,log_dir,device,num_frame_stack,state_shape,
     envs = [make(i)  for i in range(num_processes)    ]
 
     if len(envs) > 1:
-        #envs = SubprocVecEnv(envs)
-        envs = MySubprocVecEnv(envs)
+        envs = SubprocVecEnv(envs)
+        #envs = MySubprocVecEnv(envs)
         #envs = ShmemVecEnv(envs,spaces=spaces, context='fork')
     else:
         envs = DummyVecEnv(envs)
@@ -52,12 +52,10 @@ class VecPyTorch(VecEnvWrapper):
         return obs
 
     def step_async(self, actions):
-        actions, demos_in = actions
         if isinstance(actions, torch.Tensor):
             # Squeeze the dimension for discrete actions
             actions = actions.squeeze(1)
         actions = actions.cpu().numpy()
-        actions = (actions, demos_in)
         self.venv.step_async(actions)
 
     def step_wait(self):
@@ -119,7 +117,7 @@ class VecPyTorchFrameStack(VecEnvWrapper):
 
     def step_wait(self):
         obs, rews, news, infos = self.venv.step_wait()
-        self.stacked_obs[:, :-self.shape_dim0] = self.stacked_obs[:, self.shape_dim0:].clone()
+        self.stacked_obs[:, :-self.shape_dim0] = self.stacked_obs[:, self.shape_dim0:]
         for (i, new) in enumerate(news):
             if new:
                 self.stacked_obs[i] = 0
@@ -161,7 +159,7 @@ class VecPyTorchStateStack(VecEnvWrapper):
 
     def step_wait(self):
         (obs,states), rews, news, infos = self.venv.step_wait()
-        self.stacked[:, :-self.shape_dim0] =  self.stacked[:, self.shape_dim0:].clone()
+        self.stacked[:, :-self.shape_dim0] =  self.stacked[:, self.shape_dim0:]
         for (i, new) in enumerate(news):
             if new:
                 self.stacked[i] = 0

@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/..')
 import json
 import tarfile
 import tempfile
+import random
 
 from ppo.model import Policy, CNNBase, FixupCNNBase, ImpalaCNNBase
 from collections import deque
@@ -21,6 +22,7 @@ from matplotlib import pyplot as plt
 from ppo.envs import VecPyTorch, make_vec_envs
 from animal import make_animal_env
 from animalai.envs.arena_config import ArenaConfig
+from baselines.common.running_mean_std import RunningMeanStd
 
 CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase}
 
@@ -60,6 +62,8 @@ parser.add_argument(
     '--schedule-ratio',action='store_true',default=False ,help='Wether to schedule the replayer ratio')
 parser.add_argument(
     '--demo-dir',default= '/workspace7/Unity3D/gabriele/Animal-AI/animal-ppo/RUNS/recorded_reason2', help='directory where to get the demonstrations from')
+parser.add_argument(
+    '--gail',default=None, action='store_true', help='Uses gail to learn from demonstartions')    
 
 
 args = parser.parse_args()
@@ -67,7 +71,7 @@ device = torch.device(args.device)
 
 maker = make_animal_env(log_dir = None, inference_mode=args.realtime,  frame_skip=args.frame_skip , 
             arenas_dir=args.arenas_dir, info_keywords=('ereward','max_reward','max_time','arena'), 
-            reduced_actions=args.reduced_actions, seed= 1, state= False, replay_ratio= args.replay_ratio, record_actions = args.record_actions,schedule_ratio = args.schedule_ratio, demo_dir = args.demo_dir)
+            reduced_actions=args.reduced_actions, seed=random.randint(0, 99), state= False, replay_ratio= args.replay_ratio, record_actions = args.record_actions,schedule_ratio = args.schedule_ratio, demo_dir = args.demo_dir)
 
 env = make_vec_envs(maker, 1, None, device=device, num_frame_stack=args.frame_stack, 
                         state_shape=None, num_state_stack=14 )
@@ -78,9 +82,18 @@ env = make_vec_envs(maker, 1, None, device=device, num_frame_stack=args.frame_st
 
 
 base_kwargs={'recurrent': args.recurrent_policy}
-actor_critic = Policy(env.observation_space,env.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs)
+actor_critic = Policy(env.observation_space,env.action_space,base=CNN[args.cnn],base_kwargs=base_kwargs, gail=args.gail)
 
 if args.load_model:
+    """
+    if args.gail:
+        loaded_models = torch.load(args.load_model,map_location=device)
+        actor_critic_model = {k:loaded_models[k] for k in loaded_models if 'disc' not in k}
+        import ipdb; ipdb.set_trace()
+        actor_critic.load_state_dict(actor_critic_model)
+        disc_model = {k:loaded_models[k] for k in loaded_models if 'disc' in k}
+        
+    else:    """
     actor_critic.load_state_dict(torch.load(args.load_model,map_location=device))
 actor_critic.to(device)
 
@@ -132,6 +145,7 @@ def create_action():
 action_lookup = {(0, 0): 0,(0, 1): 1, (0, 2): 2,(1, 0): 3, (1, 1): 4,(1, 2): 5, (2, 0): 6, (2, 1): 7, (2, 2): 8}
 
 
+ret_rms = RunningMeanStd(shape=())
 
 def check_act(action):
     found = False
@@ -147,7 +161,7 @@ def unroll(acts):
         obs, reward, done, info = env.step(act)
 
 
-
+max_value = 0
 with keyboard.Listener(
         on_press=on_press,
         on_release=on_release) as listener:
@@ -164,7 +178,15 @@ with keyboard.Listener(
         action_2 = action_lookup[tuple(action_)]
         if "k" in pressed_keys:
             action[0] = action_2
+        
+        print(value, "VALUE")
+        if args.gail:
+            prob_pi, _ = actor_critic.disc(obs, action) 
 
+            print( "DISC P:",torch.exp(-prob_pi).item()*0.1)
+
+        max_value = max(value, max_value)
+        #print(max_value, "MAX VALUE")
         """ if "i" in pressed_keys:
             unroll(acts)
             
@@ -185,7 +207,7 @@ with keyboard.Listener(
             sum += parameter.sum()
         print(sum)"""
         #import ipdb; ipdb.set_trace()
-        
+        #data = (action,[[]])
         obs, reward, done, info = env.step(action)
 
    
@@ -214,6 +236,7 @@ with keyboard.Listener(
             step = 0
             episode_reward = 0
             done = False
+            max_value = 0
 # drop redundant frames if needed
 #all_obs = [x[0,:, :, -3:] for x in  all_obs]
 #os.makedirs("./temp/", exist_ok=True)

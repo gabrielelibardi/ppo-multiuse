@@ -29,7 +29,7 @@ def random_size(category):
 
     if category in ['GoodGoal', 'GoodGoalBounce', 'BadGoal', 'BadGoalBounce', 'GoodGoalMulti', 'GoodGoalMultiBounce']:
         #according to docs it's 0.5-5
-        s = random.randint(5, 50)/10
+        s = random.randint(25, 50)/10
         s = (s,s,s)
     elif category in ['Wall', 'WallTransparent']:
         s = (random.randint(20, 250) / 10., random.randint(20, 70) / 10., random.randint(20, 250) / 10.)

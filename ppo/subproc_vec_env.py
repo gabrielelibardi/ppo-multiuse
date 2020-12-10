@@ -11,9 +11,7 @@ def worker(remote, parent_remote, env_fn_wrapper):
         while True:
             cmd, data = remote.recv()
             if cmd == 'step':
-                ac,value=data
-                ob, reward, done, info = env.step((ac,value))
-                #print(other)
+                ob, reward, done, info = env.step(data)
                 if done:
                     ob = env.reset()
                 remote.send((ob, reward, done, info))
@@ -69,10 +67,9 @@ class MySubprocVecEnv(VecEnv):
         VecEnv.__init__(self, len(env_fns), observation_space, action_space)
 
     def step_async(self, actions):
-        actions, demos_in = actions
         self._assert_not_closed()
-        for remote, action, demo_in in zip(self.remotes, actions, demos_in):
-            remote.send(('step', (action,demo_in)))
+        for remote, action in zip(self.remotes, actions):
+            remote.send(('step', action))
         self.waiting = True
 
     def step_wait(self):

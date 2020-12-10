@@ -1075,31 +1075,36 @@ def create_box_reasoning_hard(target_path, arena_name, time=1000, is_train=True)
     return 'box_reasoning', (20, 0, 3), 0
 
 
-def create_box_reasoning_2(target_path, arena_name, time=1000, is_train=True):
+def create_box_reasoning_2(target_path, arena_name, time=1600, is_train=True):
     """ The  reward is on top of a box. agent must push box in the right position to be able to acces the reward platform."""
-    pos_box_ = [(10, 0, 10),(10, 0, 30),(30, 0, 10),(30, 0, 30)]
-    pos_box1, pos_box2  = random.sample(pos_box_, k=2)
+    #pos_box_ = [(10, 0, 10),(10, 0, 30),(30, 0, 10),(30, 0, 30)]
+    #pos_box1, pos_box2  = random.sample(pos_box_, k=2)
+    pos_box1 = (10, 0, 10)
+    pos_box2 = (10, 0, 30)
+
 
     arena = ''
-    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(7.5, 0, 20), rot=90)
-    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(22, 0, 20), rot=90)
+    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(6.5, 0, 20), rot=90)
+    arena = add_object(arena, 'WallTransparent', size=(4, 2, 4), pos=(25, 0, 20), rot=90)
+    arena = add_object(arena, 'WallTransparent', size=(5, 2, 2), pos=(16, 0, 20), rot=90)
     arena = add_object(arena, 'Cardbox1', size=(4, 2, 4), pos=pos_box1, rot=90)
     arena = add_object(arena, 'Cardbox1', size=(4, 2, 4), pos=pos_box2, rot=90)
-    arena = add_object(arena, 'Ramp', size=(8, 2, 8), pos=(28, 0, 20), rot=90)
-    arena = add_object(arena, 'GoodGoal', size=(3, 3, 3), pos=(7.5, 2.25, 20), rot=0)
+    arena = add_object(arena, 'Ramp', size=(8, 2, 8), pos=(31, 0, 20), rot=90)
+    arena = add_object(arena, 'GoodGoal', size=(3, 3, 3), pos=(6.5, 2.25, 20), rot=0)
     
 
     agent_rotation = random_rotation()
     while True:
 
-        agent_pos = random_pos()
+        agent_pos = (random.randint(150, 200) / 10., 0., random.randint(50, 100) / 10.)
 
-        if pos_on_obj(agent_pos,(7.5, 0, 20),(4, 2, 4)) == False:
-            if pos_on_obj(agent_pos,(22, 0, 20),(4, 2, 4)) == False:
-                if pos_on_obj(agent_pos, pos_box1,(4, 2, 4)) == False:
-                    if pos_on_obj(agent_pos, pos_box2,(4, 2, 4)) == False:
-                        if pos_on_obj(agent_pos,(28, 0, 20),(8, 2, 8)) == False:
-                            break
+        if pos_on_obj(agent_pos,(6.5, 0, 20),(4, 2, 4)) == False:
+            if pos_on_obj(agent_pos,(25, 0, 20),(4, 2, 4)) == False:
+                if pos_on_obj(agent_pos,(16, 0, 20),(4, 2, 4)) == False:
+                    if pos_on_obj(agent_pos, pos_box1,(4, 2, 4)) == False:
+                        if pos_on_obj(agent_pos, pos_box2,(4, 2, 4)) == False:
+                            if pos_on_obj(agent_pos,(31, 0, 20),(8, 2, 8)) == False:
+                                break
 
     
     arena = add_object(arena, "Agent", pos= agent_pos, rot=agent_rotation)                     
@@ -1107,6 +1112,67 @@ def create_box_reasoning_2(target_path, arena_name, time=1000, is_train=True):
     write_arena(save_name, time, arena)
 
     return 'box_reasoning', (20, 0, 3), 0
+
+
+def create_push_down(target_path, arena_name, time=1000, is_train=True):
+    """ The  reward is on top of a box. agent must push box in the right position to be able to acces the reward platform."""
+
+
+    coin = random.choice([0,1])
+    if coin == 1:
+        box_pos = (random.randint(25, 140) / 10., 1., random.randint(25, 200) / 10.)
+        fake_box_pos = (random.randint(260, 380) / 10., 1., random.randint(25, 200) / 10.)
+    else:
+        fake_box_pos = (random.randint(25, 140) / 10., 1., random.randint(25, 200) / 10.)
+        box_pos = (random.randint(260, 380) / 10., 1., random.randint(25, 200) / 10.)
+
+    pos_goal = (random.randint(10, 390) / 10., 1., random.randint(250, 390) / 10.)
+    goal_wal_pos = (pos_goal[0], 0,  pos_goal[2])
+    
+
+    arena = ''
+    arena = add_object(arena, 'Wall', size=(0.3, 1, 0.3), pos=goal_wal_pos, rot=0, RGB= (153, 153, 153))
+    arena = add_object(arena, 'Wall', size=(40, 1, 20), pos=(20, 0, 10), rot=0, RGB= (0, 0, 255))
+    arena = add_object(arena, 'Wall', size=(11, 2, 5), pos=(20, 1, 2.5), rot=0, RGB= (0, 0, 255))
+    arena = add_object(arena, 'Wall', size=(1, .5, 15), pos=(20, 1, 12.5), rot=0, RGB=(153, 153, 153))
+
+    arena = add_object(arena, 'Cardbox2', size=(1.5, 1.5, 1.5), pos=box_pos, rot=0)
+    arena = add_object(arena, 'Wall', size=(1.5, 1.5, 1.5), pos=fake_box_pos, rot=0, RGB=(153, 153, 153))
+    arena = add_object(arena, 'GoodGoal', size=(1,1,1), pos=pos_goal, rot=0)
+    arena = add_object(arena, "Agent", pos= (20, 3, 2.5), rot=2)   
+              
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'push_down_decieve', (20, 0, 3), 0
+
+
+def create_push_red(target_path, arena_name, time=1000, is_train=True):
+    """ The  reward is on top of a box. agent must push box in the right position to be able to acces the reward platform."""
+    arena = ''
+    
+    arena = add_object(arena, 'DeathZone', size=(10, 0, 10), pos=(20, 0, 20), rot=45)
+    arena = add_object(arena, 'GoodGoal', size=(1, 1, 1), pos=(20, 0, 20), rot=0)
+    
+    
+    while True:
+
+        agent_pos = random_pos()
+        pos_box1 = (random.randint(65, 335) / 10., 0., random.randint(65, 335) / 10.)
+        if pos_on_obj(pos_box1,(20, 0, 20),(15, 0, 15)) == False:
+            if pos_on_obj(agent_pos,(20, 0, 20),(15, 0, 15)) == False:
+                if pos_on_obj(agent_pos, pos_box1,(6, .2, 2)) == False:
+                    break
+
+    agent_rotation = random_rotation()
+    box_rotation = random_rotation()
+    arena = add_object(arena, "Agent", pos= agent_pos, rot=agent_rotation)
+    arena = add_object(arena, 'Cardbox2', size=(6, .2, 2), pos=pos_box1, rot=box_rotation)                  
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'push_red', (20, 0, 3), 0
+
 
 
 def pos_on_obj(agent_pos, obj_pos, obs_size):
@@ -1124,4 +1190,23 @@ def pos_on_obj(agent_pos, obj_pos, obs_size):
         return True
 
 
+def create_gold(target_path, arena_name, time=500, is_train=True):
+    
+    arena = ''
+    
+    while True:
 
+        goal_pos = random_pos()
+        agent_rotation = random_rotation()
+        agent_pos = random_pos()
+
+        if  5 < goal_pos[0] < 35 and 5 < goal_pos[2] < 35:
+            if agent_pos[0] - goal_pos[0] > 5 or agent_pos[2] - goal_pos[2] > 5:
+                arena = add_object(arena, 'GoodGoal', size=random_size('GoodGoal'), pos=goal_pos)
+                arena = add_object(arena, "Agent", pos= agent_pos, rot=agent_rotation)
+                break
+
+    save_name = '{}/{}'.format(target_path, arena_name)
+    write_arena(save_name, time, arena)
+
+    return 'create_gold'

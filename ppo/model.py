@@ -16,9 +16,10 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, input_space, action_space, base, base_kwargs=None, rnd=False):
+    def __init__(self, input_space, action_space, base, base_kwargs=None, rnd=False, gail=False):
         super(Policy, self).__init__()
         self.rnd = rnd
+        self.gail = gail
         if base_kwargs is None:
             base_kwargs = {}
 
@@ -43,6 +44,9 @@ class Policy(nn.Module):
             raise NotImplementedError
         if rnd:
             self.RND = RND(obs_shape[0])
+        if gail:
+            base_kwargs={'recurrent': False}
+            self.disc = Discriminator(obs_shape[0], **base_kwargs)
 
 
     @property
@@ -316,6 +320,40 @@ class RND:
     def update(self,Ri):
         Ri.sum().backward()
         self.optimizer.step()
+
+class Discriminator(NNBase):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=512):
+        super(Discriminator, self).__init__(recurrent, hidden_size, hidden_size)
+        
+        # takes in  the action and concatenates it after the convolutions
+        
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
+                               constant_(x, 0), nn.init.calculate_gain('relu'))
+        self.main = nn.Sequential(
+            init_(nn.Conv2d(num_inputs, 32, 8, stride=4)), nn.ReLU(),
+            init_(nn.Conv2d(32, 64, 4, stride=2)), nn.ReLU(),
+            init_(nn.Conv2d(64, 32, 3, stride=1)), nn.ReLU(), Flatten(),
+            init_(nn.Linear(32 * 7 * 7, hidden_size)), nn.ReLU())
+
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
+
+        self.critic_linear = init_(nn.Linear(hidden_size + 1, 1))
+
+        self.train()
+        
+        
+        
+    def forward(self, inputs, action):
+        x = self.main(inputs / 255.0)
+        x = torch.cat([x, action.float()], dim=1)
+        logits = self.critic_linear(x)
+        log_disc = F.logsigmoid(logits)
+        log_neg_disc = F.logsigmoid(- logits)
+
+        prob_pi = torch.mean(log_disc)
+        prob_expert = torch.mean(log_neg_disc)
+        
+        return prob_pi, prob_expert
 
 class FixupCNNBase(NNBase):
     def __init__(self, num_channels, recurrent=False, hidden_size=256, image_size=84):

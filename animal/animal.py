@@ -29,7 +29,9 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
             
             if 'DISPLAY' not in os.environ.keys():
                 os.environ['DISPLAY'] = ':0'
-            exe = os.path.join(os.path.dirname(animalai.__file__),'../../env/AnimalAI')
+            #exe = os.path.join(os.path.dirname(animalai.__file__),'../../env/AnimalAI')
+            exe = '/home/gabbo/Documents/AnimalMod_simple_test'
+
             env = AnimalAIEnv(environment_filename = exe,
                                retro=False, worker_id=base_port+rank, docker_training=False, 
                                seed = 7, n_arenas = 1, arenas_configurations=None, 
@@ -37,13 +39,14 @@ def make_animal_env(log_dir, inference_mode, frame_skip, arenas_dir, info_keywor
             env = RetroEnv(env)
             if reduced_actions:
                 env = FilterActionEnv(env)
-            if record_actions: 
+            env = LabAnimal(env, arenas_dir)
+            """if record_actions: 
                 env = LabAnimalRecordAction(env,arenas_dir,replay_ratio, record_actions)
             else:
                 #env = LabAnimalReplayAll(env,arenas_dir,replay_ratio, schedule_ratio, demo_dir)
                 env = LabAnimalReplayRecord(env,arenas_dir,replay_ratio, schedule_ratio, demo_dir)
                 #env = LabAnimal(env, arenas_dir,replay_ratio)
-            #env = RewardShaping(env)
+            #env = RewardShaping(env)"""
             
             if state:
                 env = Stateful(env)
@@ -116,7 +119,6 @@ class ReplayAll():
 
 
     def replay_step(self, action):
-        print('LEN DEMOS',len(self.recordings) )
 
         if self.replay == True:
             if  self.num_steps > self.step:
@@ -197,6 +199,7 @@ class LabAnimalReplayRecord(gym.Wrapper):
 
     def step(self, action_):
         action, demo_in = action_
+        
         out =self.replayer.replay_step(action)
         info = {}
         if len(out) == 1:
@@ -236,7 +239,9 @@ class LabAnimalReplayRecord(gym.Wrapper):
             info['demo_out'] = None
 
         for demo_in_ in demo_in:
-            self.replayer.add_demo(demo_in_)
+            if len(demo_in_)> 0:
+                self.replayer.add_demo(demo_in_)
+       
 
         return obs, reward, done, info
 
@@ -378,8 +383,9 @@ class LabAnimalReplayAll(gym.Wrapper):
         self.max_time = arena.arenas[0].t
         return self.env.reset(arenas_configurations=arena,**kwargs)    
 
+
 class LabAnimal(gym.Wrapper):
-    def __init__(self, env, arenas_dir, replay_ratio):
+    def __init__(self, env, arenas_dir):
         gym.Wrapper.__init__(self, env)
         if os.path.isdir(arenas_dir):
             files = glob.glob("{}/*.yaml".format(arenas_dir))
@@ -389,94 +395,24 @@ class LabAnimal(gym.Wrapper):
         
         self.env_list = [(f,ArenaConfig(f)) for f in files]
         self._arena_file = ''
-        self.replayer = ReplayActions(replay_ratio)
 
     def step(self, action):
-        action_ =self.replayer.replay_step(action)
-        obs, reward, done, info = self.env.step(action_)
+        obs, reward, done, info = self.env.step(action)
         self.steps += 1
         self.env_reward += reward
         info['arena']=self._arena_file  #for monitor
         info['max_reward']=self.max_reward
         info['max_time']=self.max_time
         info['ereward'] = self.env_reward
-        info['action'] = action_ 
         return obs, reward, done, info        
 
     def reset(self, **kwargs):
         self.steps = 0
         self.env_reward = 0
         self._arena_file, arena = random.choice(self.env_list)
-        self.replayer.reset(self._arena_file)
 #        self.max_reward = analyze_arena(arena)
         self.max_reward = set_reward_arena(arena, force_new_size=False)
         self.max_time = arena.arenas[0].t
-        return self.env.reset(arenas_configurations=arena,**kwargs)
-
-
-class LabAnimalRecordAction(gym.Wrapper):
-    def __init__(self, env, arenas_dir, replay_ratio, record_actions):
-        gym.Wrapper.__init__(self, env)
-        if os.path.isdir(arenas_dir):
-            files = glob.glob("{}/*.yaml".format(arenas_dir))
-        else:
-            #assume is a pattern
-            files = glob.glob(arenas_dir)
-        
-        self.env_list = [(f,ArenaConfig(f)) for f in files]
-        self._arena_file = ''
-        self.replayer = ReplayActions(replay_ratio)
-        self.obs_rollouts = []
-        self.rews_rollouts = []
-        self.actions_rollouts = []
-        self.directory = record_actions
-        self.arena_num = 0
-
-    def step(self, action):
-        
-        action_ =self.replayer.replay_step(action)
-        obs, reward, done, info = self.env.step(action)
-        self.obs_rollouts.append(obs)
-        self.rews_rollouts.append(reward)
-        self.actions_rollouts.append(action)
-        self.steps += 1
-        self.env_reward += reward
-        info['arena']=self._arena_file  #for monitor
-        info['max_reward']=self.max_reward
-        info['max_time']=self.max_time
-        info['ereward'] = self.env_reward
-        info['action'] = action_ 
-        return obs, reward, done, info        
-
-    def reset(self, **kwargs):
-        
-        if (len (self.actions_rollouts) > 0) and (self.env_reward > 0) :
-            arena_name =  self._arena_file.split('/')[-1].split('.')[0]
-            self.filename = '{}/{}'.format( self.directory ,arena_name)
-
-            print(os.path.exists('{}.npz'.format(self.filename)))
-            print(self.filename)
-            if not os.path.exists('{}.npz'.format(self.filename)):
-            
-                np.savez(self.filename,observations=np.array(self.obs_rollouts),
-                            rewards=np.array(self.rews_rollouts),
-                            actions=np.array(self.actions_rollouts))
-            self.arena_num += 1
-
-        #self._arena_file, arena = random.choice(self.env_list)
-        self._arena_file, arena   = self.env_list[self.arena_num % len(self.env_list)]
-        self.steps = 0
-        self.env_reward = 0
-        
-        self.replayer.reset(self._arena_file)
-#        self.max_reward = analyze_arena(arena)
-        self.max_reward = set_reward_arena(arena, force_new_size=False)
-        self.max_time = arena.arenas[0].t
-
-        self.obs_rollouts = []
-        self.rews_rollouts = []
-        self.actions_rollouts = []
-
         return self.env.reset(arenas_configurations=arena,**kwargs)
 
 
