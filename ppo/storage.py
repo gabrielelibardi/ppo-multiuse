@@ -36,7 +36,6 @@ class RolloutStorage(object):
         # or time limit end state
         self.bad_masks = torch.ones(num_steps + 1, num_processes, 1)
         self.states = torch.zeros(num_steps + 1, num_processes, *states_size)
-        self.is_demo = torch.zeros(num_steps + 1, num_processes, 1)
         self.num_steps = num_steps
         self.step = 0
         self.set_obs(0,obs)
@@ -65,11 +64,11 @@ class RolloutStorage(object):
         self.masks = self.masks.to(device)
         self.bad_masks = self.bad_masks.to(device)
         self.states = self.states.to(device)
-        self.is_demo = self.is_demo.to(device)
+
 
 
     def insert(self, obs, recurrent_hidden_states, actions, action_log_probs,
-               value_preds, rewards, masks, bad_masks, is_demos):
+               value_preds, rewards, masks, bad_masks):
         self.set_obs(self.step + 1,obs)
         self.recurrent_hidden_states[self.step + 1].copy_(recurrent_hidden_states)
         self.actions[self.step].copy_(actions)
@@ -78,7 +77,6 @@ class RolloutStorage(object):
         self.rewards[self.step].copy_(rewards)
         self.masks[self.step + 1].copy_(masks)
         self.bad_masks[self.step + 1].copy_(bad_masks)
-        self.is_demo[self.step].copy_(is_demos)
 
 
         self.step = (self.step + 1) % self.num_steps
@@ -89,7 +87,7 @@ class RolloutStorage(object):
         self.masks[0].copy_(self.masks[-1])
         self.bad_masks[0].copy_(self.bad_masks[-1])
         self.states[0].copy_(self.states[-1])
-        self.is_demo[0].copy_(self.is_demo[-1])
+
 
     def compute_returns(self,
                         next_value,
@@ -157,7 +155,6 @@ class RolloutStorage(object):
             return_batch = self.returns[:-1].view(-1, 1)[indices]
             masks_batch = self.masks[:-1].view(-1, 1)[indices]
             old_action_log_probs_batch = self.action_log_probs.view(-1,1)[indices]
-            is_demo_batch = self.is_demo[:-1].view(-1, 1)[indices]
             if self.has_states:
             	states_batch = self.states.view(-1,self.states.size(-1))[indices]
 
@@ -188,7 +185,6 @@ class RolloutStorage(object):
             old_action_log_probs_batch = []
             adv_targ = []
             states_batch = []
-            is_demo_batch = []
 
             for offset in range(num_envs_per_batch):
                 ind = perm[start_ind + offset]
@@ -213,7 +209,7 @@ class RolloutStorage(object):
             old_action_log_probs_batch = torch.stack(old_action_log_probs_batch, 1)
             adv_targ = torch.stack(adv_targ, 1)
             states_batch = torch.stack(states_batch,1)
-            is_demo_batch = torch.stack(is_demo_batch,1)
+
 
             # States is just a (N, -1) tensor
             recurrent_hidden_states_batch = torch.stack(recurrent_hidden_states_batch, 1).view(N, -1)
@@ -227,8 +223,8 @@ class RolloutStorage(object):
             old_action_log_probs_batch = _flatten_helper(T, N, old_action_log_probs_batch)
             adv_targ = _flatten_helper(T, N, adv_targ)
             states_batch = _flatten_helper(T, N, states_batch)
-            is_demo_batch = _flatten_helper(T, N, is_demo_batch)
+
 
             inputs_batch =(obs_batch,states_batch) if self.has_states else obs_batch
             yield inputs_batch, recurrent_hidden_states_batch, actions_batch, \
-                value_preds_batch, return_batch, masks_batch, old_action_log_probs_batch, adv_targ, is_demo_batch
+                value_preds_batch, return_batch, masks_batch, old_action_log_probs_batch, adv_targ

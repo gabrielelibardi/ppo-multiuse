@@ -12,17 +12,15 @@ import pybullet_data
 from pybullet_utils.arg_parser import ArgParser
 from pybullet_utils.logger import Logger
 
-def make_deepmimic_env(args= '', enable_draw = True, base_seed=0, log_dir=None, frame_skip=0, frame_stack=1, allow_early_resets=False):
+def make_deepmimic_env(args= '', renders = False, enable_draw = True, base_seed=0, log_dir=None, frame_skip=0, frame_stack=1, allow_early_resets=False):
 
     def make_env(rank):
-
-        
 
         def _thunk():
             
             arg_parser = build_arg_parser(args)
             print("enable_draw=", enable_draw)
-            env = HumanoidDeepBulletEnv(renders = True, arg_file = "run_humanoid3d_backflip_args.txt")
+            env = HumanoidDeepBulletEnv(renders = renders, arg_file = "run_humanoid3d_backflip_args.txt")
             env.seed(index_worker + rank) if base_seed is None else env.seed(
                 base_seed + rank)
             #if record:
