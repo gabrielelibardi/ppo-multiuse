@@ -40,7 +40,7 @@ def main():
     env.reset()
     torsoId = -1
     for i in range (p.getNumBodies()):
-        print(p.getBodyInfo(i))
+        print(p.getBodyInfo(i), i)
         if p.getBodyInfo(i)[0].decode() == "torso":
            torsoId = i
            print("found humanoid torso")
