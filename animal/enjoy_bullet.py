@@ -47,14 +47,16 @@ parser.add_argument(
 parser.add_argument(
     '--cnn',default='Fixup',help='Type of cnn. Options are CNN,Impala,Fixup,State')
 parser.add_argument(
-    '--state-stack',type=int,default=4,help='Number of steps to stack in states')    
+    '--state-stack',type=int,default=4,help='Number of steps to stack in states')
+parser.add_argument(
+    '--task',default='HalfCheetahPyBulletEnv-v0',help='which of the pybullet task')
 
 args = parser.parse_args()
 args.det = not args.non_det
 args.state = args.cnn=='State'
 device = torch.device(args.device)
 
-maker = make_pybullet_env('HalfCheetahPyBulletEnv-v0', log_dir = None, frame_skip=args.frame_skip)
+maker = make_pybullet_env(args.task, log_dir = None, frame_skip=args.frame_skip)
 
 if args.state:
     #TODO: hugly hack

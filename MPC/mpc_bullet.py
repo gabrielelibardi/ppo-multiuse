@@ -40,7 +40,7 @@ def main():
 
     utils.cleanup_log_dir(args.log_dir)
 
-    env_make = make_pybullet_env(args.task, log_dir = args.log_dir, frame_skip=args.frame_skip)
+    env_make = make_pybullet_env('HumanoidPyBulletEnv-v0', log_dir = args.log_dir, frame_skip=args.frame_skip)
     #spaces = ( gym.spaces.Box(low=0, high=0xff,shape=(3, 84, 84),dtype=np.uint8),
     #               gym.spaces.Discrete(9) )
     if args.cnn == 'State':
@@ -181,8 +181,6 @@ def get_args():
         '--arenas-dir',default=None,help='directory where the yamls files for the environemnt are (default: None)')   
     parser.add_argument(
         '--reduced-actions',action='store_true',default=False,help='Use reduced actions set')
-    parser.add_argument(
-        '--task',default='HalfCheetahPyBulletEnv-v0',help='which of the pybullet task')
     args = parser.parse_args()
     args.log_dir = os.path.expanduser(args.log_dir)
     args.state = args.cnn=='State'

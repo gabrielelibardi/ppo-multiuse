@@ -9,6 +9,8 @@ import numpy as np
 import pybullet as p
 import pybulletgym.envs
 import time
+from copy import deepcopy
+import random
 
 
 def relu(x):
@@ -32,12 +34,33 @@ class SmallReactivePolicy:
         return x
 
 
+
+def dumpStateToFile():
+    
+    file_ = ''
+    for i in range(p.getNumBodies()):
+        pos, orn = p.getBasePositionAndOrientation(i)
+        linVel, angVel = p.getBaseVelocity(i)
+        txtPos = "pos=" + str(pos) + "\n"
+        txtOrn = "orn=" + str(orn) + "\n"
+        txtLinVel = "linVel" + str(linVel) + "\n"
+        txtAngVel = "angVel" + str(angVel) + "\n"
+        file_ += txtPos
+        file_ += txtOrn)
+        file_ += txtLinVel
+        file_ += txtAngVel
+
+    return file_
+
+
 def main():
     env = gym.make("HumanoidPyBulletEnv-v0")
+    #import ipdb; ipdb.set_trace()
     env.render(mode="human")
+    
     pi = SmallReactivePolicy(env.observation_space, env.action_space)
-
-    env.reset()
+    reset_state = ([0, 0, 1.0], [0, 0, 0, 1.0])
+    init_state = env.reset()
     torsoId = -1
     for i in range (p.getNumBodies()):
         print(p.getBodyInfo(i), i)
@@ -48,27 +71,45 @@ def main():
         frame = 0
         score = 0
         restart_delay = 0
+        
         obs = env.reset()
         humanPos_0, humanOrn_0 = p.getBasePositionAndOrientation(torsoId)
         print("inital v", p.getBaseVelocity(torsoId))
         print("initial pos", humanPos_0, "inital orient", humanOrn_0)
         
 
-
+        stateId = None
         while 1:
+            print(stateId)
+            if frame % 60 == 0 and stateId:
+                #p.resetBasePositionAndOrientation(torsoId, deepcopy([humanPos_0[0], humanPos_0[1], humanPos_0[2]+0.2]), deepcopy(humanOrn_0))
+                p.restoreState(random.randint(0,stateId))
+            #print(env.state)
+            
             time.sleep(0.02)
             a = pi.act(obs)
             obs, r, done, _ = env.step(a)
+            #print('obs', obs.shape)
             score += r
             frame += 1
             distance = 5
             yaw = 0
-            humanPos, humanOrn = p.getBasePositionAndOrientation(torsoId)
+            humanPos_0, humanOrn_0 = p.getBasePositionAndOrientation(torsoId)
             #p.resetDebugVisualizerCamera(distance, yaw, -20, humanPos)
             if frame % 60 == 0:
-                p.resetBasePositionAndOrientation(torsoId, [0, 0, 1.0], [0, 0, 0, 1.0])
-                p.resetBaseVelocity(torsoId, [0, 0, 0], [0, 0, 0])
+                #p.resetBasePositionAndOrientation(torsoId, [0, 0, 1.0], [0, 0, 0, 1.0])
+                #p.resetBaseVelocity(torsoId, [0, 0, 0], [0, 0, 0])
+                init_state = np.copy(obs)
+                humanPos_0, humanOrn_0 = p.getBasePositionAndOrientation(torsoId)
+                
+                reset_state = (humanPos_0, humanOrn_0)
+                stateId = p.saveState()
+                print(dumpStateToFile())
                 obs = env.reset()
+                
+                
+                
+                
 
             still_open = env.render("human")
             if still_open is None:
