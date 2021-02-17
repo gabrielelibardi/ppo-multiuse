@@ -124,6 +124,7 @@ def ppo_rollout(num_steps, envs, actor_critic, rollouts):
                 rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
 
         # Obser reward and next obs
+#         action = action * 0
         obs, reward, done, infos = envs.step(action)
 
         # If done then clean the history of observations.
