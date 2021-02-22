@@ -46,7 +46,7 @@ def make_trifinger_robot_env(log_dir=None,base_seed= 0, frame_skip=0, allow_earl
                     env, os.path.join(
                         log_dir, "{}_{}".format(base_seed, str(rank))),
                     allow_early_resets=allow_early_resets,
-                    info_keywords=('r0','r1','goal'))
+                    info_keywords=('r0','r1','goal', 'goal_coor', 'goal_or'))
 
             return env
 
@@ -155,6 +155,16 @@ class ExamplePushingTrainingEnv(gym.Env):
             self.initial_robot_position = TriFingerPlatform.spaces.robot_position.default
             self.initial_object_pose=self.initializer.get_initial_state()
             self.goal_object_pose = self.initializer.get_goal()
+
+
+       
+        self.initial_object_pose.position = np.array([ 0.0, 0.0,  0.0325    ])
+        self.initial_object_pose.orientation =  np.array([0, 0, 0, 1])
+        #self.initial_robot_position = np.array([1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])  
+        self.goal_object_pose.position =  np.array([0,  0,  0.1])
+        self.goal_object_pose.orientation = np.array([0, 0, 0, 1])
+        self.min_r0 = 9999999.0
+
             
 
     def step(self, action):
@@ -207,22 +217,30 @@ class ExamplePushingTrainingEnv(gym.Env):
             mean_dist_3tips = np.mean(np.linalg.norm(observation["robot_tip_positions"] - observation["object_position"],
                                                         axis=1,keepdims=True))
             r1 += mean_dist_3tips/max_dist  #normalize to max size in arena
-
+        
+        reward = np.copy(r0)
         r0 = r0/num_steps
         r1 = r1/num_steps
-        goal = 1 if r0<self.delta else 0   
+        
+        goal = 1 if r0<self.delta else 0
+        self.min_r0 =  min(self.min_r0, r0)
+        print('MIN R0', self.min_r0)
+        print('RO', r0, self.delta, goal)
         #reward =  goal + 0.001*(1-r1)
-        reward = old_reward 
+        #reward = old_reward 
+        
         self.info['r0']=r0  #test reward within frameskip
         self.info['r1']=r1  #other
         self.info['goal']=goal
+        self.info['goal_or'] = self.goal_object_pose.orientation
+        self.info['goal_coor'] = self.goal_object_pose.position
         is_done = self.step_count == move_cube.episode_length
-
         return observation, reward, is_done, self.info
 
        
     def reset(self):
         # reset simulation
+        self.min_r0 = 99999.0
         del self.platform
 
         self.platform = TriFingerPlatform(
@@ -239,8 +257,8 @@ class ExamplePushingTrainingEnv(gym.Env):
         if self.visualization:
             self.goal_marker = visual_objects.CubeMarker(
                 width=0.065,
-                position=goal_object_pose.position,
-                orientation=goal_object_pose.orientation,
+                position=self.goal_object_pose.position,
+                orientation=self.goal_object_pose.orientation,
             )
 
         self.info = dict()
