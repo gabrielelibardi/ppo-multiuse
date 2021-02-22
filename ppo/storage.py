@@ -197,7 +197,6 @@ class RolloutStorage(object):
                 old_action_log_probs_batch.append(self.action_log_probs[:, ind])
                 adv_targ.append(advantages[:, ind])
                 states_batch.append(self.states[:-1,ind])
-                is_demo_batch.append(self.is_demo[:-1, ind])
 
             T, N = self.num_steps, num_envs_per_batch
             # These are all tensors of size (T, N, -1)

@@ -20,7 +20,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/..')
 from ppo import algo, utils
 from ppo.envs import make_vec_envs
 from ppo.model import Policy
-from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase, MLPBase
+from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase, MLPBase, 
 from ppo.storage import RolloutStorage
 from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model
 from trifinger_robot.make_trifinger_robot_env import make_trifinger_robot_env
@@ -28,7 +28,7 @@ from vision_module import ImpalaCNNVision
 #from object_detection_module import ImpalaCNNObject
 #from wrappers import VecVisionState, VecObjectState 
 
-CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase,'State':StateCNNBase, 'MLP': MLPBase}
+CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase,'State':StateCNNBase, 'MLP': MLPBase, 'MLPTrifinger': MLPBaseTrifinger}
 
 def main():
     args = get_args()
@@ -95,7 +95,7 @@ def main():
 
         ppo_rollout(args.num_steps, envs, actor_critic, rollouts)
 
-        value_loss, action_loss, dist_entropy, kl_div, loss = ppo_update(agent, actor_critic, rollouts,
+        value_loss, action_loss, dist_entropy, kl_div, loss = ppo_update(agent, actor_critic, rollouts,e
                                     args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits)
 
         if (j % args.save_interval == 0 or j == num_updates - 1) and args.log_dir != "":
