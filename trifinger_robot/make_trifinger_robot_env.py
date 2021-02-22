@@ -165,6 +165,7 @@ class ExamplePushingTrainingEnv(gym.Env):
         self.goal_object_pose.orientation = np.array([0, 0, 0, 1])
         self.min_r0 = 9999999.0
 
+
             
 
     def step(self, action):
@@ -218,16 +219,17 @@ class ExamplePushingTrainingEnv(gym.Env):
                                                         axis=1,keepdims=True))
             r1 += mean_dist_3tips/max_dist  #normalize to max size in arena
         
-        reward = np.copy(r0)
+        #reward = np.copy(r0)
         r0 = r0/num_steps
         r1 = r1/num_steps
         
         goal = 1 if r0<self.delta else 0
         self.min_r0 =  min(self.min_r0, r0)
-        print('MIN R0', self.min_r0)
-        print('RO', r0, self.delta, goal)
+        #print('MIN R0', self.min_r0)
+        #print('RO', r0, self.delta, goal)
         #reward =  goal + 0.001*(1-r1)
         #reward = old_reward 
+
         
         self.info['r0']=r0  #test reward within frameskip
         self.info['r1']=r1  #other
@@ -317,7 +319,7 @@ class ExamplePushingTrainingEnv(gym.Env):
         )
         reward_term_2 = previous_dist_to_goal - current_dist_to_goal
 
-        reward = 750 * reward_term_1 + 250 * reward_term_2
+        reward = 0 * reward_term_1 + 1000 * reward_term_2
 
         return reward
 
