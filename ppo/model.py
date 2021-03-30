@@ -247,19 +247,43 @@ class MLPBase(NNBase):
     
     
 class MLPBaseTrifinger(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=64):
-        super(MLPBase, self).__init__(recurrent, num_inputs, hidden_size)
+    def __init__(self, num_inputs, recurrent=False,hidden_size =3):
+        super(MLPBaseTrifinger, self).__init__(recurrent, num_inputs, hidden_size)
+        fake_hidden_size = 64
+        if recurrent:
+            num_inputs = fake_hidden_size
+    
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), np.sqrt(2))
 
+        self.actor = nn.Sequential(
+            init_(nn.Linear(num_inputs, fake_hidden_size)), nn.ReLU(),
+            init_(nn.Linear(fake_hidden_size, fake_hidden_size)), nn.ReLU(),
+            init_(nn.Linear(fake_hidden_size, hidden_size)), nn.ReLU(),
+            #init_(nn.Linear(3, hidden_size)), nn.ReLU()  # 9 actions times 2 for mu and sigma?
+        
+        )
+
+        self.critic = nn.Sequential(
+            init_(nn.Linear(num_inputs, fake_hidden_size)), nn.ReLU(),
+            init_(nn.Linear(fake_hidden_size, fake_hidden_size)), nn.ReLU())
+
+        self.critic_linear = init_(nn.Linear(fake_hidden_size, 1))
+
+        self.train()
+        
+class MLPBaseTrifingerRNN(NNBase):
+    def __init__(self, num_inputs, recurrent=False,hidden_size =64):
+        super(MLPBaseTrifingerRNN, self).__init__(recurrent, num_inputs, hidden_size)
         if recurrent:
             num_inputs = hidden_size
-
+    
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), np.sqrt(2))
 
         self.actor = nn.Sequential(
             init_(nn.Linear(num_inputs, hidden_size)), nn.ReLU(),
             init_(nn.Linear(hidden_size, hidden_size)), nn.ReLU(),
             init_(nn.Linear(hidden_size, 3)), nn.ReLU(),
-            init_(nn.Linear(3, 18)), nn.ReLU()  # 9 actions times 2 for mu and sigma?
+            init_(nn.Linear(3, hidden_size)), nn.ReLU()  # 9 actions times 2 for mu and sigma?
         
         )
 
@@ -269,14 +293,15 @@ class MLPBaseTrifinger(NNBase):
 
         self.critic_linear = init_(nn.Linear(hidden_size, 1))
 
-        self.train()
+        self.train()        
+      
+
 
     def forward(self, inputs, rnn_hxs, masks):
         x = inputs
 
         if self.is_recurrent:
             x, rnn_hxs = self._forward_gru(x, rnn_hxs, masks)
-
         hidden_critic = self.critic(x)
         hidden_actor = self.actor(x)
 
@@ -543,3 +568,42 @@ class ImpalaResidual(nn.Module):
         out = F.relu(out)
         out = self.conv2(out)
         return out + x
+
+class RewardFuncLunarLander(nn.Module):
+
+    def __init__(self, size_state, size_action, size_out= 1):
+        super().__init__()
+        #self.size_in, self.size_out = size_in, size_out
+
+    def forward(self, state, prev_state,  action):
+        state_term_1 = torch.sqrt(state[:,0]*state[:,0] + state[:,1]*state[:,1])
+        state_term_2 = torch.sqrt(state[:,2]*state[:,2] + state[:,3]*state[:,3])
+        state_term_3 = torch.abs(state[:,4])
+        state_term_4 = state[:,6]
+        state_term_5 = state[:,7]
+        #state_term_6 = state[0]
+        #state_term_7 = state[1]
+        #state_term_8 = state[2]
+        #state_term_9 = state[3]
+
+        prev_state_term_1 = torch.sqrt(prev_state[:,0]*prev_state[:,0] + prev_state[:,1]*prev_state[:,1])
+        prev_state_term_2 = torch.sqrt(prev_state[:,2]*prev_state[:,2] + prev_state[:,3]*prev_state[:,3])
+        prev_state_term_3 = torch.abs(prev_state[:,4])
+        prev_state_term_4 = prev_state[:,6]
+        prev_state_term_5 = prev_state[:,7]
+        #prev_state_term_6 = prev_state[0]
+        #prev_state_term_7 = prev_state[1]
+        #prev_state_term_8 = prev_state[2]
+        #prev_state_term_9 = prev_state[3]
+        action = action.squeeze(dim=1)
+        mask = action == 2
+        action_term_1 = mask.float()*1.0
+        
+        mask = (action == 3)+(action == 1)
+        action_term_2 = mask.float()*1.0 
+        
+        shape = - 100*state_term_1 - 100*state_term_2 - 100*state_term_3 + 10*state_term_4 + 10*state_term_5
+        prev_shape = - 100*prev_state_term_1 - 100*prev_state_term_2 - 100*prev_state_term_3 + 10*prev_state_term_4 + 10*prev_state_term_5
+        
+        reward = shape - 0.30*action_term_1 - 0.03*action_term_2
+        return reward.unsqueeze(1)

@@ -22,7 +22,7 @@ from ppo.envs import make_vec_envs
 from ppo.model import Policy
 from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase, MLPBase
 from ppo.storage import RolloutStorage
-from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model
+from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model, change_reward
 from bullet.make_pybullet_env import make_pybullet_env
 from vision_module import ImpalaCNNVision
 from object_detection_module import ImpalaCNNObject
@@ -95,6 +95,7 @@ def main():
     for j in range(num_updates):
 
         ppo_rollout(args.num_steps, envs, actor_critic, rollouts)
+        change_reward(rollouts)
 
         value_loss, action_loss, dist_entropy, kl_div, loss = ppo_update(agent, actor_critic, rollouts,
                                     args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits)

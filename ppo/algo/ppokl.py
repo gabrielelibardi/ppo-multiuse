@@ -116,12 +116,12 @@ class PPOKL():
 
 
 
-def ppo_rollout(num_steps, envs, actor_critic, rollouts):
+def ppo_rollout(num_steps, envs, actor_critic, rollouts, det=False):
     for step in range(num_steps):
         # Sample actions
         with torch.no_grad():
             value, action, action_log_prob, recurrent_hidden_states, _ = actor_critic.act(
-                rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step])
+                rollouts.get_obs(step), rollouts.recurrent_hidden_states[step],rollouts.masks[step], deterministic = det)
 
         # Obser reward and next obs
 #         action = action * 0
@@ -151,3 +151,7 @@ def ppo_save_model(actor_critic, fname, iter):
     torch.save(actor_critic.state_dict(), fname + ".tmp")  
     os.rename(fname + '.tmp', fname)
     copy2(fname,fname+".{}".format(iter))
+    
+def change_reward(rollouts, reward_func):
+    import ipdb; ipdb.set_trace()
+    return rollouts
