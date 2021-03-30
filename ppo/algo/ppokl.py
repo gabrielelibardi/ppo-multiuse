@@ -153,5 +153,6 @@ def ppo_save_model(actor_critic, fname, iter):
     copy2(fname,fname+".{}".format(iter))
     
 def change_reward(rollouts, reward_func):
-    import ipdb; ipdb.set_trace()
-    return rollouts
+    for work_num in range(rollouts.obs.shape[1]):
+        rollouts.rewards[:,work_num,:] = reward_func(rollouts.obs[:-1,work_num,:], rollouts.obs[:-1,work_num,:], rollouts.actions[:,work_num,:])
+    
