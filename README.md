@@ -1,6 +1,6 @@
 # animal-ppo
 
-## To make videos
+## Stuff I changed
 
 ```
   Files changed are ppokl.py, model.py, train_ppo_bullet.py
