@@ -568,7 +568,8 @@ class ImpalaResidual(nn.Module):
         out = F.relu(out)
         out = self.conv2(out)
         return out + x
-
+    
+    
 class RewardFuncLunarLander(nn.Module):
 
     def __init__(self, size_state, size_action, size_out= 1):
@@ -607,3 +608,27 @@ class RewardFuncLunarLander(nn.Module):
         
         reward = shape - 0.30*action_term_1 - 0.03*action_term_2
         return reward.unsqueeze(1)
+
+class RewardFunc(nn.Module):
+    def __init__(self, num_inputs, hidden_size=64):
+        super().__init__()
+        
+        "Same architecure as the normal MLP critic"
+
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), np.sqrt(2))
+
+        self.main = nn.Sequential(
+            init_(nn.Linear(num_inputs, hidden_size)), nn.Tanh(),
+            init_(nn.Linear(hidden_size, hidden_size)), nn.Tanh())
+
+        self.rew_linear = init_(nn.Linear(hidden_size, 1))
+
+        self.train()
+
+    def forward(self, inputs, rnn_hxs, masks):
+        x = inputs
+        hidden_critic = self.main(x)
+
+        return self.rew_linear(hidden_critic)
+    
+    

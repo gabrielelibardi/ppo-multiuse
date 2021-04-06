@@ -20,13 +20,13 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/..')
 from ppo import algo, utils
 from ppo.envs import make_vec_envs
 from ppo.model import Policy
-from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase, MLPBase, RewardFuncLunarLander
+from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase, MLPBase, RewardFunc
 from ppo.storage import RolloutStorage
-from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model, change_reward
+from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model
 from bullet.make_pybullet_env import make_pybullet_env
-from vision_module import ImpalaCNNVision
-from object_detection_module import ImpalaCNNObject
-from wrappers import VecVisionState, VecObjectState 
+#from vision_module import ImpalaCNNVision
+#from object_detection_module import ImpalaCNNObject
+#from wrappers import VecVisionState, VecObjectState 
 
 CNN={'CNN':CNNBase,'Impala':ImpalaCNNBase,'Fixup':FixupCNNBase,'State':StateCNNBase, 'MLP': MLPBase}
 
@@ -63,12 +63,14 @@ def main():
 
     actor_critic = Policy(envs.observation_space,envs.action_space,base=CNN[args.cnn],
                             base_kwargs={'recurrent': args.recurrent_policy})
-    
-    rew_func = RewardFuncLunarLander(100,100)
+
+    rew_func = RewardFunc(envs.observation_space.shape[0])
 
     if args.restart_model:
         actor_critic.load_state_dict(torch.load(args.restart_model, map_location=device))
+
     actor_critic.to(device)
+    rew_func.to(device)
 
     actor_behaviors = None
     if args.behavior: 
@@ -80,7 +82,7 @@ def main():
             actor.to(device)
             actor_behaviors.append(actor) 
 
-    agent = algo.PPOKL(actor_critic,args.clip_param,args.ppo_epoch, args.num_mini_batch,args.value_loss_coef,
+    agent = algo.PPOKL(actor_critic,rew_func,args.clip_param,args.ppo_epoch, args.num_mini_batch,args.value_loss_coef,
             args.entropy_coef,lr=args.lr,eps=args.eps,max_grad_norm=args.max_grad_norm,actor_behaviors=actor_behaviors)
 
     obs = envs.reset()
@@ -97,9 +99,9 @@ def main():
     for j in range(num_updates):
 
         ppo_rollout(args.num_steps, envs, actor_critic, rollouts)
-        change_reward(rollouts, rew_func)
+
         value_loss, action_loss, dist_entropy, kl_div, loss = ppo_update(agent, actor_critic, rollouts,
-                                    args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits)
+                                    args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits, rew_func)
 
         if (j % args.save_interval == 0 or j == num_updates - 1) and args.log_dir != "":
             ppo_save_model(actor_critic, os.path.join(args.log_dir, "animal.state_dict"), j)

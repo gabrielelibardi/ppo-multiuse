@@ -3,5 +3,6 @@
 ## To make videos
 
 ```
-  ffmpeg -video_size 1280x720 -framerate 25 -f x11grab -i :0.0+1289,766 output.mp4
+  Files changed are ppokl.py, model.py, train_ppo_bullet.py
+  main stuff in ppokl.py lines from 44 to 140 
 ```
