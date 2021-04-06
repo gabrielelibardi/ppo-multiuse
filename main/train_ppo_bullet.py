@@ -20,7 +20,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) +'/..')
 from ppo import algo, utils
 from ppo.envs import make_vec_envs
 from ppo.model import Policy
-from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase, MLPBase
+from ppo.model import CNNBase,FixupCNNBase,ImpalaCNNBase,StateCNNBase, MLPBase, RewardFuncLunarLander
 from ppo.storage import RolloutStorage
 from ppo.algo.ppokl import ppo_rollout, ppo_update, ppo_save_model, change_reward
 from bullet.make_pybullet_env import make_pybullet_env
@@ -63,6 +63,8 @@ def main():
 
     actor_critic = Policy(envs.observation_space,envs.action_space,base=CNN[args.cnn],
                             base_kwargs={'recurrent': args.recurrent_policy})
+    
+    rew_func = RewardFuncLunarLander(100,100)
 
     if args.restart_model:
         actor_critic.load_state_dict(torch.load(args.restart_model, map_location=device))
@@ -95,8 +97,7 @@ def main():
     for j in range(num_updates):
 
         ppo_rollout(args.num_steps, envs, actor_critic, rollouts)
-        change_reward(rollouts)
-
+        change_reward(rollouts, rew_func)
         value_loss, action_loss, dist_entropy, kl_div, loss = ppo_update(agent, actor_critic, rollouts,
                                     args.use_gae, args.gamma, args.gae_lambda, args.use_proper_time_limits)
 
